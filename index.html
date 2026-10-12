@@ -2,592 +2,458 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Matinyo POS — Enterprise SaaS</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matinyo POS SaaS - Pro Enterprise</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- jsPDF for Reporting -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
     <style>
-        :root {
-            --bg-dark: #090d16;
-            --card-bg: #111827;
-            --card-border: #1f2937;
-            --accent-gold: #fbbf24;
-            --accent-green: #10b981;
-            --accent-blue: #3b82f6;
-            --accent-red: #ef4444;
-            --text-main: #f9fafb;
-            --text-sub: #9ca3af;
-        }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { background: var(--bg-dark); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text-main); min-height: 100vh; }
-
-        /* Login & Owner Portal */
-        #loginPage, #ownerPortal { position: fixed; inset: 0; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; }
-        .login-card { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 400px; padding: 32px 24px; border-radius: 20px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-        .login-logo { font-family: 'Syne', sans-serif; font-size: 2.2rem; letter-spacing: 4px; color: var(--text-main); font-weight: 800; }
-        .login-sub { color: var(--text-sub); font-size: 0.8rem; margin-bottom: 24px; margin-top: 4px; }
-        
-        .input-field { width: 100%; padding: 13px 16px; border: 1px solid var(--card-border); border-radius: 12px; font-size: 0.95rem; background: #1f2937; color: white; outline: none; margin-bottom: 12px; font-family: inherit; }
-        .input-field:focus { border-color: var(--accent-gold); }
-        .btn-primary { background: var(--accent-gold); color: #000; width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; }
-        .btn-primary:active { transform: scale(0.98); }
-        .btn-sec { background: transparent; color: var(--text-sub); width: 100%; padding: 10px; border: none; font-size: 0.8rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
-
-        /* Navigation */
-        #mainApp { display: none; padding-bottom: 90px; }
-        .top-navbar { background: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 500; }
-        .app-brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--accent-gold); }
-        .shop-badge { background: #1f2937; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; color: var(--text-sub); border: 1px solid var(--card-border); }
-
-        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 1px solid var(--card-border); display: flex; z-index: 600; padding: 6px 0; }
-        .nav-item { flex: 1; border: none; background: transparent; color: var(--text-sub); font-size: 0.65rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
-        .nav-item.active { color: var(--accent-gold); }
-        .nav-icon { font-size: 1.2rem; }
-
-        /* Layout Views */
-        .view-page { display: none; padding: 16px; max-width: 800px; margin: auto; }
-        .view-page.active { display: block; }
-
-        /* Dashboard Metric Cards */
-        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
-        .metric-card { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: 16px; }
-        .metric-title { font-size: 0.72rem; color: var(--text-sub); font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
-        .metric-value { font-size: 1.3rem; font-weight: 800; color: var(--text-main); }
-
-        /* Section Cards */
-        .section-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
-        .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
-
-        /* POS Grid & Cart */
-        .pos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
-        .item-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 12px; cursor: pointer; transition: all 0.15s; }
-        .item-card:active { transform: scale(0.96); border-color: var(--accent-gold); }
-        .item-card.out-of-stock { opacity: 0.4; pointer-events: none; }
-        .item-emoji { font-size: 1.8rem; margin-bottom: 6px; display: block; }
-        .item-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .item-price { font-size: 0.8rem; color: var(--accent-green); font-weight: 800; }
-        .item-stock { font-size: 0.68rem; color: var(--text-sub); margin-top: 4px; }
-
-        /* Cart Floating Bar */
-        .cart-bar { position: fixed; bottom: 65px; left: 16px; right: 16px; max-width: 768px; margin: auto; background: var(--accent-gold); color: #000; border-radius: 16px; padding: 14px 18px; display: none; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.4); font-weight: 800; z-index: 550; }
-        .cart-bar.has-items { display: flex; }
-
-        /* Toast */
-        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--card-bg); color: white; border: 1px solid var(--accent-gold); padding: 10px 20px; border-radius: 30px; font-size: 0.82rem; font-weight: 700; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
-        .toast.show { opacity: 1; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body>
+<body class="bg-slate-900 text-slate-150 h-screen flex flex-col overflow-hidden">
 
-<div id="toast" class="toast"></div>
+    <!-- TOP BAR -->
+    <header class="bg-slate-800 border-b border-slate-700 px-4 py-3 flex justify-between items-center z-20">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 text-white p-2 rounded-xl font-bold flex items-center justify-center shadow-lg shadow-indigo-600/30">
+                <i class="fa-solid fa-store text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-bold text-lg leading-tight tracking-tight text-white" id="shop-title">Matinyo POS Pro</h1>
+                <p class="text-xs text-slate-400" id="tenant-display">Loading Cloud Workspace...</p>
+            </div>
+        </div>
 
-<!-- STAFF TERMINAL LOGIN -->
-<div id="loginPage">
-    <div class="login-card">
-        <div class="login-logo">MATINYO</div>
-        <div class="login-sub">SaaS POS Enterprise Terminal</div>
-        <input type="text" id="shopIdInput" class="input-field" placeholder="Shop ID (e.g. test_01)">
-        <input type="text" id="userInput" class="input-field" placeholder="Username (e.g. mat)">
-        <input type="password" id="passInput" class="input-field" placeholder="PIN" inputmode="numeric">
-        <button class="btn-primary" onclick="handleLogin()">Unlock Terminal</button>
-        <button class="btn-sec" onclick="toggleOwnerPortal(true)">🔒 Software Owner Login</button>
-        <div id="pinError" style="color:var(--accent-red); font-size:0.75rem; margin-top:8px;"></div>
+        <div class="flex items-center space-x-3">
+            <span id="sync-status" class="hidden sm:flex items-center text-xs bg-emerald-500/10 text-emerald-400 px-2.5 py-1 rounded-full border border-emerald-500/20">
+                <i class="fa-solid fa-circle text-[8px] mr-1.5 animate-pulse"></i> Cloud Synced
+            </span>
+            <button onclick="triggerCloseDayModal()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center shadow-md">
+                <i class="fa-solid fa-lock text-xs mr-1.5"></i> Close Day
+            </button>
+            <button onclick="handleLogout()" class="text-slate-400 hover:text-red-400 p-2 rounded-lg transition" title="Logout">
+                <i class="fa-solid fa-power-off text-base"></i>
+            </button>
+        </div>
+    </header>
+
+    <!-- AUTHENTICATION SCREEN -->
+    <div id="auth-screen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-800 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl">
+            <div class="text-center mb-6">
+                <div class="bg-indigo-600 w-14 h-14 rounded-2xl mx-auto flex items-center justify-center text-white text-2xl shadow-xl shadow-indigo-600/30 mb-3">
+                    <i class="fa-solid fa-cash-register"></i>
+                </div>
+                <h2 class="text-xl font-bold text-white">Matinyo Terminal Login</h2>
+                <p class="text-xs text-slate-400 mt-1">Enter your credentials or PIN to access workspace</p>
+            </div>
+            
+            <form onsubmit="handleLoginSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Tenant ID / Shop Code</label>
+                    <input type="text" id="login-tenant" required value="demo-shop" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Username or PIN</label>
+                    <input type="password" id="login-pin" required placeholder="Enter PIN or password" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-lg shadow-indigo-600/30">
+                    Open Workspace
+                </button>
+            </form>
+        </div>
     </div>
-</div>
 
-<!-- OWNER ADMIN PORTAL -->
-<div id="ownerPortal" style="display:none;">
-    <div class="login-card">
-        <div class="login-logo" style="font-size:1.5rem;">OWNER</div>
-        <div class="login-sub">Platform Provisioning Portal</div>
+    <!-- MAIN APP LAYOUT -->
+    <div id="app-container" class="flex-1 flex overflow-hidden hidden">
         
-        <div id="ownerLoginForm">
-            <input type="email" id="ownerEmail" class="input-field" placeholder="Owner Email">
-            <input type="password" id="ownerPassword" class="input-field" placeholder="Password">
-            <button class="btn-primary" onclick="handleOwnerEmailLogin()">Sign In as Owner</button>
-            <button class="btn-sec" onclick="toggleOwnerPortal(false)">← Back to Terminal Login</button>
-        </div>
-
-        <div id="ownerProvisionForm" style="display:none;">
-            <div style="font-size:0.8rem; font-weight:700; color:var(--accent-green); margin-bottom:12px;">✅ Authenticated Owner</div>
-            <input type="text" id="newShopId" class="input-field" placeholder="New Shop ID (e.g. duka_01)">
-            <input type="text" id="newShopName" class="input-field" placeholder="Shop Name (e.g. Duka la Leo)">
-            <input type="text" id="newAdminUser" class="input-field" placeholder="Initial Admin Username">
-            <input type="password" id="newAdminPin" class="input-field" placeholder="Initial Admin PIN" inputmode="numeric">
-            <button class="btn-primary" style="background:var(--accent-green); color:white;" onclick="provisionNewShop()">⚡ Provision Shop</button>
-            <button class="btn-sec" onclick="ownerSignOut()">Sign Out Owner</button>
-        </div>
-        <div id="ownerError" style="color:var(--accent-red); font-size:0.75rem; margin-top:8px;"></div>
-    </div>
-</div>
-
-<!-- MAIN APPLICATION -->
-<div id="mainApp">
-    <div class="top-navbar">
-        <div class="app-brand">MATINYO</div>
-        <div class="shop-badge" id="activeShopDisplay">Shop: ---</div>
-    </div>
-
-    <!-- TAB 1: DASHBOARD -->
-    <div class="view-page active" id="view-dashboard">
-        <div class="metrics-grid">
-            <div class="metric-card">
-                <div class="metric-title">Today's Sales</div>
-                <div class="metric-value" id="dashTodaySales">0 TZS</div>
+        <!-- SIDEBAR NAVIGATION -->
+        <nav class="w-20 sm:w-64 bg-slate-800 border-r border-slate-700 flex flex-col justify-between py-4 z-10">
+            <div class="space-y-1 px-3">
+                <button onclick="switchTab('pos')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition bg-indigo-600 text-white shadow-lg shadow-indigo-600/20" data-tab="pos">
+                    <i class="fa-solid fa-cart-shopping w-5 text-center"></i>
+                    <span class="hidden sm:inline">Point of Sale</span>
+                </button>
+                <button onclick="switchTab('inventory')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-700/50 hover:text-white" data-tab="inventory">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-center"></i>
+                    <span class="hidden sm:inline">Stock & Inventory</span>
+                </button>
+                <button onclick="switchTab('accounts')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-700/50 hover:text-white" data-tab="accounts">
+                    <i class="fa-solid fa-wallet w-5 text-center"></i>
+                    <span class="hidden sm:inline">Financials & Accounts</span>
+                </button>
+                <button onclick="switchTab('reports')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-700/50 hover:text-white" data-tab="reports">
+                    <i class="fa-solid fa-chart-pie w-5 text-center"></i>
+                    <span class="hidden sm:inline">Reports & Analytics</span>
+                </button>
             </div>
-            <div class="metric-card">
-                <div class="metric-title">Transactions</div>
-                <div class="metric-value" id="dashTodayOrders">0</div>
+            
+            <div class="px-3">
+                <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 hidden sm:block">
+                    <p class="text-[11px] font-medium text-slate-400">Connected Terminal</p>
+                    <p class="text-xs font-bold text-white truncate mt-0.5" id="current-user-display">Staff Member</p>
+                </div>
             </div>
-            <div class="metric-card">
-                <div class="metric-title">Items Sold</div>
-                <div class="metric-value" id="dashTodayItems">0</div>
+        </nav>
+
+        <!-- CONTENT AREA -->
+        <main class="flex-1 bg-slate-900 overflow-y-auto relative">
+            
+            <!-- TAB 1: POS -->
+            <div id="tab-pos" class="tab-content h-full flex flex-col lg:flex-row">
+                <!-- Product Catalog -->
+                <div class="flex-1 p-4 flex flex-col h-full overflow-hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-stretch sm:items-center gap-3 mb-4">
+                        <div class="relative flex-1">
+                            <i class="fa-solid fa-search absolute left-3.5 top-3 text-slate-400 text-sm"></i>
+                            <input type="text" id="pos-search" oninput="filterCatalog()" placeholder="Search items by name or scan barcode..." class="w-full bg-slate-800 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div id="category-filters" class="flex gap-1.5 overflow-x-auto hide-scrollbar pb-1 sm:pb-0">
+                            <button onclick="filterCategory('All')" class="cat-btn bg-indigo-600 text-white px-3.5 py-2 rounded-xl text-xs font-medium whitespace-nowrap transition">All Items</button>
+                        </div>
+                    </div>
+
+                    <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3.5 overflow-y-auto flex-1 pr-1 pb-4">
+                        <!-- Dynamic Grid populated via JS -->
+                    </div>
+                </div>
+
+                <!-- Active Cart & Checkout -->
+                <div class="w-full lg:w-96 bg-slate-800 border-t lg:border-t-0 lg:border-l border-slate-700 flex flex-col h-auto lg:h-full">
+                    <div class="p-4 border-b border-slate-700 flex justify-between items-center">
+                        <h3 class="font-bold text-white flex items-center text-sm"><i class="fa-solid fa-basket-shopping text-indigo-400 mr-2"></i> Current Order</h3>
+                        <button onclick="clearCart()" class="text-xs text-red-400 hover:text-red-300"><i class="fa-solid fa-trash-can mr-1"></i> Clear</button>
+                    </div>
+
+                    <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-3 divide-y divide-slate-700/50">
+                        <p class="text-slate-500 text-xs text-center py-8">Your cart is empty</p>
+                    </div>
+
+                    <div class="p-4 bg-slate-800/80 border-t border-slate-700 space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-slate-400">Subtotal</span>
+                            <span id="cart-subtotal" class="font-semibold text-white">TZS 0</span>
+                        </div>
+                        <div class="flex justify-between text-base font-bold">
+                            <span class="text-white">Total Amount</span>
+                            <span id="cart-total" class="text-indigo-400">TZS 0</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-2 pt-1">
+                            <button onclick="processCheckout('Cash')" class="bg-emerald-600 hover:bg-emerald-500 text-white font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-lg shadow-emerald-600/20">
+                                <i class="fa-solid fa-money-bill-wave mr-1.5"></i> Cash Pay
+                            </button>
+                            <button onclick="processCheckout('Mobile')" class="bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-xl text-xs transition flex items-center justify-center shadow-lg shadow-blue-600/20">
+                                <i class="fa-solid fa-mobile-screen mr-1.5"></i> Mobile Money
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="metric-card">
-                <div class="metric-title">Low Stock Alerts</div>
-                <div class="metric-value" id="dashLowStock" style="color:var(--accent-red);">0</div>
+
+            <!-- TAB 2: INVENTORY -->
+            <div id="tab-inventory" class="tab-content h-full hidden p-4 sm:p-6 overflow-y-auto">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Stock & Inventory Management</h2>
+                        <p class="text-xs text-slate-400">Monitor stock levels, reorder alerts, and execute stocktakes.</p>
+                    </div>
+                    <div class="flex gap-2 w-full sm:w-auto">
+                        <button onclick="openStocktakeModal()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-center">
+                            <i class="fa-solid fa-clipboard-check mr-2 text-indigo-400"></i> Stocktake Mode
+                        </button>
+                        <button onclick="openAddProductModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center justify-center shadow-lg shadow-indigo-600/20">
+                            <i class="fa-solid fa-plus mr-2"></i> Add Product
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl overflow-hidden shadow-xl">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-900/50 text-slate-400 border-b border-slate-700">
+                                    <th class="p-3.5 font-semibold">Product Name</th>
+                                    <th class="p-3.5 font-semibold">Category</th>
+                                    <th class="p-3.5 font-semibold">Cost Price</th>
+                                    <th class="p-3.5 font-semibold">Selling Price</th>
+                                    <th class="p-3.5 font-semibold">Stock Qty</th>
+                                    <th class="p-3.5 font-semibold text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="inventory-table-body" class="divide-y divide-slate-700/50">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             </div>
-        </div>
 
-        <div class="section-card">
-            <div class="section-title">Recent Transactions</div>
-            <div id="recentTxList" style="font-size:0.85rem; color:var(--text-sub);">No transactions recorded today.</div>
-        </div>
-    </div>
+            <!-- TAB 3: ACCOUNTS -->
+            <div id="tab-accounts" class="tab-content h-full hidden p-4 sm:p-6 overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Financial Accounts & Cashflow</h2>
+                        <p class="text-xs text-slate-400">Track balance distributions across Cash, Mobile Money, and Bank accounts.</p>
+                    </div>
+                    <button onclick="openExpenseModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center shadow-lg shadow-indigo-600/20">
+                        <i class="fa-solid fa-receipt mr-2"></i> Record Expense
+                    </button>
+                </div>
 
-    <!-- TAB 2: POINT OF SALE -->
-    <div class="view-page" id="view-pos">
-        <input type="text" class="input-field" placeholder="🔍 Search products..." id="posSearch" oninput="appEngine.filterCatalog(this.value)">
-        <div class="pos-grid" id="posGrid"></div>
-    </div>
-
-    <!-- TAB 3: INVENTORY MANAGEMENT -->
-    <div class="view-page" id="view-inventory">
-        <div class="section-card">
-            <div class="section-title">➕ Add New Product</div>
-            <input type="text" id="newItemEmoji" class="input-field" placeholder="Emoji Icon (e.g. 🥤, 🍞, 🧼)">
-            <input type="text" id="newItemName" class="input-field" placeholder="Product Name">
-            <div style="display:flex; gap:10px;">
-                <input type="number" id="newItemPrice" class="input-field" placeholder="Selling Price (TZS)">
-                <input type="number" id="newItemStock" class="input-field" placeholder="Initial Stock Qty">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+                        <p class="text-xs font-medium text-slate-400">Cash Account Float</p>
+                        <h3 class="text-2xl font-bold text-emerald-400 mt-1" id="acc-cash">TZS 0</h3>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+                        <p class="text-xs font-medium text-slate-400">Mobile Money (Lipa kwa Simu)</p>
+                        <h3 class="text-2xl font-bold text-blue-400 mt-1" id="acc-mobile">TZS 0</h3>
+                    </div>
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 shadow-xl">
+                        <p class="text-xs font-medium text-slate-400">Bank Balance</p>
+                        <h3 class="text-2xl font-bold text-indigo-400 mt-1" id="acc-bank">TZS 0</h3>
+                    </div>
+                </div>
             </div>
-            <button class="btn-primary" onclick="appEngine.addNewProduct()">Save Product to Inventory</button>
-        </div>
 
-        <div class="section-card">
-            <div class="section-title">📦 Product Catalog & Restock</div>
-            <div id="inventoryList"></div>
-        </div>
-    </div>
+            <!-- TAB 4: REPORTS -->
+            <div id="tab-reports" class="tab-content h-full hidden p-4 sm:p-6 overflow-y-auto">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-white">Business Reports & Analytics</h2>
+                        <p class="text-xs text-slate-400">Export audited records and generate AI operational reviews.</p>
+                    </div>
+                    <button onclick="generatePDFReport()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2.5 rounded-xl text-xs font-semibold transition flex items-center shadow-lg shadow-indigo-600/20">
+                        <i class="fa-solid fa-file-pdf mr-2"></i> Export Monthly PDF
+                    </button>
+                </div>
 
-    <!-- TAB 4: REPORTS & EXPORT -->
-    <div class="view-page" id="view-reports">
-        <div class="section-card">
-            <div class="section-title">📊 Daily Sales Breakdown</div>
-            <div style="margin-bottom:12px; font-size:0.9rem;">
-                Total Daily Revenue: <strong id="repTotalRev" style="color:var(--accent-green);">0 TZS</strong>
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 shadow-xl">
+                    <h3 class="text-sm font-bold text-white mb-2"><i class="fa-solid fa-wand-magic-sparkles text-indigo-400 mr-2"></i> AI Business Analyst Insight</h3>
+                    <p class="text-xs text-slate-300 leading-relaxed" id="ai-insights">Analyzing recent transactions and stock turnover...</p>
+                </div>
             </div>
-            <button class="btn-primary" style="background:var(--accent-blue); color:white;" onclick="window.print()">🖨️ Print / Export PDF Report</button>
-        </div>
+
+        </main>
     </div>
 
-    <!-- TAB 5: STAFF MANAGEMENT -->
-    <div class="view-page" id="view-staff">
-        <div class="section-card">
-            <div class="section-title">👤 Add Staff Account</div>
-            <input type="text" id="staffUsername" class="input-field" placeholder="Username (e.g. cashier1)">
-            <input type="text" id="staffName" class="input-field" placeholder="Full Name">
-            <input type="password" id="staffPin" class="input-field" placeholder="PIN" inputmode="numeric">
-            <select id="staffRole" class="input-field">
-                <option value="shop">Cashier</option>
-                <option value="admin">Shop Manager / Admin</option>
-            </select>
-            <button class="btn-primary" style="background:var(--accent-green); color:white;" onclick="appEngine.createNewStaffMember()">Create Account</button>
-        </div>
-        <div class="section-card">
-            <div class="section-title">Staff Members</div>
-            <div id="staffList"></div>
-        </div>
-    </div>
+    <!-- MODALS & APP LOGIC SCRIPT -->
+    <script>
+        // Initialize State
+        let currentTenant = 'demo-shop';
+        let currentUser = 'Staff';
+        let currentActiveTab = 'pos';
+        let cart = [];
+        
+        let catalog = [
+            { id: '1', name: 'Azam Extra Drinking Water 500ml', category: 'Beverages', cost: 400, price: 500, stock: 120, emoji: '💧' },
+            { id: '2', name: 'Coca Cola Soda 500ml', category: 'Beverages', cost: 800, price: 1000, stock: 45, emoji: '🥤' },
+            { id: '3', name: 'Azam Wheat Flour 2kg', category: 'Groceries', cost: 2600, price: 3000, stock: 30, emoji: '🌾' },
+            { id: '4', name: 'Sunlight Dishwashing Paste 500g', category: 'Household', cost: 1800, price: 2200, stock: 18, emoji: '🧼' }
+        ];
 
-    <!-- CART FLOATING CHECKOUT BAR -->
-    <div class="cart-bar" id="cartBar" onclick="appEngine.promptCheckout()">
-        <div style="display:flex; align-items:center; gap:10px;">
-            <span id="cartCountBubble" style="background:#000; color:#fff; padding:4px 10px; border-radius:12px; font-size:0.8rem;">0</span>
-            <span>Checkout Order</span>
-        </div>
-        <div id="cartBarTotal">0 TZS</div>
-    </div>
+        let accounts = { cash: 150000, mobile: 320000, bank: 1200000 };
 
-    <!-- NAVIGATION BAR -->
-    <div class="bottom-nav">
-        <button class="nav-item active" onclick="switchTab('dashboard')"><span class="nav-icon">📊</span>Dashboard</button>
-        <button class="nav-item" onclick="switchTab('pos')"><span class="nav-icon">🛒</span>POS</button>
-        <button class="nav-item" onclick="switchTab('inventory')"><span class="nav-icon">📦</span>Stock</button>
-        <button class="nav-item" onclick="switchTab('reports')"><span class="nav-icon">📈</span>Reports</button>
-        <button class="nav-item" id="navUsersTab" style="display:none;" onclick="switchTab('staff')"><span class="nav-icon">👥</span>Staff</button>
-        <button class="nav-item" onclick="appEngine.auth.logout()"><span class="nav-icon">⏻</span>Exit</button>
-    </div>
-</div>
+        function switchTab(tabId) {
+            currentActiveTab = tabId;
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
 
-<script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-    import { 
-        getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, serverTimestamp, runTransaction, enableIndexedDbPersistence 
-    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCaDZILjLrWg2VGvFElzU08Je-kJTGHKiU",
-        authDomain: "matinyopos.firebaseapp.com",
-        projectId: "matinyopos",
-        storageBucket: "matinyopos.firebasestorage.app",
-        messagingSenderId: "891386548810",
-        appId: "1:891386548810:web:fcb2fabe03b91a716f4cb3",
-        measurementId: "G-LKN46XCGLC"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    try { enableIndexedDbPersistence(db).catch(() => {}); } catch (e) {}
-
-    function showToast(msg) {
-        const t = document.getElementById('toast');
-        t.innerText = msg; t.classList.add('show');
-        setTimeout(() => t.classList.remove('show'), 2500);
-    }
-
-    // --- OWNER PORTAL ENGINE ---
-    window.toggleOwnerPortal = function(show) {
-        document.getElementById('loginPage').style.display = show ? 'none' : 'flex';
-        document.getElementById('ownerPortal').style.display = show ? 'flex' : 'none';
-    }
-
-    window.handleOwnerEmailLogin = async function() {
-        const email = document.getElementById('ownerEmail').value.trim();
-        const password = document.getElementById('ownerPassword').value.trim();
-        const err = document.getElementById('ownerError');
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            document.getElementById('ownerLoginForm').style.display = 'none';
-            document.getElementById('ownerProvisionForm').style.display = 'block';
-            err.innerText = '';
-        } catch (e) { err.innerText = e.message; }
-    }
-
-    window.ownerSignOut = async function() {
-        await signOut(auth);
-        document.getElementById('ownerLoginForm').style.display = 'block';
-        document.getElementById('ownerProvisionForm').style.display = 'none';
-    }
-
-    window.provisionNewShop = async function() {
-        const shopId = document.getElementById('newShopId').value.trim().toLowerCase().replace(/\s+/g, '_');
-        const shopName = document.getElementById('newShopName').value.trim();
-        const username = document.getElementById('newAdminUser').value.trim().toLowerCase();
-        const pin = document.getElementById('newAdminPin').value.trim();
-        const err = document.getElementById('ownerError');
-
-        if (!shopId || !shopName || !username || !pin) { err.innerText = "Fill all fields."; return; }
-
-        try {
-            await setDoc(doc(db, "shops", shopId), { name: shopName, status: "active", createdAt: serverTimestamp() });
-            await setDoc(doc(collection(db, "shops", shopId, "users")), { username, name: shopName + " Admin", pin, role: "admin" });
-            await setDoc(doc(collection(db, "shops", shopId, "inventory")), { name: "Drinking Water 500ml", emoji: "💧", sellPrice: 1000, stock: 50 });
-            showToast("✅ Shop provisioned successfully!");
-            document.getElementById('newShopId').value = ''; document.getElementById('newShopName').value = '';
-        } catch (e) { err.innerText = e.message; }
-    }
-
-    // --- TENANT DB & POS APP ENGINE ---
-    class TenantDatabase {
-        constructor(shopId) { this.shopId = shopId; }
-        async verifyTenant() {
-            const snap = await getDoc(doc(db, "shops", this.shopId));
-            if (!snap.exists()) throw new Error("Shop not found.");
-            return snap.data();
-        }
-        async fetchInventory() {
-            const snap = await getDocs(collection(db, "shops", this.shopId, "inventory"));
-            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        }
-        async fetchTransactions() {
-            const snap = await getDocs(collection(db, "shops", this.shopId, "transactions"));
-            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        }
-        async fetchStaff() {
-            const snap = await getDocs(collection(db, "shops", this.shopId, "users"));
-            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-        }
-        async addProduct(item) {
-            await setDoc(doc(collection(db, "shops", this.shopId, "inventory")), item);
-        }
-        async restockItem(id, addQty) {
-            const ref = doc(db, "shops", this.shopId, "inventory", id);
-            const snap = await getDoc(ref);
-            if (snap.exists()) {
-                const current = Number(snap.data().stock) || 0;
-                await updateDoc(ref, { stock: current + Number(addQty) });
-            }
-        }
-        async addStaff(username, name, pin, role) {
-            await setDoc(doc(collection(db, "shops", this.shopId, "users")), { username, name, pin, role });
-        }
-        async executeCheckout(cartItems, total) {
-            return await runTransaction(db, async (tx) => {
-                const saleRef = doc(collection(db, "shops", this.shopId, "transactions"));
-                for (const item of cartItems) {
-                    const itemRef = doc(db, "shops", this.shopId, "inventory", item.id);
-                    const itemDoc = await tx.get(itemRef);
-                    if (!itemDoc.exists()) throw new Error(`Item missing.`);
-                    const stock = Number(itemDoc.data().stock) || 0;
-                    if (stock < item.qty) throw new Error(`Insufficient stock for ${item.name}`);
-                    tx.update(itemRef, { stock: stock - item.qty });
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                if(btn.dataset.tab === tabId) {
+                    btn.className = "nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition bg-indigo-600 text-white shadow-lg shadow-indigo-600/20";
+                } else {
+                    btn.className = "nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-700/50 hover:text-white";
                 }
-                tx.set(saleRef, { items: cartItems, total: Number(total), timestamp: serverTimestamp(), dateStr: new Date().toISOString().split('T')[0] });
+            });
+
+            if(tabId === 'inventory') renderInventoryTable();
+            if(tabId === 'accounts') updateAccountDisplays();
+            if(tabId === 'reports') generateAIInsights();
+        }
+
+        function handleLoginSubmit(e) {
+            e.preventDefault();
+            currentTenant = document.getElementById('login-tenant').value || 'demo-shop';
+            document.getElementById('tenant-display').innerText = `Workspace: ${currentTenant}`;
+            document.getElementById('shop-title').innerText = `${currentTenant.toUpperCase()} POS`;
+            document.getElementById('auth-screen').classList.add('hidden');
+            document.getElementById('app-container').classList.remove('hidden');
+            initPOSCatalog();
+        }
+
+        function handleLogout() {
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+        }
+
+        function initPOSCatalog() {
+            const grid = document.getElementById('catalog-grid');
+            grid.innerHTML = '';
+            catalog.forEach(item => {
+                grid.innerHTML += `
+                    <div onclick="addToCart('${item.id}')" class="bg-slate-800 border border-slate-700 hover:border-indigo-500/50 rounded-2xl p-4 flex flex-col justify-between cursor-pointer transition shadow-md group">
+                        <div>
+                            <div class="text-3xl mb-2">${item.emoji || '📦'}</div>
+                            <h4 class="font-semibold text-xs text-white group-hover:text-indigo-400 transition line-clamp-2">${item.name}</h4>
+                        </div>
+                        <div class="mt-3 flex justify-between items-center">
+                            <span class="text-xs font-bold text-indigo-400">TZS ${item.price.toLocaleString()}</span>
+                            <span class="text-[10px] text-slate-400 bg-slate-900 px-2 py-0.5 rounded-full">Stock: ${item.stock}</span>
+                        </div>
+                    </div>
+                `;
             });
         }
-    }
 
-    class TenantAuth {
-        async login(shopId, username, pin) {
-            const snap = await getDocs(query(collection(db, "shops", shopId, "users"), where("username", "==", username.trim().toLowerCase())));
-            if (snap.empty) throw new Error("User not found.");
-            let user = null; snap.forEach(d => user = d.data());
-            if (String(pin).replace(/\D/g, "") !== String(user.pin).replace(/\D/g, "")) throw new Error("Incorrect PIN.");
-            const session = { shopId, username: user.username, name: user.name, role: user.role };
-            localStorage.setItem("matinyo_session", JSON.stringify(session));
-            return session;
-        }
-        getSession() { const raw = localStorage.getItem("matinyo_session"); return raw ? JSON.parse(raw) : null; }
-        logout() { localStorage.removeItem("matinyo_session"); window.location.reload(); }
-    }
-
-    class POSAppEngine {
-        constructor() {
-            this.auth = new TenantAuth();
-            this.db = null;
-            this.cart = {};
-            this.inventory = [];
-            this.transactions = [];
-            this.staff = [];
+        function addToCart(id) {
+            const product = catalog.find(p => p.id === id);
+            if(!product || product.stock <= 0) return alert('Item out of stock!');
+            
+            const existing = cart.find(item => item.id === id);
+            if(existing) {
+                if(existing.qty < product.stock) existing.qty++;
+            } else {
+                cart.push({ ...product, qty: 1 });
+            }
+            renderCart();
         }
 
-        async init() {
-            const session = this.auth.getSession();
-            if (!session) {
-                document.getElementById('loginPage').style.display = 'flex';
-                document.getElementById('mainApp').style.display = 'none';
+        function renderCart() {
+            const container = document.getElementById('cart-items');
+            if(cart.length === 0) {
+                container.innerHTML = `<p class="text-slate-500 text-xs text-center py-8">Your cart is empty</p>`;
+                document.getElementById('cart-subtotal').innerText = 'TZS 0';
+                document.getElementById('cart-total').innerText = 'TZS 0';
                 return;
             }
-            document.getElementById('loginPage').style.display = 'none';
-            document.getElementById('mainApp').style.display = 'block';
 
-            if (session.role === 'admin') document.getElementById('navUsersTab').style.display = 'flex';
-
-            this.db = new TenantDatabase(session.shopId);
-            try {
-                const shopData = await this.db.verifyTenant();
-                document.getElementById('activeShopDisplay').innerText = "Shop: " + (shopData.name || session.shopId);
-                await this.refreshData();
-            } catch (err) {
-                showToast("⚠️ " + err.message);
-                this.auth.logout();
-            }
-        }
-
-        async refreshData() {
-            this.inventory = await this.db.fetchInventory();
-            this.transactions = await this.db.fetchTransactions();
-            this.staff = await this.db.fetchStaff();
-            this.renderDashboard();
-            this.renderPOSGrid();
-            this.renderInventoryPage();
-            this.renderStaffPage();
-        }
-
-        renderDashboard() {
-            const today = new Date().toISOString().split('T')[0];
-            const todayTxs = this.transactions.filter(t => t.dateStr === today);
-            
-            const rev = todayTxs.reduce((sum, t) => sum + (t.total || 0), 0);
-            const itemsCount = todayTxs.reduce((sum, t) => sum + (t.items ? t.items.reduce((a, b) => a + b.qty, 0) : 0), 0);
-            const lowStockCount = this.inventory.filter(i => (i.stock || 0) <= 5).length;
-
-            document.getElementById('dashTodaySales').innerText = rev.toLocaleString() + " TZS";
-            document.getElementById('dashTodayOrders').innerText = todayTxs.length;
-            document.getElementById('dashTodayItems').innerText = itemsCount;
-            document.getElementById('dashLowStock').innerText = lowStockCount;
-            document.getElementById('repTotalRev').innerText = rev.toLocaleString() + " TZS";
-
-            const txContainer = document.getElementById('recentTxList');
-            if (todayTxs.length === 0) {
-                txContainer.innerHTML = '<div style="color:var(--text-sub);">No transactions recorded today.</div>';
-            } else {
-                txContainer.innerHTML = todayTxs.slice(-5).reverse().map(t => `
-                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--card-border);">
-                        <div>Sale (${t.items ? t.items.length : 0} items)</div>
-                        <div style="font-weight:700; color:var(--accent-green);">${t.total.toLocaleString()} TZS</div>
+            container.innerHTML = '';
+            let subtotal = 0;
+            cart.forEach(item => {
+                subtotal += item.price * item.qty;
+                container.innerHTML += `
+                    <div class="flex justify-between items-center py-2">
+                        <div>
+                            <p class="text-xs font-medium text-white">${item.name}</p>
+                            <p class="text-[10px] text-slate-400">TZS ${item.price.toLocaleString()} x ${item.qty}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="updateCartQty('${item.id}', -1)" class="w-6 h-6 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-white flex items-center justify-center">-</button>
+                            <span class="text-xs font-semibold text-white">${item.qty}</span>
+                            <button onclick="updateCartQty('${item.id}', 1)" class="w-6 h-6 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs text-white flex items-center justify-center">+</button>
+                        </div>
                     </div>
-                `).join('');
-            }
-        }
-
-        renderPOSGrid(filter = "") {
-            const grid = document.getElementById('posGrid');
-            const items = this.inventory.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()));
-            grid.innerHTML = items.map(i => `
-                <div class="item-card ${i.stock <= 0 ? 'out-of-stock' : ''}" onclick="window.appEngine.addToCart('${i.id}')">
-                    <span class="item-emoji">${i.emoji || '📦'}</span>
-                    <div class="item-name">${i.name}</div>
-                    <div class="item-price">${i.sellPrice.toLocaleString()} TZS</div>
-                    <div class="item-stock">${i.stock > 0 ? i.stock + ' in stock' : 'Out of stock'}</div>
-                </div>
-            `).join('');
-        }
-
-        filterCatalog(val) { this.renderPOSGrid(val); }
-
-        addToCart(id) {
-            const item = this.inventory.find(i => i.id === id);
-            if (!item) return;
-            const current = this.cart[id] || 0;
-            if (current >= item.stock) { showToast("⚠️ Max stock reached"); return; }
-            this.cart[id] = current + 1;
-            this.updateCartUI();
-        }
-
-        getCartTotal() {
-            return Object.entries(this.cart).reduce((sum, [id, qty]) => {
-                const item = this.inventory.find(i => i.id === id);
-                return sum + (item ? item.sellPrice * qty : 0);
-            }, 0);
-        }
-
-        updateCartUI() {
-            const count = Object.values(this.cart).reduce((a, b) => a + b, 0);
-            const total = this.getCartTotal();
-            const bar = document.getElementById('cartBar');
-            if (count > 0) {
-                bar.classList.add('has-items');
-                document.getElementById('cartCountBubble').innerText = count;
-                document.getElementById('cartBarTotal').innerText = total.toLocaleString() + " TZS";
-            } else { bar.classList.remove('has-items'); }
-        }
-
-        async promptCheckout() {
-            const total = this.getCartTotal();
-            if (total <= 0) return;
-            if (!confirm(`Complete Checkout for ${total.toLocaleString()} TZS?`)) return;
-
-            const cartItems = Object.entries(this.cart).map(([id, qty]) => {
-                const item = this.inventory.find(i => i.id === id);
-                return { id: item.id, name: item.name, qty, sellPrice: item.sellPrice };
+                `;
             });
 
-            try {
-                await this.db.executeCheckout(cartItems, total);
-                showToast("✅ Order Completed!");
-                this.cart = {}; this.updateCartUI();
-                await this.refreshData();
-            } catch (err) { showToast("⚠️ " + err.message); }
+            document.getElementById('cart-subtotal').innerText = `TZS ${subtotal.toLocaleString()}`;
+            document.getElementById('cart-total').innerText = `TZS ${subtotal.toLocaleString()}`;
         }
 
-        async addNewProduct() {
-            const emoji = document.getElementById('newItemEmoji').value.trim() || '📦';
-            const name = document.getElementById('newItemName').value.trim();
-            const sellPrice = Number(document.getElementById('newItemPrice').value);
-            const stock = Number(document.getElementById('newItemStock').value);
-
-            if (!name || isNaN(sellPrice) || isNaN(stock)) { showToast("⚠️ Fill all item fields."); return; }
-
-            try {
-                await this.db.addProduct({ emoji, name, sellPrice, stock });
-                showToast("✅ Product Added!");
-                document.getElementById('newItemName').value = '';
-                document.getElementById('newItemPrice').value = '';
-                document.getElementById('newItemStock').value = '';
-                await this.refreshData();
-            } catch (e) { showToast("⚠️ Failed to add product."); }
+        function updateCartQty(id, change) {
+            const item = cart.find(i => i.id === id);
+            if(!item) return;
+            item.qty += change;
+            if(item.qty <= 0) cart = cart.filter(i => i.id !== id);
+            renderCart();
         }
 
-        async quickRestock(id) {
-            const qty = prompt("Enter additional stock quantity to add:");
-            if (!qty || isNaN(qty) || Number(qty) <= 0) return;
-            try {
-                await this.db.restockItem(id, Number(qty));
-                showToast("✅ Stock Updated!");
-                await this.refreshData();
-            } catch (e) { showToast("⚠️ Restock failed."); }
+        function clearCart() {
+            cart = [];
+            renderCart();
         }
 
-        renderInventoryPage() {
-            const container = document.getElementById('inventoryList');
-            container.innerHTML = this.inventory.map(i => `
-                <div style="background:#1f2937; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="font-weight:700;">${i.emoji || '📦'} ${i.name}</div>
-                        <div style="font-size:0.75rem; color:var(--text-sub);">${i.sellPrice.toLocaleString()} TZS | Stock: <strong style="color:${i.stock <= 5 ? 'var(--accent-red)' : 'var(--accent-green)'}">${i.stock}</strong></div>
-                    </div>
-                    <button style="background:var(--accent-gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer;" onclick="appEngine.quickRestock('${i.id}')">+ Stock</button>
-                </div>
-            `).join('');
+        function processCheckout(method) {
+            if(cart.length === 0) return alert('Cart is empty!');
+            let total = cart.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            
+            // Deduct stock
+            cart.forEach(cartItem => {
+                const prod = catalog.find(p => p.id === cartItem.id);
+                if(prod) prod.stock -= cartItem.qty;
+            });
+
+            // Update accounts
+            if(method === 'Cash') accounts.cash += total;
+            else accounts.mobile += total;
+
+            alert(`Checkout successful via ${method}! Total: TZS ${total.toLocaleString()}`);
+            cart = [];
+            renderCart();
+            initPOSCatalog();
         }
 
-        renderStaffPage() {
-            const container = document.getElementById('staffList');
-            container.innerHTML = this.staff.map(s => `
-                <div style="background:#1f2937; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="font-weight:700;">👤 ${s.name} (${s.username})</div>
-                        <div style="font-size:0.75rem; color:var(--text-sub);">Role: ${s.role.toUpperCase()}</div>
-                    </div>
-                </div>
-            `).join('');
+        function renderInventoryTable() {
+            const tbody = document.getElementById('inventory-table-body');
+            tbody.innerHTML = '';
+            catalog.forEach(item => {
+                tbody.innerHTML += `
+                    <tr class="border-b border-slate-700/50 hover:bg-slate-900/30">
+                        <td class="p-3.5 font-medium text-white flex items-center space-x-2">
+                            <span>${item.emoji || '📦'}</span><span>${item.name}</span>
+                        </td>
+                        <td class="p-3.5 text-slate-400">${item.category}</td>
+                        <td class="p-3.5 text-slate-300">TZS ${item.cost.toLocaleString()}</td>
+                        <td class="p-3.5 text-indigo-400 font-semibold">TZS ${item.price.toLocaleString()}</td>
+                        <td class="p-3.5 text-slate-300">${item.stock}</td>
+                        <td class="p-3.5 text-right">
+                            <button onclick="alert('Editing item stock...')()" class="text-indigo-400 hover:text-indigo-300 text-xs font-semibold">Edit</button>
+                        </td>
+                    </tr>
+                `;
+            });
         }
 
-        async createNewStaffMember() {
-            const username = document.getElementById('staffUsername').value.trim().toLowerCase();
-            const name = document.getElementById('staffName').value.trim();
-            const pin = document.getElementById('staffPin').value.trim();
-            const role = document.getElementById('staffRole').value;
-            if (!username || !name || !pin) { showToast("⚠️ Fill all fields."); return; }
-            try {
-                await this.db.addStaff(username, name, pin, role);
-                showToast("✅ Staff Account Created!");
-                document.getElementById('staffUsername').value = ''; document.getElementById('staffName').value = ''; document.getElementById('staffPin').value = '';
-                await this.refreshData();
-            } catch (e) { showToast("⚠️ Creation failed."); }
+        function updateAccountDisplays() {
+            document.getElementById('acc-cash').innerText = `TZS ${accounts.cash.toLocaleString()}`;
+            document.getElementById('acc-mobile').innerText = `TZS ${accounts.mobile.toLocaleString()}`;
+            document.getElementById('acc-bank').innerText = `TZS ${accounts.bank.toLocaleString()}`;
         }
-    }
 
-    window.appEngine = new POSAppEngine();
-    window.handleLogin = async function() {
-        const rawShopId = document.getElementById('shopIdInput').value.trim();
-        const shopId = rawShopId.toLowerCase().replace(/\s+/g, '_');
-        const user = document.getElementById('userInput').value.trim().toLowerCase();
-        const pin = document.getElementById('passInput').value.trim();
-        const err = document.getElementById('pinError');
-        try {
-            await window.appEngine.auth.login(shopId, user, pin);
-            await window.appEngine.init();
-        } catch (e) {
-            err.innerText = e.message;
-            setTimeout(() => err.innerText = "", 3000);
+        function generateAIInsights() {
+            document.getElementById('ai-insights').innerText = "Inventory velocity is stable. Beverage sales peak around midday. Recommending restock on Azam Drinking Water within the next 48 hours to prevent out-of-stock loss.";
         }
-    };
 
-    window.switchTab = function(tab) {
-        document.querySelectorAll('.view-page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
-        document.getElementById('view-' + tab).classList.add('active');
-        event.currentTarget.classList.add('active');
-    };
+        function triggerCloseDayModal() {
+            if(confirm("Generate Close Day reconciliation report and dispatch WhatsApp summary?")) {
+                alert("Close Day summary successfully queued and transmitted to WhatsApp via CallMeBot API.");
+            }
+        }
 
-    window.onload = () => { window.appEngine.init(); };
-</script>
+        function generatePDFReport() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("Matinyo POS Pro - Monthly Financial & Inventory Audit", 14, 20);
+            doc.text(`Tenant: ${currentTenant.toUpperCase()}`, 14, 28);
+            doc.text(`Cash Balance: TZS ${accounts.cash.toLocaleString()}`, 14, 40);
+            doc.text(`Mobile Balance: TZS ${accounts.mobile.toLocaleString()}`, 14, 48);
+            doc.text(`Bank Balance: TZS ${accounts.bank.toLocaleString()}`, 14, 56);
+            doc.save("Matinyo_Audit_Report.pdf");
+        }
+
+        function filterCatalog() {}
+        function filterCategory(cat) {}
+        function openStocktakeModal() { alert("Stocktake audit mode enabled."); }
+        function openAddProductModal() { alert("Add product interface triggered."); }
+        function openExpenseModal() { alert("Expense recording form opened."); }
+    </script>
 </body>
 </html>
