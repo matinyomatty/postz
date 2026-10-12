@@ -4,66 +4,77 @@
     <meta charset="UTF-8">
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Matinyo POS — SaaS Enterprise</title>
+    <title>Matinyo POS — Enterprise SaaS</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Syne:wght@700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --blue: #004085;
-            --dark: #001a33;
-            --light: #f0f4f8;
-            --green: #28a745;
-            --gray: #6c757d;
-            --red: #dc3545;
-            --gold: #d4af37;
-            --pos-green: #00875a;
-            --pos-green-light: #e6f6f0;
+            --bg-dark: #090d16;
+            --card-bg: #111827;
+            --card-border: #1f2937;
+            --accent-gold: #fbbf24;
+            --accent-green: #10b981;
+            --accent-blue: #3b82f6;
+            --accent-red: #ef4444;
+            --text-main: #f9fafb;
+            --text-sub: #9ca3af;
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        body { background: var(--dark); font-family: 'DM Sans', sans-serif; color: var(--dark); min-height: 100vh; }
-        body.unlocked { background: var(--light); }
+        body { background: var(--bg-dark); font-family: 'Plus Jakarta Sans', sans-serif; color: var(--text-main); min-height: 100vh; }
 
         /* Login & Owner Portal */
-        #loginPage, #ownerPortal { position: fixed; inset: 0; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; overflow-y: auto; }
-        .login-card { background: white; width: 100%; max-width: 420px; padding: 36px 24px; border-radius: 24px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
-        .login-logo { font-family: 'Syne', sans-serif; font-size: 2rem; letter-spacing: 6px; color: var(--dark); margin-bottom: 6px; }
-        .login-sub { color: var(--gray); font-size: 0.75rem; margin-bottom: 24px; }
-        .input-field { width: 100%; padding: 14px; border: 2px solid #dde3ea; border-radius: 12px; font-size: 1rem; background: #f8fafc; outline: none; margin-bottom: 12px; font-family: 'DM Sans', sans-serif; }
-        .input-field:focus { border-color: var(--blue); background: white; }
-        .btn-primary { background: var(--blue); color: white; width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+        #loginPage, #ownerPortal { position: fixed; inset: 0; background: var(--bg-dark); display: flex; align-items: center; justify-content: center; z-index: 1000; padding: 20px; overflow-y: auto; }
+        .login-card { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 400px; padding: 32px 24px; border-radius: 20px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .login-logo { font-family: 'Syne', sans-serif; font-size: 2.2rem; letter-spacing: 4px; color: var(--text-main); font-weight: 800; }
+        .login-sub { color: var(--text-sub); font-size: 0.8rem; margin-bottom: 24px; margin-top: 4px; }
+        
+        .input-field { width: 100%; padding: 13px 16px; border: 1px solid var(--card-border); border-radius: 12px; font-size: 0.95rem; background: #1f2937; color: white; outline: none; margin-bottom: 12px; font-family: inherit; }
+        .input-field:focus { border-color: var(--accent-gold); }
+        .btn-primary { background: var(--accent-gold); color: #000; width: 100%; padding: 14px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; transition: all 0.2s; }
         .btn-primary:active { transform: scale(0.98); }
-        .btn-sec { background: #f0f3f6; color: var(--dark); width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
-        #pinError, #ownerError { color: var(--red); font-size: 0.78rem; min-height: 18px; margin-top: 8px; }
+        .btn-sec { background: transparent; color: var(--text-sub); width: 100%; padding: 10px; border: none; font-size: 0.8rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
 
-        /* Main App */
-        #mainApp { display: none; }
-        .tab-nav { position: sticky; top: 0; z-index: 600; background: var(--dark); display: flex; border-bottom: 3px solid var(--gold); }
-        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: rgba(255,255,255,0.45); font-weight: 700; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-        .tab-btn.active { color: var(--gold); background: rgba(212,175,55,0.07); }
-        .tab-page { display: none; padding-bottom: 100px; }
-        .tab-page.active { display: block; }
+        /* Navigation */
+        #mainApp { display: none; padding-bottom: 90px; }
+        .top-navbar { background: var(--card-bg); border-bottom: 1px solid var(--card-border); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 500; }
+        .app-brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; color: var(--accent-gold); }
+        .shop-badge { background: #1f2937; padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; color: var(--text-sub); border: 1px solid var(--card-border); }
 
-        /* POS Header & Grid */
-        .pos-header { background: var(--dark); color: white; padding: 14px 16px; border-bottom: 3px solid var(--pos-green); position: sticky; top: 45px; z-index: 500; }
-        .pos-search { width: 100%; padding: 11px 14px; border: 1.5px solid rgba(255,255,255,0.15); border-radius: 12px; background: rgba(255,255,255,0.07); color: white; font-size: 0.9rem; outline: none; }
-        .pos-items-container { padding: 16px; max-width: 480px; margin: auto; }
-        .pos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .item-card { background: white; border-radius: 16px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; position: relative; border: 2px solid transparent; }
-        .item-card:active { transform: scale(0.96); }
-        .item-card.out-of-stock { opacity: 0.5; cursor: not-allowed; }
-        .item-card-emoji { font-size: 1.6rem; margin-bottom: 6px; display: block; }
-        .item-card-name { font-size: 0.8rem; font-weight: 700; color: var(--dark); margin-bottom: 2px; }
-        .item-card-price { font-size: 0.75rem; color: var(--pos-green); font-weight: 700; }
-        .item-card-stock { font-size: 0.62rem; color: var(--gray); margin-top: 3px; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: var(--card-bg); border-top: 1px solid var(--card-border); display: flex; z-index: 600; padding: 6px 0; }
+        .nav-item { flex: 1; border: none; background: transparent; color: var(--text-sub); font-size: 0.65rem; font-weight: 700; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 8px 0; }
+        .nav-item.active { color: var(--accent-gold); }
+        .nav-icon { font-size: 1.2rem; }
 
-        /* Cart Bar */
-        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 800; display: none; justify-content: center; padding: 10px 16px 20px; background: linear-gradient(to top, rgba(240,244,248,1) 70%, transparent); }
+        /* Layout Views */
+        .view-page { display: none; padding: 16px; max-width: 800px; margin: auto; }
+        .view-page.active { display: block; }
+
+        /* Dashboard Metric Cards */
+        .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 20px; }
+        .metric-card { background: var(--card-bg); border: 1px solid var(--card-border); padding: 16px; border-radius: 16px; }
+        .metric-title { font-size: 0.72rem; color: var(--text-sub); font-weight: 600; text-transform: uppercase; margin-bottom: 6px; }
+        .metric-value { font-size: 1.3rem; font-weight: 800; color: var(--text-main); }
+
+        /* Section Cards */
+        .section-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; margin-bottom: 16px; }
+        .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* POS Grid & Cart */
+        .pos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; }
+        .item-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 14px; padding: 12px; cursor: pointer; transition: all 0.15s; }
+        .item-card:active { transform: scale(0.96); border-color: var(--accent-gold); }
+        .item-card.out-of-stock { opacity: 0.4; pointer-events: none; }
+        .item-emoji { font-size: 1.8rem; margin-bottom: 6px; display: block; }
+        .item-name { font-size: 0.85rem; font-weight: 700; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-price { font-size: 0.8rem; color: var(--accent-green); font-weight: 800; }
+        .item-stock { font-size: 0.68rem; color: var(--text-sub); margin-top: 4px; }
+
+        /* Cart Floating Bar */
+        .cart-bar { position: fixed; bottom: 65px; left: 16px; right: 16px; max-width: 768px; margin: auto; background: var(--accent-gold); color: #000; border-radius: 16px; padding: 14px 18px; display: none; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 10px 25px -5px rgba(251, 191, 36, 0.4); font-weight: 800; z-index: 550; }
         .cart-bar.has-items { display: flex; }
-        .cart-bar-inner { width: 100%; max-width: 448px; background: var(--dark); color: white; border-radius: 20px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 8px 32px rgba(0,26,51,0.35); }
-        .cart-count-bubble { background: var(--gold); color: var(--dark); width: 32px; height: 32px; border-radius: 50%; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
-        .cart-bar-total { font-size: 1rem; font-weight: 800; color: var(--gold); }
 
-        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--dark); color: white; padding: 12px 24px; border-radius: 12px; font-size: 0.82rem; font-weight: 600; z-index: 9998; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        /* Toast */
+        .toast { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: var(--card-bg); color: white; border: 1px solid var(--accent-gold); padding: 10px 20px; border-radius: 30px; font-size: 0.82rem; font-weight: 700; z-index: 9999; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
         .toast.show { opacity: 1; }
     </style>
 </head>
@@ -71,113 +82,160 @@
 
 <div id="toast" class="toast"></div>
 
-<!-- LOGIN PAGE (Staff / Cashier Terminal) -->
+<!-- STAFF TERMINAL LOGIN -->
 <div id="loginPage">
     <div class="login-card">
         <div class="login-logo">MATINYO</div>
         <div class="login-sub">SaaS POS Enterprise Terminal</div>
-        <input type="text" id="shopIdInput" class="input-field" placeholder="Tenant Shop ID (e.g. maduka_freshi)">
-        <input type="text" id="userInput" class="input-field" placeholder="Username">
+        <input type="text" id="shopIdInput" class="input-field" placeholder="Shop ID (e.g. test_01)">
+        <input type="text" id="userInput" class="input-field" placeholder="Username (e.g. mat)">
         <input type="password" id="passInput" class="input-field" placeholder="PIN" inputmode="numeric">
         <button class="btn-primary" onclick="handleLogin()">Unlock Terminal</button>
-        <button class="btn-sec" onclick="toggleOwnerPortal(true)" style="background:none; color:var(--blue); font-size:0.75rem;">🔒 Software Owner Email Login</button>
-        <div id="pinError"></div>
+        <button class="btn-sec" onclick="toggleOwnerPortal(true)">🔒 Software Owner Login</button>
+        <div id="pinError" style="color:var(--accent-red); font-size:0.75rem; margin-top:8px;"></div>
     </div>
 </div>
 
-<!-- SOFTWARE OWNER EMAIL LOGIN & PROVISIONING PORTAL -->
+<!-- OWNER ADMIN PORTAL -->
 <div id="ownerPortal" style="display:none;">
     <div class="login-card">
         <div class="login-logo" style="font-size:1.5rem;">OWNER</div>
-        <div class="login-sub">Software Administrator Portal</div>
+        <div class="login-sub">Platform Provisioning Portal</div>
         
-        <!-- Owner Email Login Form -->
         <div id="ownerLoginForm">
-            <input type="email" id="ownerEmail" class="input-field" placeholder="Owner Email Address">
+            <input type="email" id="ownerEmail" class="input-field" placeholder="Owner Email">
             <input type="password" id="ownerPassword" class="input-field" placeholder="Password">
             <button class="btn-primary" onclick="handleOwnerEmailLogin()">Sign In as Owner</button>
             <button class="btn-sec" onclick="toggleOwnerPortal(false)">← Back to Terminal Login</button>
         </div>
 
-        <!-- Shop Provisioning Form (Revealed after Owner authenticates) -->
-        <div id="ownerProvisionForm" style="display:none; margin-top:10px;">
-            <div style="font-size:0.8rem; font-weight:700; color:var(--pos-green); margin-bottom:12px;">✅ Owner Authenticated Successfully</div>
-            <input type="text" id="newShopId" class="input-field" placeholder="New Shop ID (e.g. duka_la_leo)">
+        <div id="ownerProvisionForm" style="display:none;">
+            <div style="font-size:0.8rem; font-weight:700; color:var(--accent-green); margin-bottom:12px;">✅ Authenticated Owner</div>
+            <input type="text" id="newShopId" class="input-field" placeholder="New Shop ID (e.g. duka_01)">
             <input type="text" id="newShopName" class="input-field" placeholder="Shop Name (e.g. Duka la Leo)">
             <input type="text" id="newAdminUser" class="input-field" placeholder="Initial Admin Username">
             <input type="password" id="newAdminPin" class="input-field" placeholder="Initial Admin PIN" inputmode="numeric">
-            <button class="btn-primary" style="background:var(--pos-green);" onclick="provisionNewShop()">⚡ Provision New Shop</button>
+            <button class="btn-primary" style="background:var(--accent-green); color:white;" onclick="provisionNewShop()">⚡ Provision Shop</button>
             <button class="btn-sec" onclick="ownerSignOut()">Sign Out Owner</button>
         </div>
-        <div id="ownerError"></div>
+        <div id="ownerError" style="color:var(--accent-red); font-size:0.75rem; margin-top:8px;"></div>
     </div>
 </div>
 
-<!-- MAIN APP INTERFACE -->
+<!-- MAIN APPLICATION -->
 <div id="mainApp">
-    <div class="tab-nav">
-        <button class="tab-btn active" onclick="switchTab('pos')">🛒 POS</button>
-        <button class="tab-btn" onclick="switchTab('inventory')">📦 Stock</button>
-        <button class="tab-btn" id="navUsersTab" onclick="switchTab('users')" style="display:none;">👥 Staff</button>
-        <button class="tab-btn" onclick="appEngine.auth.logout()">⏻ Logout</button>
+    <div class="top-navbar">
+        <div class="app-brand">MATINYO</div>
+        <div class="shop-badge" id="activeShopDisplay">Shop: ---</div>
     </div>
 
-    <!-- TAB: POS -->
-    <div class="tab-page active" id="page-pos">
-        <div class="pos-header">
-            <input type="text" class="pos-search" placeholder="Search product catalog..." id="posSearch" oninput="appEngine.filterCatalog(this.value)">
-        </div>
-        <div class="pos-items-container">
-            <div class="pos-grid" id="posGrid"></div>
-        </div>
-        <div class="cart-bar" id="cartBar" onclick="appEngine.promptCheckout()">
-            <div class="cart-bar-inner">
-                <div style="display:flex; align-items:center; gap:12px;">
-                    <div class="cart-count-bubble" id="cartCountBubble">0</div>
-                    <div>
-                        <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase;">Complete Order</div>
-                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.6);">Tap to checkout</div>
-                    </div>
-                </div>
-                <div class="cart-bar-total" id="cartBarTotal">0 TZS</div>
+    <!-- TAB 1: DASHBOARD -->
+    <div class="view-page active" id="view-dashboard">
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-title">Today's Sales</div>
+                <div class="metric-value" id="dashTodaySales">0 TZS</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Transactions</div>
+                <div class="metric-value" id="dashTodayOrders">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Items Sold</div>
+                <div class="metric-value" id="dashTodayItems">0</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-title">Low Stock Alerts</div>
+                <div class="metric-value" id="dashLowStock" style="color:var(--accent-red);">0</div>
             </div>
         </div>
-    </div>
 
-    <!-- TAB: INVENTORY -->
-    <div class="tab-page" id="page-inventory">
-        <div style="padding: 16px; max-width: 480px; margin: auto;">
-            <h2 style="font-family:'Syne', sans-serif; margin-bottom: 14px; font-size: 1.2rem;">Stock Management</h2>
-            <div id="inventoryListContainer"></div>
+        <div class="section-card">
+            <div class="section-title">Recent Transactions</div>
+            <div id="recentTxList" style="font-size:0.85rem; color:var(--text-sub);">No transactions recorded today.</div>
         </div>
     </div>
 
-    <!-- TAB: USER / STAFF MANAGEMENT (Admin Only) -->
-    <div class="tab-page" id="page-users">
-        <div style="padding: 16px; max-width: 480px; margin: auto;">
-            <h2 style="font-family:'Syne', sans-serif; margin-bottom: 14px; font-size: 1.2rem;">Staff & User Management</h2>
-            <div style="background:white; padding:16px; border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px;">
-                <h3 style="font-size:0.9rem; margin-bottom:10px; color:var(--dark);">Add New Cashier / Admin</h3>
-                <input type="text" id="staffUsername" class="input-field" placeholder="Username (e.g. cashier2)">
-                <input type="text" id="staffName" class="input-field" placeholder="Full Name (e.g. Juma Ali)">
-                <input type="password" id="staffPin" class="input-field" placeholder="4-6 Digit PIN" inputmode="numeric">
-                <select id="staffRole" class="input-field">
-                    <option value="shop">Cashier / Shop Staff</option>
-                    <option value="admin">Shop Admin / Owner</option>
-                </select>
-                <button class="btn-primary" style="background:var(--pos-green);" onclick="appEngine.createNewStaffMember()">➕ Create User Account</button>
+    <!-- TAB 2: POINT OF SALE -->
+    <div class="view-page" id="view-pos">
+        <input type="text" class="input-field" placeholder="🔍 Search products..." id="posSearch" oninput="appEngine.filterCatalog(this.value)">
+        <div class="pos-grid" id="posGrid"></div>
+    </div>
+
+    <!-- TAB 3: INVENTORY MANAGEMENT -->
+    <div class="view-page" id="view-inventory">
+        <div class="section-card">
+            <div class="section-title">➕ Add New Product</div>
+            <input type="text" id="newItemEmoji" class="input-field" placeholder="Emoji Icon (e.g. 🥤, 🍞, 🧼)">
+            <input type="text" id="newItemName" class="input-field" placeholder="Product Name">
+            <div style="display:flex; gap:10px;">
+                <input type="number" id="newItemPrice" class="input-field" placeholder="Selling Price (TZS)">
+                <input type="number" id="newItemStock" class="input-field" placeholder="Initial Stock Qty">
             </div>
-            <div id="staffListContainer"></div>
+            <button class="btn-primary" onclick="appEngine.addNewProduct()">Save Product to Inventory</button>
         </div>
+
+        <div class="section-card">
+            <div class="section-title">📦 Product Catalog & Restock</div>
+            <div id="inventoryList"></div>
+        </div>
+    </div>
+
+    <!-- TAB 4: REPORTS & EXPORT -->
+    <div class="view-page" id="view-reports">
+        <div class="section-card">
+            <div class="section-title">📊 Daily Sales Breakdown</div>
+            <div style="margin-bottom:12px; font-size:0.9rem;">
+                Total Daily Revenue: <strong id="repTotalRev" style="color:var(--accent-green);">0 TZS</strong>
+            </div>
+            <button class="btn-primary" style="background:var(--accent-blue); color:white;" onclick="window.print()">🖨️ Print / Export PDF Report</button>
+        </div>
+    </div>
+
+    <!-- TAB 5: STAFF MANAGEMENT -->
+    <div class="view-page" id="view-staff">
+        <div class="section-card">
+            <div class="section-title">👤 Add Staff Account</div>
+            <input type="text" id="staffUsername" class="input-field" placeholder="Username (e.g. cashier1)">
+            <input type="text" id="staffName" class="input-field" placeholder="Full Name">
+            <input type="password" id="staffPin" class="input-field" placeholder="PIN" inputmode="numeric">
+            <select id="staffRole" class="input-field">
+                <option value="shop">Cashier</option>
+                <option value="admin">Shop Manager / Admin</option>
+            </select>
+            <button class="btn-primary" style="background:var(--accent-green); color:white;" onclick="appEngine.createNewStaffMember()">Create Account</button>
+        </div>
+        <div class="section-card">
+            <div class="section-title">Staff Members</div>
+            <div id="staffList"></div>
+        </div>
+    </div>
+
+    <!-- CART FLOATING CHECKOUT BAR -->
+    <div class="cart-bar" id="cartBar" onclick="appEngine.promptCheckout()">
+        <div style="display:flex; align-items:center; gap:10px;">
+            <span id="cartCountBubble" style="background:#000; color:#fff; padding:4px 10px; border-radius:12px; font-size:0.8rem;">0</span>
+            <span>Checkout Order</span>
+        </div>
+        <div id="cartBarTotal">0 TZS</div>
+    </div>
+
+    <!-- NAVIGATION BAR -->
+    <div class="bottom-nav">
+        <button class="nav-item active" onclick="switchTab('dashboard')"><span class="nav-icon">📊</span>Dashboard</button>
+        <button class="nav-item" onclick="switchTab('pos')"><span class="nav-icon">🛒</span>POS</button>
+        <button class="nav-item" onclick="switchTab('inventory')"><span class="nav-icon">📦</span>Stock</button>
+        <button class="nav-item" onclick="switchTab('reports')"><span class="nav-icon">📈</span>Reports</button>
+        <button class="nav-item" id="navUsersTab" style="display:none;" onclick="switchTab('staff')"><span class="nav-icon">👥</span>Staff</button>
+        <button class="nav-item" onclick="appEngine.auth.logout()"><span class="nav-icon">⏻</span>Exit</button>
     </div>
 </div>
 
-<!-- FIREBASE & APPLICATION ENGINE SCRIPT -->
 <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
     import { 
-        getFirestore, collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp, runTransaction, enableIndexedDbPersistence 
+        getFirestore, collection, doc, getDoc, getDocs, setDoc, updateDoc, query, where, serverTimestamp, runTransaction, enableIndexedDbPersistence 
     } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -202,7 +260,7 @@
         setTimeout(() => t.classList.remove('show'), 2500);
     }
 
-    // --- SOFTWARE OWNER EMAIL AUTH & PROVISIONING ---
+    // --- OWNER PORTAL ENGINE ---
     window.toggleOwnerPortal = function(show) {
         document.getElementById('loginPage').style.display = show ? 'none' : 'flex';
         document.getElementById('ownerPortal').style.display = show ? 'flex' : 'none';
@@ -212,15 +270,12 @@
         const email = document.getElementById('ownerEmail').value.trim();
         const password = document.getElementById('ownerPassword').value.trim();
         const err = document.getElementById('ownerError');
-
         try {
             await signInWithEmailAndPassword(auth, email, password);
             document.getElementById('ownerLoginForm').style.display = 'none';
             document.getElementById('ownerProvisionForm').style.display = 'block';
             err.innerText = '';
-        } catch (e) {
-            err.innerText = "Owner Login Failed: " + e.message;
-        }
+        } catch (e) { err.innerText = e.message; }
     }
 
     window.ownerSignOut = async function() {
@@ -236,125 +291,88 @@
         const pin = document.getElementById('newAdminPin').value.trim();
         const err = document.getElementById('ownerError');
 
-        if (!shopId || !shopName || !username || !pin) {
-            err.innerText = "All fields are required.";
-            return;
-        }
+        if (!shopId || !shopName || !username || !pin) { err.innerText = "Fill all fields."; return; }
 
         try {
-            await setDoc(doc(db, "shops", shopId), {
-                name: shopName,
-                status: "active",
-                createdAt: serverTimestamp()
-            });
-
-            const userRef = doc(collection(db, "shops", shopId, "users"));
-            await setDoc(userRef, {
-                username: username,
-                name: shopName + " Admin",
-                pin: pin,
-                role: "admin",
-                createdAt: serverTimestamp()
-            });
-
-            const itemRef = doc(collection(db, "shops", shopId, "inventory"));
-            await setDoc(itemRef, {
-                name: "Bottled Water 500ml",
-                category: "Drinks",
-                emoji: "💧",
-                sellPrice: 1000,
-                stock: 50,
-                reorderLevel: 5
-            });
-
-            showToast("✅ Shop successfully provisioned on Firestore!");
-            document.getElementById('newShopId').value = '';
-            document.getElementById('newShopName').value = '';
-            document.getElementById('newAdminUser').value = '';
-            document.getElementById('newAdminPin').value = '';
-        } catch (e) {
-            err.innerText = "Provisioning failed: " + e.message;
-        }
+            await setDoc(doc(db, "shops", shopId), { name: shopName, status: "active", createdAt: serverTimestamp() });
+            await setDoc(doc(collection(db, "shops", shopId, "users")), { username, name: shopName + " Admin", pin, role: "admin" });
+            await setDoc(doc(collection(db, "shops", shopId, "inventory")), { name: "Drinking Water 500ml", emoji: "💧", sellPrice: 1000, stock: 50 });
+            showToast("✅ Shop provisioned successfully!");
+            document.getElementById('newShopId').value = ''; document.getElementById('newShopName').value = '';
+        } catch (e) { err.innerText = e.message; }
     }
 
-    // --- 1. MULTI-TENANT DATABASE ENGINE ---
+    // --- TENANT DB & POS APP ENGINE ---
     class TenantDatabase {
         constructor(shopId) { this.shopId = shopId; }
         async verifyTenant() {
-            const shopSnap = await getDoc(doc(db, "shops", this.shopId));
-            if (!shopSnap.exists()) throw new Error("Tenant shop ID not found.");
-            if (shopSnap.data().status !== "active") throw new Error("Subscription inactive.");
-            return shopSnap.data();
+            const snap = await getDoc(doc(db, "shops", this.shopId));
+            if (!snap.exists()) throw new Error("Shop not found.");
+            return snap.data();
         }
         async fetchInventory() {
             const snap = await getDocs(collection(db, "shops", this.shopId, "inventory"));
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        async fetchTransactions() {
+            const snap = await getDocs(collection(db, "shops", this.shopId, "transactions"));
             return snap.docs.map(d => ({ id: d.id, ...d.data() }));
         }
         async fetchStaff() {
             const snap = await getDocs(collection(db, "shops", this.shopId, "users"));
             return snap.docs.map(d => ({ id: d.id, ...d.data() }));
         }
+        async addProduct(item) {
+            await setDoc(doc(collection(db, "shops", this.shopId, "inventory")), item);
+        }
+        async restockItem(id, addQty) {
+            const ref = doc(db, "shops", this.shopId, "inventory", id);
+            const snap = await getDoc(ref);
+            if (snap.exists()) {
+                const current = Number(snap.data().stock) || 0;
+                await updateDoc(ref, { stock: current + Number(addQty) });
+            }
+        }
         async addStaff(username, name, pin, role) {
-            const ref = doc(collection(db, "shops", this.shopId, "users"));
-            await setDoc(ref, { username, name, pin, role, createdAt: serverTimestamp() });
+            await setDoc(doc(collection(db, "shops", this.shopId, "users")), { username, name, pin, role });
         }
         async executeCheckout(cartItems, total) {
-            return await runTransaction(db, async (transaction) => {
+            return await runTransaction(db, async (tx) => {
                 const saleRef = doc(collection(db, "shops", this.shopId, "transactions"));
                 for (const item of cartItems) {
                     const itemRef = doc(db, "shops", this.shopId, "inventory", item.id);
-                    const itemDoc = await transaction.get(itemRef);
-                    if (!itemDoc.exists()) throw new Error(`Item ${item.name} missing.`);
+                    const itemDoc = await tx.get(itemRef);
+                    if (!itemDoc.exists()) throw new Error(`Item missing.`);
                     const stock = Number(itemDoc.data().stock) || 0;
-                    if (stock < item.qty) throw new Error(`Insufficient stock for ${item.name}. Available: ${stock}`);
-                    transaction.update(itemRef, { stock: stock - item.qty });
+                    if (stock < item.qty) throw new Error(`Insufficient stock for ${item.name}`);
+                    tx.update(itemRef, { stock: stock - item.qty });
                 }
-                transaction.set(saleRef, {
-                    items: cartItems,
-                    total: Number(total),
-                    timestamp: serverTimestamp(),
-                    dateStr: new Date().toISOString().split('T')[0]
-                });
+                tx.set(saleRef, { items: cartItems, total: Number(total), timestamp: serverTimestamp(), dateStr: new Date().toISOString().split('T')[0] });
             });
         }
     }
 
-    // --- 2. SECURE AUTHENTICATION SERVICE ---
     class TenantAuth {
         async login(shopId, username, pin) {
-            const usersRef = collection(db, "shops", shopId, "users");
-            const q = query(usersRef, where("username", "==", username.trim().toLowerCase()));
-            const snap = await getDocs(q);
+            const snap = await getDocs(query(collection(db, "shops", shopId, "users"), where("username", "==", username.trim().toLowerCase())));
             if (snap.empty) throw new Error("User not found.");
-            
-            let userData = null;
-            snap.forEach(d => userData = d.data());
-
-            if (String(pin).replace(/\D/g, "") !== String(userData.pin).replace(/\D/g, "")) {
-                throw new Error("Incorrect PIN.");
-            }
-
-            const session = { shopId, username: userData.username, name: userData.name, role: userData.role };
+            let user = null; snap.forEach(d => user = d.data());
+            if (String(pin).replace(/\D/g, "") !== String(user.pin).replace(/\D/g, "")) throw new Error("Incorrect PIN.");
+            const session = { shopId, username: user.username, name: user.name, role: user.role };
             localStorage.setItem("matinyo_session", JSON.stringify(session));
             return session;
         }
-        getSession() {
-            const raw = localStorage.getItem("matinyo_session");
-            return raw ? JSON.parse(raw) : null;
-        }
-        logout() {
-            localStorage.removeItem("matinyo_session");
-            window.location.reload();
-        }
+        getSession() { const raw = localStorage.getItem("matinyo_session"); return raw ? JSON.parse(raw) : null; }
+        logout() { localStorage.removeItem("matinyo_session"); window.location.reload(); }
     }
 
-    // --- 3. POS APP ENGINE ---
     class POSAppEngine {
         constructor() {
             this.auth = new TenantAuth();
             this.db = null;
             this.cart = {};
             this.inventory = [];
+            this.transactions = [];
             this.staff = [];
         }
 
@@ -368,47 +386,70 @@
             document.getElementById('loginPage').style.display = 'none';
             document.getElementById('mainApp').style.display = 'block';
 
-            if (session.role === 'admin') {
-                document.getElementById('navUsersTab').style.display = 'flex';
-            }
+            if (session.role === 'admin') document.getElementById('navUsersTab').style.display = 'flex';
 
             this.db = new TenantDatabase(session.shopId);
             try {
-                await this.db.verifyTenant();
-                this.inventory = await this.db.fetchInventory();
-                this.staff = await this.db.fetchStaff();
-                this.renderPOSGrid();
-                this.renderInventoryPage();
-                this.renderStaffPage();
+                const shopData = await this.db.verifyTenant();
+                document.getElementById('activeShopDisplay').innerText = "Shop: " + (shopData.name || session.shopId);
+                await this.refreshData();
             } catch (err) {
                 showToast("⚠️ " + err.message);
                 this.auth.logout();
             }
         }
 
-        async createNewStaffMember() {
-            const username = document.getElementById('staffUsername').value.trim().toLowerCase();
-            const name = document.getElementById('staffName').value.trim();
-            const pin = document.getElementById('staffPin').value.trim();
-            const role = document.getElementById('staffRole').value;
+        async refreshData() {
+            this.inventory = await this.db.fetchInventory();
+            this.transactions = await this.db.fetchTransactions();
+            this.staff = await this.db.fetchStaff();
+            this.renderDashboard();
+            this.renderPOSGrid();
+            this.renderInventoryPage();
+            this.renderStaffPage();
+        }
 
-            if (!username || !name || !pin) {
-                showToast("⚠️ Fill in all staff details.");
-                return;
-            }
+        renderDashboard() {
+            const today = new Date().toISOString().split('T')[0];
+            const todayTxs = this.transactions.filter(t => t.dateStr === today);
+            
+            const rev = todayTxs.reduce((sum, t) => sum + (t.total || 0), 0);
+            const itemsCount = todayTxs.reduce((sum, t) => sum + (t.items ? t.items.reduce((a, b) => a + b.qty, 0) : 0), 0);
+            const lowStockCount = this.inventory.filter(i => (i.stock || 0) <= 5).length;
 
-            try {
-                await this.db.addStaff(username, name, pin, role);
-                showToast("✅ Staff account created!");
-                document.getElementById('staffUsername').value = '';
-                document.getElementById('staffName').value = '';
-                document.getElementById('staffPin').value = '';
-                this.staff = await this.db.fetchStaff();
-                this.renderStaffPage();
-            } catch (e) {
-                showToast("⚠️ Failed to create user.");
+            document.getElementById('dashTodaySales').innerText = rev.toLocaleString() + " TZS";
+            document.getElementById('dashTodayOrders').innerText = todayTxs.length;
+            document.getElementById('dashTodayItems').innerText = itemsCount;
+            document.getElementById('dashLowStock').innerText = lowStockCount;
+            document.getElementById('repTotalRev').innerText = rev.toLocaleString() + " TZS";
+
+            const txContainer = document.getElementById('recentTxList');
+            if (todayTxs.length === 0) {
+                txContainer.innerHTML = '<div style="color:var(--text-sub);">No transactions recorded today.</div>';
+            } else {
+                txContainer.innerHTML = todayTxs.slice(-5).reverse().map(t => `
+                    <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid var(--card-border);">
+                        <div>Sale (${t.items ? t.items.length : 0} items)</div>
+                        <div style="font-weight:700; color:var(--accent-green);">${t.total.toLocaleString()} TZS</div>
+                    </div>
+                `).join('');
             }
         }
+
+        renderPOSGrid(filter = "") {
+            const grid = document.getElementById('posGrid');
+            const items = this.inventory.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()));
+            grid.innerHTML = items.map(i => `
+                <div class="item-card ${i.stock <= 0 ? 'out-of-stock' : ''}" onclick="window.appEngine.addToCart('${i.id}')">
+                    <span class="item-emoji">${i.emoji || '📦'}</span>
+                    <div class="item-name">${i.name}</div>
+                    <div class="item-price">${i.sellPrice.toLocaleString()} TZS</div>
+                    <div class="item-stock">${i.stock > 0 ? i.stock + ' in stock' : 'Out of stock'}</div>
+                </div>
+            `).join('');
+        }
+
+        filterCatalog(val) { this.renderPOSGrid(val); }
 
         addToCart(id) {
             const item = this.inventory.find(i => i.id === id);
@@ -434,15 +475,13 @@
                 bar.classList.add('has-items');
                 document.getElementById('cartCountBubble').innerText = count;
                 document.getElementById('cartBarTotal').innerText = total.toLocaleString() + " TZS";
-            } else {
-                bar.classList.remove('has-items');
-            }
+            } else { bar.classList.remove('has-items'); }
         }
 
         async promptCheckout() {
             const total = this.getCartTotal();
             if (total <= 0) return;
-            if (!confirm(`Confirm checkout for ${total.toLocaleString()} TZS?`)) return;
+            if (!confirm(`Complete Checkout for ${total.toLocaleString()} TZS?`)) return;
 
             const cartItems = Object.entries(this.cart).map(([id, qty]) => {
                 const item = this.inventory.find(i => i.id === id);
@@ -451,64 +490,85 @@
 
             try {
                 await this.db.executeCheckout(cartItems, total);
-                showToast("✅ Sale recorded successfully!");
-                this.cart = {};
-                this.updateCartUI();
-                this.inventory = await this.db.fetchInventory();
-                this.renderPOSGrid();
-                this.renderInventoryPage();
-            } catch (err) {
-                showToast("⚠️ Checkout error: " + err.message);
-            }
+                showToast("✅ Order Completed!");
+                this.cart = {}; this.updateCartUI();
+                await this.refreshData();
+            } catch (err) { showToast("⚠️ " + err.message); }
         }
 
-        renderPOSGrid(filter = "") {
-            const grid = document.getElementById('posGrid');
-            const items = this.inventory.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()));
-            grid.innerHTML = items.map(i => `
-                <div class="item-card ${i.stock <= 0 ? 'out-of-stock' : ''}" onclick="window.appEngine.addToCart('${i.id}')">
-                    <span class="item-card-emoji">${i.emoji || '📦'}</span>
-                    <div class="item-card-name">${i.name}</div>
-                    <div class="item-card-price">${i.sellPrice.toLocaleString()} TZS</div>
-                    <div class="item-card-stock">${i.stock > 0 ? i.stock + ' units left' : 'Out of stock'}</div>
-                </div>
-            `).join('');
+        async addNewProduct() {
+            const emoji = document.getElementById('newItemEmoji').value.trim() || '📦';
+            const name = document.getElementById('newItemName').value.trim();
+            const sellPrice = Number(document.getElementById('newItemPrice').value);
+            const stock = Number(document.getElementById('newItemStock').value);
+
+            if (!name || isNaN(sellPrice) || isNaN(stock)) { showToast("⚠️ Fill all item fields."); return; }
+
+            try {
+                await this.db.addProduct({ emoji, name, sellPrice, stock });
+                showToast("✅ Product Added!");
+                document.getElementById('newItemName').value = '';
+                document.getElementById('newItemPrice').value = '';
+                document.getElementById('newItemStock').value = '';
+                await this.refreshData();
+            } catch (e) { showToast("⚠️ Failed to add product."); }
         }
 
-        filterCatalog(val) { this.renderPOSGrid(val); }
+        async quickRestock(id) {
+            const qty = prompt("Enter additional stock quantity to add:");
+            if (!qty || isNaN(qty) || Number(qty) <= 0) return;
+            try {
+                await this.db.restockItem(id, Number(qty));
+                showToast("✅ Stock Updated!");
+                await this.refreshData();
+            } catch (e) { showToast("⚠️ Restock failed."); }
+        }
 
         renderInventoryPage() {
-            const container = document.getElementById('inventoryListContainer');
+            const container = document.getElementById('inventoryList');
             container.innerHTML = this.inventory.map(i => `
-                <div style="background:white; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+                <div style="background:#1f2937; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <div style="font-weight:700; font-size:0.85rem;">${i.emoji || '📦'} ${i.name}</div>
-                        <div style="font-size:0.7rem; color:var(--gray);">Price: ${i.sellPrice.toLocaleString()} TZS</div>
+                        <div style="font-weight:700;">${i.emoji || '📦'} ${i.name}</div>
+                        <div style="font-size:0.75rem; color:var(--text-sub);">${i.sellPrice.toLocaleString()} TZS | Stock: <strong style="color:${i.stock <= 5 ? 'var(--accent-red)' : 'var(--accent-green)'}">${i.stock}</strong></div>
                     </div>
-                    <div style="font-weight:800; font-size:0.9rem; color:${i.stock <= 5 ? 'var(--red)' : 'var(--pos-green)'};">
-                        ${i.stock} units
-                    </div>
+                    <button style="background:var(--accent-gold); border:none; padding:6px 12px; border-radius:8px; font-weight:700; cursor:pointer;" onclick="appEngine.quickRestock('${i.id}')">+ Stock</button>
                 </div>
             `).join('');
         }
 
         renderStaffPage() {
-            const container = document.getElementById('staffListContainer');
+            const container = document.getElementById('staffList');
             container.innerHTML = this.staff.map(s => `
-                <div style="background:white; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+                <div style="background:#1f2937; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
                     <div>
-                        <div style="font-weight:700; font-size:0.85rem;">👤 ${s.name} (${s.username})</div>
-                        <div style="font-size:0.7rem; color:var(--gray);">Role: <strong style="text-transform:uppercase;">${s.role}</strong></div>
+                        <div style="font-weight:700;">👤 ${s.name} (${s.username})</div>
+                        <div style="font-size:0.75rem; color:var(--text-sub);">Role: ${s.role.toUpperCase()}</div>
                     </div>
                 </div>
             `).join('');
+        }
+
+        async createNewStaffMember() {
+            const username = document.getElementById('staffUsername').value.trim().toLowerCase();
+            const name = document.getElementById('staffName').value.trim();
+            const pin = document.getElementById('staffPin').value.trim();
+            const role = document.getElementById('staffRole').value;
+            if (!username || !name || !pin) { showToast("⚠️ Fill all fields."); return; }
+            try {
+                await this.db.addStaff(username, name, pin, role);
+                showToast("✅ Staff Account Created!");
+                document.getElementById('staffUsername').value = ''; document.getElementById('staffName').value = ''; document.getElementById('staffPin').value = '';
+                await this.refreshData();
+            } catch (e) { showToast("⚠️ Creation failed."); }
         }
     }
 
     window.appEngine = new POSAppEngine();
     window.handleLogin = async function() {
-        const shopId = document.getElementById('shopIdInput').value.trim().toLowerCase();
-        const user = document.getElementById('userInput').value.trim();
+        const rawShopId = document.getElementById('shopIdInput').value.trim();
+        const shopId = rawShopId.toLowerCase().replace(/\s+/g, '_');
+        const user = document.getElementById('userInput').value.trim().toLowerCase();
         const pin = document.getElementById('passInput').value.trim();
         const err = document.getElementById('pinError');
         try {
@@ -521,9 +581,9 @@
     };
 
     window.switchTab = function(tab) {
-        document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById('page-' + tab).classList.add('active');
+        document.querySelectorAll('.view-page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.getElementById('view-' + tab).classList.add('active');
         event.currentTarget.classList.add('active');
     };
 
