@@ -6,7 +6,6 @@
     <title>Matinyo POS Pro - Enterprise Retail</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -22,14 +21,14 @@
             </div>
             <div>
                 <h1 class="font-bold text-lg leading-tight text-white" id="shop-title">Matinyo POS</h1>
-                <p class="text-xs text-slate-400" id="tenant-display">Workspace: Connecting...</p>
+                <p class="text-xs text-slate-400" id="tenant-display">Workspace: not signed in</p>
             </div>
         </div>
-        <div class="flex items-center space-x-3">
+        <div id="header-actions" class="flex items-center space-x-3 hidden">
             <button onclick="triggerCloseDay()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-semibold px-3 py-2 rounded-lg transition flex items-center shadow">
                 <i class="fa-solid fa-lock text-xs mr-1.5"></i> Close Day
             </button>
-            <button onclick="handleLogout()" class="text-slate-400 hover:text-red-400 p-2 rounded-lg transition"><i class="fa-solid fa-power-off"></i></button>
+            <button onclick="handleLogout()" title="Sign out" class="text-slate-400 hover:text-red-400 p-2 rounded-lg transition"><i class="fa-solid fa-power-off"></i></button>
         </div>
     </header>
 
@@ -41,18 +40,19 @@
                     <i class="fa-solid fa-cash-register"></i>
                 </div>
                 <h2 class="text-xl font-bold text-white">Terminal Sign In</h2>
-                <p class="text-xs text-slate-400 mt-1">Enter your assigned Tenant Code & Staff PIN</p>
+                <p class="text-xs text-slate-400 mt-1">Enter your Shop Code &amp; Shop Password</p>
             </div>
             <form onsubmit="handleLogin(event)" class="space-y-4">
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Tenant Shop Code</label>
-                    <input type="text" id="login-tenant" required value="demo-shop" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Shop Code</label>
+                    <input type="text" id="login-tenant" required autocomplete="username" placeholder="e.g. demo-shop" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500 lowercase">
                 </div>
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Staff PIN / Password</label>
-                    <input type="password" id="login-pin" required placeholder="••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                    <label class="block text-xs font-medium text-slate-300 mb-1">Shop Password</label>
+                    <input type="password" id="login-pin" required autocomplete="current-password" placeholder="••••••" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
                 </div>
-                <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold py-3 rounded-xl transition shadow-lg">Access Terminal</button>
+                <p id="login-error" class="text-xs text-red-400 hidden"></p>
+                <button type="submit" id="login-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition shadow-lg">Access Terminal</button>
             </form>
         </div>
     </div>
@@ -61,29 +61,31 @@
     <div id="app-container" class="flex-1 flex overflow-hidden hidden">
         <nav class="w-20 sm:w-64 bg-slate-800 border-r border-slate-700 flex flex-col justify-between py-4">
             <div class="space-y-1 px-3">
-                <button onclick="switchTab('pos')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition bg-indigo-600 text-white" data-tab="pos">
+                <button onclick="switchTab('pos')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition" data-tab="pos">
                     <i class="fa-solid fa-cart-shopping w-5 text-center"></i><span class="hidden sm:inline">Point of Sale</span>
                 </button>
-                <button onclick="switchTab('inventory')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-700/50 hover:text-white" data-tab="inventory">
+                <button onclick="switchTab('inventory')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition" data-tab="inventory">
                     <i class="fa-solid fa-boxes-stacked w-5 text-center"></i><span class="hidden sm:inline">Inventory</span>
                 </button>
-                <button onclick="switchTab('accounts')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition text-slate-400 hover:bg-slate-700/50 hover:text-white" data-tab="accounts">
-                    <i class="fa-solid fa-wallet w-5 text-center"></i><span class="hidden sm:inline">Accounts & Float</span>
+                <button onclick="switchTab('accounts')" class="nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition" data-tab="accounts">
+                    <i class="fa-solid fa-wallet w-5 text-center"></i><span class="hidden sm:inline">Accounts &amp; Float</span>
                 </button>
             </div>
+            <p class="px-4 text-[10px] text-slate-500 hidden sm:block" id="sync-status"><i class="fa-solid fa-circle text-emerald-500 mr-1"></i> Synced to cloud</p>
         </nav>
 
         <main class="flex-1 bg-slate-900 overflow-y-auto">
+
             <!-- POS TAB -->
             <div id="tab-pos" class="tab-content h-full flex flex-col lg:flex-row">
-                <div class="flex-1 p-4 flex flex-col h-full">
-                    <input type="text" id="pos-search" placeholder="Search product name..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white mb-4 focus:outline-none">
-                    <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto flex-1"></div>
+                <div class="flex-1 p-4 flex flex-col h-full min-h-0">
+                    <input type="text" id="pos-search" oninput="renderCatalog()" placeholder="Search product name..." class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2.5 text-sm text-white mb-4 focus:outline-none">
+                    <div id="catalog-grid" class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 overflow-y-auto flex-1 content-start"></div>
                 </div>
                 <div class="w-full lg:w-96 bg-slate-800 border-l border-slate-700 flex flex-col">
                     <div class="p-4 border-b border-slate-700 font-bold text-sm text-white flex justify-between">
                         <span>Current Cart</span>
-                        <button onclick="cart=[]" class="text-xs text-red-400">Clear</button>
+                        <button onclick="clearCart()" class="text-xs text-red-400">Clear</button>
                     </div>
                     <div id="cart-items" class="flex-1 overflow-y-auto p-4 space-y-2"></div>
                     <div class="p-4 bg-slate-800 border-t border-slate-700 space-y-3">
@@ -91,32 +93,454 @@
                             <span>Total:</span><span id="cart-total" class="text-indigo-400">TZS 0</span>
                         </div>
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="checkout('Cash')" class="bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-semibold shadow">Cash Pay</button>
-                            <button onclick="checkout('Mobile Money')" class="bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-xl text-xs font-semibold shadow">Lipa kwa Simu</button>
+                            <button onclick="checkout('Cash')" class="checkout-btn bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white py-2.5 rounded-xl text-xs font-semibold shadow">Cash Pay</button>
+                            <button onclick="checkout('Mobile Money')" class="checkout-btn bg-blue-600 hover:bg-blue-500 disabled:opacity-60 text-white py-2.5 rounded-xl text-xs font-semibold shadow">Lipa kwa Simu</button>
                         </div>
                     </div>
                 </div>
             </div>
-            <!-- Other tabs omitted for brevity, structured identically -->
+
+            <!-- INVENTORY TAB -->
+            <div id="tab-inventory" class="tab-content hidden p-4 sm:p-6 space-y-6 max-w-5xl">
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+                    <h2 class="text-sm font-bold text-white mb-4">Add Product</h2>
+                    <form onsubmit="addProduct(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                        <input id="p-name" required placeholder="Product name" class="sm:col-span-2 bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <input id="p-price" required type="number" min="0" step="1" placeholder="Price (TZS)" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <input id="p-stock" required type="number" min="0" step="1" placeholder="Opening stock" class="bg-slate-900 border border-slate-700 rounded-xl px-3.5 py-2.5 text-sm text-white focus:outline-none focus:border-indigo-500">
+                        <button class="sm:col-span-4 bg-indigo-600 hover:bg-indigo-500 text-white py-2.5 rounded-xl text-xs font-semibold"><i class="fa-solid fa-plus mr-1.5"></i> Save Product</button>
+                    </form>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+                    <h2 class="text-sm font-bold text-white mb-4">Stock List</h2>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-xs">
+                            <thead><tr class="text-slate-400 border-b border-slate-700">
+                                <th class="p-3 font-semibold">Product</th>
+                                <th class="p-3 font-semibold text-right">Price</th>
+                                <th class="p-3 font-semibold text-right">In Stock</th>
+                                <th class="p-3 font-semibold text-right">Actions</th>
+                            </tr></thead>
+                            <tbody id="inventory-body" class="divide-y divide-slate-700"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ACCOUNTS TAB -->
+            <div id="tab-accounts" class="tab-content hidden p-4 sm:p-6 space-y-6 max-w-5xl">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4"><p class="text-xs text-slate-400">Today's Sales</p><h3 id="acc-total" class="text-xl font-bold text-white mt-1">TZS 0</h3></div>
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4"><p class="text-xs text-slate-400">Cash</p><h3 id="acc-cash" class="text-xl font-bold text-emerald-400 mt-1">TZS 0</h3></div>
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4"><p class="text-xs text-slate-400">Lipa kwa Simu</p><h3 id="acc-mobile" class="text-xl font-bold text-blue-400 mt-1">TZS 0</h3></div>
+                    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4"><p class="text-xs text-slate-400">Transactions</p><h3 id="acc-count" class="text-xl font-bold text-white mt-1">0</h3></div>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+                    <h2 class="text-sm font-bold text-white mb-4">Today's Transactions</h2>
+                    <div id="sales-list" class="space-y-2 text-xs"></div>
+                </div>
+                <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5">
+                    <h2 class="text-sm font-bold text-white mb-4">Recent Day Closings</h2>
+                    <div id="closings-list" class="space-y-2 text-xs"></div>
+                </div>
+            </div>
         </main>
     </div>
 
+    <!-- TOAST -->
+    <div id="toast" class="fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-sm font-medium shadow-xl hidden z-[60]"></div>
+
     <script>
+        // ===== FIREBASE SETUP =====
+        const firebaseConfig = {
+            apiKey: "AIzaSyCaDZILjLrWg2VGvFElzU08Je-kJTGHKiU",
+            authDomain: "matinyopos.firebaseapp.com",
+            projectId: "matinyopos",
+            storageBucket: "matinyopos.firebasestorage.app",
+            messagingSenderId: "891386548810",
+            appId: "1:891386548810:web:26f1ef407a053a3f6f4cb3",
+            measurementId: "G-FSDR5WGPFD"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const FV = firebase.firestore.FieldValue;
+
+        // Each shop signs in with a hidden login email built from its shop code.
+        const SHOP_DOMAIN = 'tenants.matinyopos.app';
+
+        // ===== STATE =====
         let cart = [];
-        let currentTenant = 'demo-shop';
-        function handleLogin(e) {
+        let products = [];
+        let todaysSales = [];
+        let closings = [];
+        let currentTenant = null;
+        let tenantInfo = null;
+        let listeners = [];
+        let busy = false;
+
+        // ===== HELPERS =====
+        const fmt = n => 'TZS ' + Math.round(n || 0).toLocaleString('en-US');
+        const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+        const tRef = () => db.collection('tenants').doc(currentTenant);
+        function todayKey() {
+            const d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        }
+        function toast(msg, type = 'ok') {
+            const el = document.getElementById('toast');
+            el.textContent = msg;
+            el.className = 'fixed bottom-5 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-sm font-medium shadow-xl z-[60] ' +
+                (type === 'err' ? 'bg-red-600 text-white' : 'bg-emerald-600 text-white');
+            clearTimeout(el._t);
+            el._t = setTimeout(() => el.classList.add('hidden'), 3500);
+        }
+        function setLoginError(msg) {
+            const el = document.getElementById('login-error');
+            el.textContent = msg || '';
+            el.classList.toggle('hidden', !msg);
+        }
+        function friendlyAuthError(err) {
+            const c = err && err.code || '';
+            if (c.includes('invalid-login-credentials') || c.includes('wrong-password') || c.includes('user-not-found') || c.includes('invalid-credential'))
+                return 'Wrong shop code or password.';
+            if (c.includes('too-many-requests')) return 'Too many attempts. Wait a few minutes and try again.';
+            if (c.includes('network')) return 'No internet connection. Check your network and try again.';
+            if (c.includes('invalid-email')) return 'Shop code can only use letters, numbers and dashes.';
+            return 'Sign in failed: ' + (err.message || c);
+        }
+
+        // ===== AUTH =====
+        async function handleLogin(e) {
             e.preventDefault();
-            currentTenant = document.getElementById('login-tenant').value;
-            document.getElementById('tenant-display').innerText = `Workspace: ${currentTenant}`;
+            setLoginError('');
+            const code = document.getElementById('login-tenant').value.trim().toLowerCase();
+            const pw = document.getElementById('login-pin').value;
+            const btn = document.getElementById('login-btn');
+            btn.disabled = true; btn.textContent = 'Signing in...';
+            try {
+                await auth.signInWithEmailAndPassword(`${code}@${SHOP_DOMAIN}`, pw);
+            } catch (err) {
+                setLoginError(friendlyAuthError(err));
+            } finally {
+                btn.disabled = false; btn.textContent = 'Access Terminal';
+            }
+        }
+
+        async function rejectLogin(msg) {
+            await auth.signOut();
+            setLoginError(msg);
+        }
+
+        auth.onAuthStateChanged(async user => {
+            stopListeners();
+            if (!user) { showLogin(); return; }
+
+            const email = (user.email || '').toLowerCase();
+            if (!email.endsWith('@' + SHOP_DOMAIN)) {
+                return rejectLogin('This is not a shop account. The owner account signs in on the Vendor Control Center.');
+            }
+            currentTenant = email.split('@')[0];
+            try {
+                const snap = await tRef().get();
+                if (!snap.exists) return rejectLogin('Shop workspace not found. Contact Matinyo support.');
+                tenantInfo = snap.data();
+                if (tenantInfo.status !== 'active') return rejectLogin('This shop subscription is suspended. Contact Matinyo to reactivate.');
+            } catch (err) {
+                return rejectLogin('Could not load shop: ' + err.message);
+            }
+            showApp();
+            startListeners();
+        });
+
+        function handleLogout() {
+            if (cart.length && !confirm('There are items in the cart. Sign out anyway?')) return;
+            cart = [];
+            auth.signOut();
+        }
+
+        function showLogin() {
+            currentTenant = null; tenantInfo = null; cart = []; products = []; todaysSales = []; closings = [];
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('header-actions').classList.add('hidden');
+            document.getElementById('shop-title').textContent = 'Matinyo POS';
+            document.getElementById('tenant-display').textContent = 'Workspace: not signed in';
+            document.getElementById('login-pin').value = '';
+        }
+        function showApp() {
+            setLoginError('');
             document.getElementById('auth-screen').classList.add('hidden');
             document.getElementById('app-container').classList.remove('hidden');
+            document.getElementById('header-actions').classList.remove('hidden');
+            document.getElementById('shop-title').textContent = tenantInfo.name || 'Matinyo POS';
+            document.getElementById('tenant-display').textContent = 'Workspace: ' + currentTenant;
+            switchTab('pos');
+            renderCart();
         }
-        function handleLogout() { location.reload(); }
+
+        // ===== LIVE DATA =====
+        function setSync(ok) {
+            document.getElementById('sync-status').innerHTML = ok
+                ? '<i class="fa-solid fa-circle text-emerald-500 mr-1"></i> Synced to cloud'
+                : '<i class="fa-solid fa-circle text-red-500 mr-1"></i> Sync problem';
+        }
+        function startListeners() {
+            const onErr = err => { setSync(false); toast('Sync error: ' + err.message, 'err'); };
+
+            listeners.push(tRef().onSnapshot(snap => {
+                tenantInfo = snap.data() || {};
+                if (tenantInfo.status && tenantInfo.status !== 'active') {
+                    rejectLogin('This shop subscription has been suspended. Contact Matinyo to reactivate.');
+                }
+            }, onErr));
+
+            listeners.push(tRef().collection('products').orderBy('name').onSnapshot(snap => {
+                products = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+                setSync(true);
+                renderCatalog(); renderInventory(); renderCart();
+            }, onErr));
+
+            listeners.push(tRef().collection('sales').where('day', '==', todayKey()).onSnapshot(snap => {
+                todaysSales = snap.docs.map(d => ({ id: d.id, ...d.data() }))
+                    .sort((a, b) => (b.createdAt?.toMillis?.() || Date.now()) - (a.createdAt?.toMillis?.() || Date.now()));
+                renderAccounts();
+            }, onErr));
+
+            listeners.push(tRef().collection('closings').orderBy('day', 'desc').limit(14).onSnapshot(snap => {
+                closings = snap.docs.map(d => d.data());
+                renderClosings();
+            }, onErr));
+        }
+        function stopListeners() {
+            listeners.forEach(u => u());
+            listeners = [];
+        }
+
+        // ===== TABS =====
         function switchTab(tab) {
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
             document.getElementById(`tab-${tab}`).classList.remove('hidden');
+            document.querySelectorAll('.nav-btn').forEach(b => {
+                const on = b.dataset.tab === tab;
+                b.className = 'nav-btn w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition ' +
+                    (on ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700/50 hover:text-white');
+            });
         }
-        function triggerCloseDay() { alert("Close-day reconciliation generated and dispatched via WhatsApp."); }
+
+        // ===== POS =====
+        function renderCatalog() {
+            const q = document.getElementById('pos-search').value.trim().toLowerCase();
+            const list = products.filter(p => !q || (p.name || '').toLowerCase().includes(q));
+            const grid = document.getElementById('catalog-grid');
+            if (!products.length) {
+                grid.innerHTML = `<div class="col-span-full text-center text-slate-400 text-sm py-12">
+                    No products yet. Go to <button onclick="switchTab('inventory')" class="text-indigo-400 underline">Inventory</button> to add your first product.</div>`;
+                return;
+            }
+            if (!list.length) { grid.innerHTML = '<div class="col-span-full text-center text-slate-400 text-sm py-12">No product matches your search.</div>'; return; }
+            grid.innerHTML = list.map(p => {
+                const out = (p.stock || 0) <= 0;
+                return `<button ${out ? 'disabled' : ''} onclick="addToCart('${p.id}')"
+                    class="text-left bg-slate-800 border border-slate-700 rounded-xl p-3.5 transition ${out ? 'opacity-40 cursor-not-allowed' : 'hover:border-indigo-500'}">
+                    <p class="text-sm font-semibold text-white leading-snug">${esc(p.name)}</p>
+                    <p class="text-indigo-400 font-bold text-sm mt-1.5">${fmt(p.price)}</p>
+                    <p class="text-[11px] mt-1 ${(p.stock || 0) <= 5 ? 'text-amber-400' : 'text-slate-400'}">${out ? 'Out of stock' : 'Stock: ' + p.stock}</p>
+                </button>`;
+            }).join('');
+        }
+
+        function addToCart(id) {
+            const p = products.find(x => x.id === id);
+            if (!p) return;
+            const line = cart.find(c => c.id === id);
+            const inCart = line ? line.qty : 0;
+            if (inCart + 1 > (p.stock || 0)) return toast(`Only ${p.stock} of ${p.name} in stock`, 'err');
+            if (line) line.qty++;
+            else cart.push({ id: p.id, name: p.name, price: Number(p.price) || 0, qty: 1 });
+            renderCart();
+        }
+        function changeQty(id, delta) {
+            const line = cart.find(c => c.id === id);
+            if (!line) return;
+            const p = products.find(x => x.id === id);
+            if (delta > 0 && p && line.qty + 1 > (p.stock || 0)) return toast(`Only ${p.stock} of ${p.name} in stock`, 'err');
+            line.qty += delta;
+            if (line.qty <= 0) cart = cart.filter(c => c.id !== id);
+            renderCart();
+        }
+        function clearCart() { cart = []; renderCart(); }
+        const cartTotal = () => cart.reduce((s, c) => s + c.price * c.qty, 0);
+
+        function renderCart() {
+            const box = document.getElementById('cart-items');
+            if (!cart.length) {
+                box.innerHTML = '<p class="text-center text-slate-500 text-xs py-10">Tap a product to add it.</p>';
+            } else {
+                box.innerHTML = cart.map(c => `
+                    <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex items-center justify-between">
+                        <div class="min-w-0">
+                            <p class="text-sm text-white font-medium truncate">${esc(c.name)}</p>
+                            <p class="text-[11px] text-slate-400">${fmt(c.price)} × ${c.qty} = <span class="text-slate-200">${fmt(c.price * c.qty)}</span></p>
+                        </div>
+                        <div class="flex items-center space-x-1.5 ml-2 shrink-0">
+                            <button onclick="changeQty('${c.id}',-1)" class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs"><i class="fa-solid fa-minus"></i></button>
+                            <span class="w-6 text-center text-sm font-semibold">${c.qty}</span>
+                            <button onclick="changeQty('${c.id}',1)" class="w-7 h-7 rounded-lg bg-slate-700 hover:bg-slate-600 text-white text-xs"><i class="fa-solid fa-plus"></i></button>
+                        </div>
+                    </div>`).join('');
+            }
+            document.getElementById('cart-total').textContent = fmt(cartTotal());
+        }
+
+        async function checkout(method) {
+            if (busy) return;
+            if (!cart.length) return toast('Cart is empty', 'err');
+            for (const c of cart) {
+                const p = products.find(x => x.id === c.id);
+                if (!p) return toast(`${c.name} was removed from inventory. Remove it from the cart.`, 'err');
+                if ((p.stock || 0) < c.qty) return toast(`Not enough stock for ${p.name} (only ${p.stock} left)`, 'err');
+            }
+            const total = cartTotal();
+            busy = true;
+            document.querySelectorAll('.checkout-btn').forEach(b => b.disabled = true);
+            try {
+                const batch = db.batch();
+                batch.set(tRef().collection('sales').doc(), {
+                    items: cart.map(c => ({ productId: c.id, name: c.name, price: c.price, qty: c.qty })),
+                    total, method,
+                    day: todayKey(),
+                    createdAt: FV.serverTimestamp()
+                });
+                cart.forEach(c => batch.update(tRef().collection('products').doc(c.id), { stock: FV.increment(-c.qty) }));
+                batch.update(tRef(), { txnCount: FV.increment(1), lastSaleAt: FV.serverTimestamp() });
+                await batch.commit();
+                cart = [];
+                renderCart();
+                toast(`Sale recorded: ${fmt(total)} (${method === 'Cash' ? 'Cash' : 'Lipa kwa Simu'})`);
+            } catch (err) {
+                toast('Sale NOT saved: ' + err.message, 'err');
+            } finally {
+                busy = false;
+                document.querySelectorAll('.checkout-btn').forEach(b => b.disabled = false);
+            }
+        }
+
+        // ===== INVENTORY =====
+        async function addProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('p-name').value.trim();
+            const price = Number(document.getElementById('p-price').value);
+            const stock = parseInt(document.getElementById('p-stock').value, 10);
+            if (!name) return;
+            if (products.some(p => (p.name || '').toLowerCase() === name.toLowerCase()))
+                return toast('A product with that name already exists', 'err');
+            try {
+                await tRef().collection('products').add({ name, price, stock, createdAt: FV.serverTimestamp() });
+                e.target.reset();
+                toast('Product saved');
+            } catch (err) { toast('Could not save: ' + err.message, 'err'); }
+        }
+
+        function renderInventory() {
+            const body = document.getElementById('inventory-body');
+            if (!products.length) { body.innerHTML = '<tr><td colspan="4" class="p-4 text-center text-slate-500">No products yet.</td></tr>'; return; }
+            body.innerHTML = products.map(p => `
+                <tr class="hover:bg-slate-700/30">
+                    <td class="p-3 text-white font-medium">${esc(p.name)}</td>
+                    <td class="p-3 text-right">${fmt(p.price)}</td>
+                    <td class="p-3 text-right font-semibold ${(p.stock || 0) <= 5 ? 'text-amber-400' : 'text-slate-200'}">${p.stock || 0}</td>
+                    <td class="p-3 text-right whitespace-nowrap space-x-3">
+                        <button onclick="restock('${p.id}')" class="text-emerald-400 hover:text-emerald-300 font-semibold">Restock</button>
+                        <button onclick="editPrice('${p.id}')" class="text-indigo-400 hover:text-indigo-300 font-semibold">Price</button>
+                        <button onclick="deleteProduct('${p.id}')" class="text-red-400 hover:text-red-300 font-semibold">Delete</button>
+                    </td>
+                </tr>`).join('');
+        }
+        async function restock(id) {
+            const p = products.find(x => x.id === id);
+            const v = prompt(`How many units of "${p.name}" are you adding?`);
+            if (v === null) return;
+            const n = parseInt(v, 10);
+            if (!Number.isFinite(n) || n === 0) return toast('Enter a whole number', 'err');
+            try { await tRef().collection('products').doc(id).update({ stock: FV.increment(n) }); toast(`Stock updated (+${n})`); }
+            catch (err) { toast(err.message, 'err'); }
+        }
+        async function editPrice(id) {
+            const p = products.find(x => x.id === id);
+            const v = prompt(`New price for "${p.name}" (TZS):`, p.price);
+            if (v === null) return;
+            const n = Number(v);
+            if (!Number.isFinite(n) || n < 0) return toast('Enter a valid price', 'err');
+            try { await tRef().collection('products').doc(id).update({ price: n }); toast('Price updated'); }
+            catch (err) { toast(err.message, 'err'); }
+        }
+        async function deleteProduct(id) {
+            const p = products.find(x => x.id === id);
+            if (!confirm(`Delete "${p.name}"? Past sales stay recorded.`)) return;
+            try { await tRef().collection('products').doc(id).delete(); cart = cart.filter(c => c.id !== id); renderCart(); toast('Product deleted'); }
+            catch (err) { toast(err.message, 'err'); }
+        }
+
+        // ===== ACCOUNTS & CLOSE DAY =====
+        function summarize(sales) {
+            const s = { count: sales.length, total: 0, cash: 0, mobile: 0, items: {} };
+            sales.forEach(x => {
+                s.total += x.total || 0;
+                if (x.method === 'Cash') s.cash += x.total || 0; else s.mobile += x.total || 0;
+                (x.items || []).forEach(i => { s.items[i.name] = (s.items[i.name] || 0) + i.qty; });
+            });
+            return s;
+        }
+        function renderAccounts() {
+            const s = summarize(todaysSales);
+            document.getElementById('acc-total').textContent = fmt(s.total);
+            document.getElementById('acc-cash').textContent = fmt(s.cash);
+            document.getElementById('acc-mobile').textContent = fmt(s.mobile);
+            document.getElementById('acc-count').textContent = s.count;
+            const list = document.getElementById('sales-list');
+            if (!todaysSales.length) { list.innerHTML = '<p class="text-slate-500">No sales yet today.</p>'; return; }
+            list.innerHTML = todaysSales.map(x => {
+                const t = x.createdAt?.toDate ? x.createdAt.toDate().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'saving...';
+                const items = (x.items || []).map(i => `${esc(i.name)} ×${i.qty}`).join(', ');
+                return `<div class="flex justify-between items-start bg-slate-900 border border-slate-700 rounded-xl p-3">
+                    <div class="min-w-0 pr-3"><p class="text-slate-200">${items}</p><p class="text-slate-500 mt-0.5">${t} · ${x.method === 'Cash' ? 'Cash' : 'Lipa kwa Simu'}</p></div>
+                    <span class="font-bold text-white shrink-0">${fmt(x.total)}</span></div>`;
+            }).join('');
+        }
+        function renderClosings() {
+            const list = document.getElementById('closings-list');
+            if (!closings.length) { list.innerHTML = '<p class="text-slate-500">No days closed yet.</p>'; return; }
+            list.innerHTML = closings.map(c => `
+                <div class="flex justify-between bg-slate-900 border border-slate-700 rounded-xl p-3">
+                    <div><p class="text-slate-200 font-semibold">${esc(c.day)}</p><p class="text-slate-500 mt-0.5">${c.count} sales · Cash ${fmt(c.cash)} · Simu ${fmt(c.mobile)}</p></div>
+                    <span class="font-bold text-white">${fmt(c.total)}</span></div>`).join('');
+        }
+
+        async function triggerCloseDay() {
+            const day = todayKey();
+            const s = summarize(todaysSales);
+            if (!confirm(`Close day ${day}?\n\nTransactions: ${s.count}\nCash: ${fmt(s.cash)}\nLipa kwa Simu: ${fmt(s.mobile)}\nTotal: ${fmt(s.total)}`)) return;
+            const top = Object.entries(s.items).sort((a, b) => b[1] - a[1]).slice(0, 5);
+            try {
+                await tRef().collection('closings').doc(day).set({
+                    day, count: s.count, total: s.total, cash: s.cash, mobile: s.mobile,
+                    topItems: top.map(([name, qty]) => ({ name, qty })),
+                    closedAt: FV.serverTimestamp()
+                });
+            } catch (err) { return toast('Could not save closing: ' + err.message, 'err'); }
+
+            const lines = [
+                `*${tenantInfo.name || currentTenant} — Close of Day ${day}*`,
+                `Transactions: ${s.count}`,
+                `Cash: ${fmt(s.cash)}`,
+                `Lipa kwa Simu: ${fmt(s.mobile)}`,
+                `*Total: ${fmt(s.total)}*`
+            ];
+            if (top.length) lines.push('', 'Top items:', ...top.map(([n, q]) => `• ${n} — ${q}`));
+            window.open('https://wa.me/?text=' + encodeURIComponent(lines.join('\n')), '_blank');
+            toast('Day closed. Choose who to send it to on WhatsApp.');
+        }
     </script>
 </body>
 </html>
