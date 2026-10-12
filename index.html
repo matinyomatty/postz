@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Matinyo POS — SaaS Enterprise</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --blue: #004085;
+            --dark: #001a33;
+            --light: #f0f4f8;
+            --green: #28a745;
+            --gray: #6c757d;
+            --red: #dc3545;
+            --gold: #d4af37;
+            --pos-green: #00875a;
+            --pos-green-light: #e6f6f0;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        body { background: var(--dark); font-family: 'DM Sans', sans-serif; color: var(--dark); min-height: 100vh; }
+        body.unlocked { background: var(--light); }
+
+        /* Login & Owner Portal */
+        #loginPage, #ownerPortal { position: fixed; inset: 0; background: var(--dark); display: flex; align-items: center; justify-content: center; z-index: 100; padding: 24px; overflow-y: auto; }
+        .login-card { background: white; width: 100%; max-width: 420px; padding: 36px 24px; border-radius: 24px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.5); }
+        .login-logo { font-family: 'Syne', sans-serif; font-size: 2rem; letter-spacing: 6px; color: var(--dark); margin-bottom: 6px; }
+        .login-sub { color: var(--gray); font-size: 0.75rem; margin-bottom: 24px; }
+        .input-field { width: 100%; padding: 14px; border: 2px solid #dde3ea; border-radius: 12px; font-size: 1rem; background: #f8fafc; outline: none; margin-bottom: 12px; font-family: 'DM Sans', sans-serif; }
+        .input-field:focus { border-color: var(--blue); background: white; }
+        .btn-primary { background: var(--blue); color: white; width: 100%; padding: 15px; border: none; border-radius: 12px; font-size: 0.95rem; font-weight: 800; cursor: pointer; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+        .btn-primary:active { transform: scale(0.98); }
+        .btn-sec { background: #f0f3f6; color: var(--dark); width: 100%; padding: 12px; border: none; border-radius: 12px; font-size: 0.85rem; font-weight: 700; cursor: pointer; margin-top: 8px; }
+        #pinError, #ownerError { color: var(--red); font-size: 0.78rem; min-height: 18px; margin-top: 8px; }
+
+        /* Main App */
+        #mainApp { display: none; }
+        .tab-nav { position: sticky; top: 0; z-index: 600; background: var(--dark); display: flex; border-bottom: 3px solid var(--gold); }
+        .tab-btn { flex: 1; padding: 12px; border: none; background: transparent; color: rgba(255,255,255,0.45); font-weight: 700; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1px; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+        .tab-btn.active { color: var(--gold); background: rgba(212,175,55,0.07); }
+        .tab-page { display: none; padding-bottom: 100px; }
+        .tab-page.active { display: block; }
+
+        /* POS Header & Grid */
+        .pos-header { background: var(--dark); color: white; padding: 14px 16px; border-bottom: 3px solid var(--pos-green); position: sticky; top: 45px; z-index: 500; }
+        .pos-search { width: 100%; padding: 11px 14px; border: 1.5px solid rgba(255,255,255,0.15); border-radius: 12px; background: rgba(255,255,255,0.07); color: white; font-size: 0.9rem; outline: none; }
+        .pos-items-container { padding: 16px; max-width: 480px; margin: auto; }
+        .pos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .item-card { background: white; border-radius: 16px; padding: 14px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer; position: relative; border: 2px solid transparent; }
+        .item-card:active { transform: scale(0.96); }
+        .item-card.out-of-stock { opacity: 0.5; cursor: not-allowed; }
+        .item-card-emoji { font-size: 1.6rem; margin-bottom: 6px; display: block; }
+        .item-card-name { font-size: 0.8rem; font-weight: 700; color: var(--dark); margin-bottom: 2px; }
+        .item-card-price { font-size: 0.75rem; color: var(--pos-green); font-weight: 700; }
+        .item-card-stock { font-size: 0.62rem; color: var(--gray); margin-top: 3px; }
+
+        /* Cart Bar */
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; z-index: 800; display: none; justify-content: center; padding: 10px 16px 20px; background: linear-gradient(to top, rgba(240,244,248,1) 70%, transparent); }
+        .cart-bar.has-items { display: flex; }
+        .cart-bar-inner { width: 100%; max-width: 448px; background: var(--dark); color: white; border-radius: 20px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; box-shadow: 0 8px 32px rgba(0,26,51,0.35); }
+        .cart-count-bubble { background: var(--gold); color: var(--dark); width: 32px; height: 32px; border-radius: 50%; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        .cart-bar-total { font-size: 1rem; font-weight: 800; color: var(--gold); }
+
+        .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: var(--dark); color: white; padding: 12px 24px; border-radius: 12px; font-size: 0.82rem; font-weight: 600; z-index: 9998; opacity: 0; transition: opacity 0.3s; pointer-events: none; }
+        .toast.show { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- LOGIN PAGE (Staff / Cashier Terminal) -->
+<div id="loginPage">
+    <div class="login-card">
+        <div class="login-logo">MATINYO</div>
+        <div class="login-sub">SaaS POS Enterprise Terminal</div>
+        <input type="text" id="shopIdInput" class="input-field" placeholder="Tenant Shop ID (e.g. maduka_freshi)">
+        <input type="text" id="userInput" class="input-field" placeholder="Username">
+        <input type="password" id="passInput" class="input-field" placeholder="PIN" inputmode="numeric">
+        <button class="btn-primary" onclick="handleLogin()">Unlock Terminal</button>
+        <button class="btn-sec" onclick="toggleOwnerPortal(true)" style="background:none; color:var(--blue); font-size:0.75rem;">🔒 Software Owner Email Login</button>
+        <div id="pinError"></div>
+    </div>
+</div>
+
+<!-- SOFTWARE OWNER EMAIL LOGIN & PROVISIONING PORTAL -->
+<div id="ownerPortal" style="display:none;">
+    <div class="login-card">
+        <div class="login-logo" style="font-size:1.5rem;">OWNER</div>
+        <div class="login-sub">Software Administrator Portal</div>
+        
+        <!-- Owner Email Login Form -->
+        <div id="ownerLoginForm">
+            <input type="email" id="ownerEmail" class="input-field" placeholder="Owner Email Address">
+            <input type="password" id="ownerPassword" class="input-field" placeholder="Password">
+            <button class="btn-primary" onclick="handleOwnerEmailLogin()">Sign In as Owner</button>
+            <button class="btn-sec" onclick="toggleOwnerPortal(false)">← Back to Terminal Login</button>
+        </div>
+
+        <!-- Shop Provisioning Form (Revealed after Owner authenticates) -->
+        <div id="ownerProvisionForm" style="display:none; margin-top:10px;">
+            <div style="font-size:0.8rem; font-weight:700; color:var(--pos-green); margin-bottom:12px;">✅ Owner Authenticated Successfully</div>
+            <input type="text" id="newShopId" class="input-field" placeholder="New Shop ID (e.g. duka_la_leo)">
+            <input type="text" id="newShopName" class="input-field" placeholder="Shop Name (e.g. Duka la Leo)">
+            <input type="text" id="newAdminUser" class="input-field" placeholder="Initial Admin Username">
+            <input type="password" id="newAdminPin" class="input-field" placeholder="Initial Admin PIN" inputmode="numeric">
+            <button class="btn-primary" style="background:var(--pos-green);" onclick="provisionNewShop()">⚡ Provision New Shop</button>
+            <button class="btn-sec" onclick="ownerSignOut()">Sign Out Owner</button>
+        </div>
+        <div id="ownerError"></div>
+    </div>
+</div>
+
+<!-- MAIN APP INTERFACE -->
+<div id="mainApp">
+    <div class="tab-nav">
+        <button class="tab-btn active" onclick="switchTab('pos')">🛒 POS</button>
+        <button class="tab-btn" onclick="switchTab('inventory')">📦 Stock</button>
+        <button class="tab-btn" id="navUsersTab" onclick="switchTab('users')" style="display:none;">👥 Staff</button>
+        <button class="tab-btn" onclick="appEngine.auth.logout()">⏻ Logout</button>
+    </div>
+
+    <!-- TAB: POS -->
+    <div class="tab-page active" id="page-pos">
+        <div class="pos-header">
+            <input type="text" class="pos-search" placeholder="Search product catalog..." id="posSearch" oninput="appEngine.filterCatalog(this.value)">
+        </div>
+        <div class="pos-items-container">
+            <div class="pos-grid" id="posGrid"></div>
+        </div>
+        <div class="cart-bar" id="cartBar" onclick="appEngine.promptCheckout()">
+            <div class="cart-bar-inner">
+                <div style="display:flex; align-items:center; gap:12px;">
+                    <div class="cart-count-bubble" id="cartCountBubble">0</div>
+                    <div>
+                        <div style="font-size:0.75rem; font-weight:700; text-transform:uppercase;">Complete Order</div>
+                        <div style="font-size:0.65rem; color:rgba(255,255,255,0.6);">Tap to checkout</div>
+                    </div>
+                </div>
+                <div class="cart-bar-total" id="cartBarTotal">0 TZS</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB: INVENTORY -->
+    <div class="tab-page" id="page-inventory">
+        <div style="padding: 16px; max-width: 480px; margin: auto;">
+            <h2 style="font-family:'Syne', sans-serif; margin-bottom: 14px; font-size: 1.2rem;">Stock Management</h2>
+            <div id="inventoryListContainer"></div>
+        </div>
+    </div>
+
+    <!-- TAB: USER / STAFF MANAGEMENT (Admin Only) -->
+    <div class="tab-page" id="page-users">
+        <div style="padding: 16px; max-width: 480px; margin: auto;">
+            <h2 style="font-family:'Syne', sans-serif; margin-bottom: 14px; font-size: 1.2rem;">Staff & User Management</h2>
+            <div style="background:white; padding:16px; border-radius:16px; box-shadow:0 2px 8px rgba(0,0,0,0.06); margin-bottom:16px;">
+                <h3 style="font-size:0.9rem; margin-bottom:10px; color:var(--dark);">Add New Cashier / Admin</h3>
+                <input type="text" id="staffUsername" class="input-field" placeholder="Username (e.g. cashier2)">
+                <input type="text" id="staffName" class="input-field" placeholder="Full Name (e.g. Juma Ali)">
+                <input type="password" id="staffPin" class="input-field" placeholder="4-6 Digit PIN" inputmode="numeric">
+                <select id="staffRole" class="input-field">
+                    <option value="shop">Cashier / Shop Staff</option>
+                    <option value="admin">Shop Admin / Owner</option>
+                </select>
+                <button class="btn-primary" style="background:var(--pos-green);" onclick="appEngine.createNewStaffMember()">➕ Create User Account</button>
+            </div>
+            <div id="staffListContainer"></div>
+        </div>
+    </div>
+</div>
+
+<!-- FIREBASE & APPLICATION ENGINE SCRIPT -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+    import { 
+        getFirestore, collection, doc, getDoc, getDocs, setDoc, query, where, serverTimestamp, runTransaction, enableIndexedDbPersistence 
+    } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCaDZILjLrWg2VGvFElzU08Je-kJTGHKiU",
+        authDomain: "matinyopos.firebaseapp.com",
+        projectId: "matinyopos",
+        storageBucket: "matinyopos.firebasestorage.app",
+        messagingSenderId: "891386548810",
+        appId: "1:891386548810:web:fcb2fabe03b91a716f4cb3",
+        measurementId: "G-LKN46XCGLC"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    try { enableIndexedDbPersistence(db).catch(() => {}); } catch (e) {}
+
+    function showToast(msg) {
+        const t = document.getElementById('toast');
+        t.innerText = msg; t.classList.add('show');
+        setTimeout(() => t.classList.remove('show'), 2500);
+    }
+
+    // --- SOFTWARE OWNER EMAIL AUTH & PROVISIONING ---
+    window.toggleOwnerPortal = function(show) {
+        document.getElementById('loginPage').style.display = show ? 'none' : 'flex';
+        document.getElementById('ownerPortal').style.display = show ? 'flex' : 'none';
+    }
+
+    window.handleOwnerEmailLogin = async function() {
+        const email = document.getElementById('ownerEmail').value.trim();
+        const password = document.getElementById('ownerPassword').value.trim();
+        const err = document.getElementById('ownerError');
+
+        try {
+            await signInWithEmailAndPassword(auth, email, password);
+            document.getElementById('ownerLoginForm').style.display = 'none';
+            document.getElementById('ownerProvisionForm').style.display = 'block';
+            err.innerText = '';
+        } catch (e) {
+            err.innerText = "Owner Login Failed: " + e.message;
+        }
+    }
+
+    window.ownerSignOut = async function() {
+        await signOut(auth);
+        document.getElementById('ownerLoginForm').style.display = 'block';
+        document.getElementById('ownerProvisionForm').style.display = 'none';
+    }
+
+    window.provisionNewShop = async function() {
+        const shopId = document.getElementById('newShopId').value.trim().toLowerCase().replace(/\s+/g, '_');
+        const shopName = document.getElementById('newShopName').value.trim();
+        const username = document.getElementById('newAdminUser').value.trim().toLowerCase();
+        const pin = document.getElementById('newAdminPin').value.trim();
+        const err = document.getElementById('ownerError');
+
+        if (!shopId || !shopName || !username || !pin) {
+            err.innerText = "All fields are required.";
+            return;
+        }
+
+        try {
+            await setDoc(doc(db, "shops", shopId), {
+                name: shopName,
+                status: "active",
+                createdAt: serverTimestamp()
+            });
+
+            const userRef = doc(collection(db, "shops", shopId, "users"));
+            await setDoc(userRef, {
+                username: username,
+                name: shopName + " Admin",
+                pin: pin,
+                role: "admin",
+                createdAt: serverTimestamp()
+            });
+
+            const itemRef = doc(collection(db, "shops", shopId, "inventory"));
+            await setDoc(itemRef, {
+                name: "Bottled Water 500ml",
+                category: "Drinks",
+                emoji: "💧",
+                sellPrice: 1000,
+                stock: 50,
+                reorderLevel: 5
+            });
+
+            showToast("✅ Shop successfully provisioned on Firestore!");
+            document.getElementById('newShopId').value = '';
+            document.getElementById('newShopName').value = '';
+            document.getElementById('newAdminUser').value = '';
+            document.getElementById('newAdminPin').value = '';
+        } catch (e) {
+            err.innerText = "Provisioning failed: " + e.message;
+        }
+    }
+
+    // --- 1. MULTI-TENANT DATABASE ENGINE ---
+    class TenantDatabase {
+        constructor(shopId) { this.shopId = shopId; }
+        async verifyTenant() {
+            const shopSnap = await getDoc(doc(db, "shops", this.shopId));
+            if (!shopSnap.exists()) throw new Error("Tenant shop ID not found.");
+            if (shopSnap.data().status !== "active") throw new Error("Subscription inactive.");
+            return shopSnap.data();
+        }
+        async fetchInventory() {
+            const snap = await getDocs(collection(db, "shops", this.shopId, "inventory"));
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        async fetchStaff() {
+            const snap = await getDocs(collection(db, "shops", this.shopId, "users"));
+            return snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        }
+        async addStaff(username, name, pin, role) {
+            const ref = doc(collection(db, "shops", this.shopId, "users"));
+            await setDoc(ref, { username, name, pin, role, createdAt: serverTimestamp() });
+        }
+        async executeCheckout(cartItems, total) {
+            return await runTransaction(db, async (transaction) => {
+                const saleRef = doc(collection(db, "shops", this.shopId, "transactions"));
+                for (const item of cartItems) {
+                    const itemRef = doc(db, "shops", this.shopId, "inventory", item.id);
+                    const itemDoc = await transaction.get(itemRef);
+                    if (!itemDoc.exists()) throw new Error(`Item ${item.name} missing.`);
+                    const stock = Number(itemDoc.data().stock) || 0;
+                    if (stock < item.qty) throw new Error(`Insufficient stock for ${item.name}. Available: ${stock}`);
+                    transaction.update(itemRef, { stock: stock - item.qty });
+                }
+                transaction.set(saleRef, {
+                    items: cartItems,
+                    total: Number(total),
+                    timestamp: serverTimestamp(),
+                    dateStr: new Date().toISOString().split('T')[0]
+                });
+            });
+        }
+    }
+
+    // --- 2. SECURE AUTHENTICATION SERVICE ---
+    class TenantAuth {
+        async login(shopId, username, pin) {
+            const usersRef = collection(db, "shops", shopId, "users");
+            const q = query(usersRef, where("username", "==", username.trim().toLowerCase()));
+            const snap = await getDocs(q);
+            if (snap.empty) throw new Error("User not found.");
+            
+            let userData = null;
+            snap.forEach(d => userData = d.data());
+
+            if (String(pin).replace(/\D/g, "") !== String(userData.pin).replace(/\D/g, "")) {
+                throw new Error("Incorrect PIN.");
+            }
+
+            const session = { shopId, username: userData.username, name: userData.name, role: userData.role };
+            localStorage.setItem("matinyo_session", JSON.stringify(session));
+            return session;
+        }
+        getSession() {
+            const raw = localStorage.getItem("matinyo_session");
+            return raw ? JSON.parse(raw) : null;
+        }
+        logout() {
+            localStorage.removeItem("matinyo_session");
+            window.location.reload();
+        }
+    }
+
+    // --- 3. POS APP ENGINE ---
+    class POSAppEngine {
+        constructor() {
+            this.auth = new TenantAuth();
+            this.db = null;
+            this.cart = {};
+            this.inventory = [];
+            this.staff = [];
+        }
+
+        async init() {
+            const session = this.auth.getSession();
+            if (!session) {
+                document.getElementById('loginPage').style.display = 'flex';
+                document.getElementById('mainApp').style.display = 'none';
+                return;
+            }
+            document.getElementById('loginPage').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+
+            if (session.role === 'admin') {
+                document.getElementById('navUsersTab').style.display = 'flex';
+            }
+
+            this.db = new TenantDatabase(session.shopId);
+            try {
+                await this.db.verifyTenant();
+                this.inventory = await this.db.fetchInventory();
+                this.staff = await this.db.fetchStaff();
+                this.renderPOSGrid();
+                this.renderInventoryPage();
+                this.renderStaffPage();
+            } catch (err) {
+                showToast("⚠️ " + err.message);
+                this.auth.logout();
+            }
+        }
+
+        async createNewStaffMember() {
+            const username = document.getElementById('staffUsername').value.trim().toLowerCase();
+            const name = document.getElementById('staffName').value.trim();
+            const pin = document.getElementById('staffPin').value.trim();
+            const role = document.getElementById('staffRole').value;
+
+            if (!username || !name || !pin) {
+                showToast("⚠️ Fill in all staff details.");
+                return;
+            }
+
+            try {
+                await this.db.addStaff(username, name, pin, role);
+                showToast("✅ Staff account created!");
+                document.getElementById('staffUsername').value = '';
+                document.getElementById('staffName').value = '';
+                document.getElementById('staffPin').value = '';
+                this.staff = await this.db.fetchStaff();
+                this.renderStaffPage();
+            } catch (e) {
+                showToast("⚠️ Failed to create user.");
+            }
+        }
+
+        addToCart(id) {
+            const item = this.inventory.find(i => i.id === id);
+            if (!item) return;
+            const current = this.cart[id] || 0;
+            if (current >= item.stock) { showToast("⚠️ Max stock reached"); return; }
+            this.cart[id] = current + 1;
+            this.updateCartUI();
+        }
+
+        getCartTotal() {
+            return Object.entries(this.cart).reduce((sum, [id, qty]) => {
+                const item = this.inventory.find(i => i.id === id);
+                return sum + (item ? item.sellPrice * qty : 0);
+            }, 0);
+        }
+
+        updateCartUI() {
+            const count = Object.values(this.cart).reduce((a, b) => a + b, 0);
+            const total = this.getCartTotal();
+            const bar = document.getElementById('cartBar');
+            if (count > 0) {
+                bar.classList.add('has-items');
+                document.getElementById('cartCountBubble').innerText = count;
+                document.getElementById('cartBarTotal').innerText = total.toLocaleString() + " TZS";
+            } else {
+                bar.classList.remove('has-items');
+            }
+        }
+
+        async promptCheckout() {
+            const total = this.getCartTotal();
+            if (total <= 0) return;
+            if (!confirm(`Confirm checkout for ${total.toLocaleString()} TZS?`)) return;
+
+            const cartItems = Object.entries(this.cart).map(([id, qty]) => {
+                const item = this.inventory.find(i => i.id === id);
+                return { id: item.id, name: item.name, qty, sellPrice: item.sellPrice };
+            });
+
+            try {
+                await this.db.executeCheckout(cartItems, total);
+                showToast("✅ Sale recorded successfully!");
+                this.cart = {};
+                this.updateCartUI();
+                this.inventory = await this.db.fetchInventory();
+                this.renderPOSGrid();
+                this.renderInventoryPage();
+            } catch (err) {
+                showToast("⚠️ Checkout error: " + err.message);
+            }
+        }
+
+        renderPOSGrid(filter = "") {
+            const grid = document.getElementById('posGrid');
+            const items = this.inventory.filter(i => i.name.toLowerCase().includes(filter.toLowerCase()));
+            grid.innerHTML = items.map(i => `
+                <div class="item-card ${i.stock <= 0 ? 'out-of-stock' : ''}" onclick="window.appEngine.addToCart('${i.id}')">
+                    <span class="item-card-emoji">${i.emoji || '📦'}</span>
+                    <div class="item-card-name">${i.name}</div>
+                    <div class="item-card-price">${i.sellPrice.toLocaleString()} TZS</div>
+                    <div class="item-card-stock">${i.stock > 0 ? i.stock + ' units left' : 'Out of stock'}</div>
+                </div>
+            `).join('');
+        }
+
+        filterCatalog(val) { this.renderPOSGrid(val); }
+
+        renderInventoryPage() {
+            const container = document.getElementById('inventoryListContainer');
+            container.innerHTML = this.inventory.map(i => `
+                <div style="background:white; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+                    <div>
+                        <div style="font-weight:700; font-size:0.85rem;">${i.emoji || '📦'} ${i.name}</div>
+                        <div style="font-size:0.7rem; color:var(--gray);">Price: ${i.sellPrice.toLocaleString()} TZS</div>
+                    </div>
+                    <div style="font-weight:800; font-size:0.9rem; color:${i.stock <= 5 ? 'var(--red)' : 'var(--pos-green)'};">
+                        ${i.stock} units
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        renderStaffPage() {
+            const container = document.getElementById('staffListContainer');
+            container.innerHTML = this.staff.map(s => `
+                <div style="background:white; padding:12px; border-radius:12px; margin-bottom:8px; display:flex; justify-content:space-between; align-items:center; box-shadow:0 1px 4px rgba(0,0,0,0.04);">
+                    <div>
+                        <div style="font-weight:700; font-size:0.85rem;">👤 ${s.name} (${s.username})</div>
+                        <div style="font-size:0.7rem; color:var(--gray);">Role: <strong style="text-transform:uppercase;">${s.role}</strong></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+
+    window.appEngine = new POSAppEngine();
+    window.handleLogin = async function() {
+        const shopId = document.getElementById('shopIdInput').value.trim().toLowerCase();
+        const user = document.getElementById('userInput').value.trim();
+        const pin = document.getElementById('passInput').value.trim();
+        const err = document.getElementById('pinError');
+        try {
+            await window.appEngine.auth.login(shopId, user, pin);
+            await window.appEngine.init();
+        } catch (e) {
+            err.innerText = e.message;
+            setTimeout(() => err.innerText = "", 3000);
+        }
+    };
+
+    window.switchTab = function(tab) {
+        document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('page-' + tab).classList.add('active');
+        event.currentTarget.classList.add('active');
+    };
+
+    window.onload = () => { window.appEngine.init(); };
+</script>
+</body>
+</html>
