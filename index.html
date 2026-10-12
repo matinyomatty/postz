@@ -419,14 +419,16 @@
         <div id="pickedHello" class="login-hello hidden"></div>
 
         <div id="manualFields">
-            <input type="text" id="loginShop" class="login-field" placeholder="Shop code (e.g. mwanza-store)" autocapitalize="none" autocomplete="organization">
-            <input type="text" id="loginUser" class="login-field" placeholder="Username (e.g. amina)" autocapitalize="none" autocomplete="username">
+            <input type="text" id="loginId" class="login-field" placeholder="Phone number or email" autocapitalize="none" autocomplete="username" inputmode="email">
         </div>
-        <input type="password" id="loginPin" class="login-field pass-input" inputmode="numeric" placeholder="PIN" autocomplete="current-password"
+        <input type="password" id="loginPin" class="login-field pass-input" placeholder="PIN" autocomplete="current-password"
                onkeydown="if(event.key==='Enter') doLogin()">
         <button class="primary-cta" id="loginBtn" style="margin:4px 0 0;" onclick="doLogin()">UNLOCK</button>
         <div id="loginError"></div>
-        <button class="link-btn hidden" id="otherAccountBtn" onclick="otherAccount()">Use another account</button>
+        <div style="display:flex;justify-content:center;gap:16px;flex-wrap:wrap;">
+            <button class="link-btn" id="forgotBtn" onclick="forgotPin()">Forgot PIN?</button>
+            <button class="link-btn hidden" id="otherAccountBtn" onclick="otherAccount()">Use another account</button>
+        </div>
     </div>
 </div>
 
@@ -508,6 +510,7 @@
                 <div class="header-meta">
                     <span class="who me-name"></span>
                     <span class="hdr-date today-label"></span>
+                    <button class="icon-btn" onclick="openPin()" title="Change my PIN">🔑</button>
                     <button class="icon-btn" onclick="forceUpdate()" title="Refresh app">🔄</button>
                     <button class="icon-btn" onclick="logout()" title="Sign out">⏻</button>
                 </div>
@@ -811,17 +814,17 @@
         <div class="modal-title">👥 Team & Settings</div>
         <span class="section-label">Staff</span>
         <div id="staffList"></div>
-        <span class="section-label" style="margin-top:16px;">Add staff member</span>
+        <span class="section-label" style="margin-top:16px;">Add a seller</span>
         <div class="form-row">
             <div class="field-group"><span class="field-label">Full name</span><input type="text" id="stName" placeholder="e.g. Amina Juma"></div>
-            <div class="field-group"><span class="field-label">Username</span><input type="text" id="stUser" placeholder="e.g. amina" autocapitalize="none"></div>
+            <div class="field-group"><span class="field-label">Phone number</span><input type="tel" id="stPhone" placeholder="07XX XXX XXX"></div>
         </div>
         <div class="form-row">
             <div class="field-group"><span class="field-label">Role</span>
                 <select id="stRole"><option value="cashier">Cashier — sells & restocks</option><option value="admin">Admin — full access</option></select></div>
-            <div class="field-group"><span class="field-label">PIN (6+ digits)</span><input type="tel" id="stPin" inputmode="numeric" placeholder="e.g. 482915"></div>
+            <div class="field-group"><span class="field-label">PIN (6–12 digits)</span><input type="tel" id="stPin" inputmode="numeric" placeholder="e.g. 482915"></div>
         </div>
-        <button class="primary-cta" id="stBtn" onclick="addStaff()">➕ ADD STAFF</button>
+        <button class="primary-cta" id="stBtn" onclick="addStaff()">➕ ADD SELLER</button>
 
         <span class="section-label" style="margin-top:6px;">Shop settings</span>
         <div class="form-row">
@@ -830,6 +833,23 @@
         </div>
         <button class="btn-sec wide" onclick="saveSettings()">💾 SAVE SETTINGS</button>
         <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Change my PIN -->
+<div class="modal-overlay" id="sheetPin" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🔑 Change My PIN</div>
+        <div class="field-group"><span class="field-label">Current PIN</span><input type="password" id="pinOld" autocomplete="current-password"></div>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">New PIN (6–12 digits)</span><input type="password" id="pinNew" inputmode="numeric" autocomplete="new-password"></div>
+            <div class="field-group"><span class="field-label">New PIN again</span><input type="password" id="pinNew2" inputmode="numeric" autocomplete="new-password"></div>
+        </div>
+        <div class="save-bar">
+            <button class="primary-cta" id="pinBtn" onclick="changeMyPin()">SAVE NEW PIN</button>
+            <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
+        </div>
     </div>
 </div>
 
@@ -852,7 +872,7 @@ const firebaseConfig = {
     appId: "1:891386548810:web:26f1ef407a053a3f6f4cb3",
     measurementId: "G-FSDR5WGPFD"
 };
-// Every staff login is <shop>.<username>@ this hidden domain. Nobody types it.
+// Sellers' hidden logins live on this domain. Nobody types it — they use their phone number.
 const SHOP_DOMAIN = 'tenants.matinyopos.app';
 const IDLE_LIMIT = 10 * 60 * 1000; // sign out after 10 minutes without a tap
 const EMOJIS = ['📦','🍞','🥛','🍫','🍬','🥤','💧','🧃','🍺','🧂','🫙','🍗','🥚','🍌','🍎','🍚','🌽','🧅','🍅','🥫','🧈','☕','🍵','🧴','🧻','🪥','🧼','🧹','🔋','💊','🛍️','🍜','🌶️','🥜','🫘','🍪','🚬','📱','✏️','🕯️'];
@@ -994,78 +1014,118 @@ function overlayClose(e) { if (e.target.classList.contains('modal-overlay')) clo
 })();
 
 // ════════════════════════════════════════════════
-//  LOGIN
+//  LOGIN  — phone number (or email) + PIN
+//  Owners sign in with their real email (so "Forgot PIN" can email them).
+//  Sellers sign in with their phone number. A small public lookup
+//  (logins/<phone>) turns the phone number into the hidden login behind it.
 // ════════════════════════════════════════════════
-const emailFor = (shop, user) => `${shop}.${user}@${SHOP_DOMAIN}`;
-function parseEmail(email) {
-    const local = (email || '').split('@')[0];
-    const i = local.indexOf('.');
-    return i < 1 ? null : { shop: local.slice(0, i), username: local.slice(i + 1) };
+const isSellerEmail = e => (e || '').toLowerCase().endsWith('@' + SHOP_DOMAIN);
+function normPhone(v) {
+    let d = String(v || '').replace(/\D/g, '');
+    if (d.startsWith('0') && d.length === 10) d = '255' + d.slice(1);
+    else if (d.length === 9 && /^[67]/.test(d)) d = '255' + d;
+    return d;
 }
-function savedUsers() { try { return JSON.parse(sGet('matinyo.users') || '[]'); } catch (e) { return []; } }
-function rememberUser(shop, username, name) {
-    const list = savedUsers().filter(u => !(u.shop === shop && u.username === username));
-    list.unshift({ shop, username, name });
-    sSet('matinyo.users', JSON.stringify(list.slice(0, 8)));
+function normLoginId(v) {
+    v = String(v || '').trim().toLowerCase();
+    return v.includes('@') ? v : normPhone(v);
+}
+const prettyPhone = p => p && p.startsWith('255') && p.length === 12 ? '0' + p.slice(3, 6) + ' ' + p.slice(6, 9) + ' ' + p.slice(9) : p;
+const maskEmail = e => { const [a, b] = String(e).split('@'); return (a.length <= 2 ? a[0] + '*' : a.slice(0, 2) + '***' + a.slice(-1)) + '@' + b; };
+
+// Turn what the person typed into { email } for Firebase sign-in
+async function resolveLogin(id) {
+    if (id.includes('@')) return { email: id, owner: !isSellerEmail(id) };
+    if (id.length < 9) throw new Error('Enter a valid phone number.');
+    const snap = await db.collection('logins').doc(id).get({ source: 'server' }).catch(() => db.collection('logins').doc(id).get());
+    if (!snap.exists) throw new Error('No account uses that phone number.');
+    const d = snap.data();
+    return { email: d.email, owner: !isSellerEmail(d.email) };
+}
+
+function savedUsers() {
+    try { return JSON.parse(sGet('matinyo.users2') || '[]').filter(u => u && u.id); } catch (e) { return []; }
+}
+function rememberUser(id, name, shopName) {
+    const list = savedUsers().filter(u => u.id !== id);
+    list.unshift({ id, name, shop: shopName });
+    sSet('matinyo.users2', JSON.stringify(list.slice(0, 8)));
 }
 function forgetUser(i, ev) {
     ev.stopPropagation();
     const list = savedUsers(); list.splice(i, 1);
-    sSet('matinyo.users', JSON.stringify(list));
-    pickUser(null, list.length === 0);
+    sSet('matinyo.users2', JSON.stringify(list));
+    S.loginPick = null; S.manualLogin = list.length === 0;
+    renderLogin();
 }
-function loginError(msg) { $('loginError').textContent = msg || ''; }
+function loginError(msg, ok) { const e = $('loginError'); e.textContent = msg || ''; e.style.color = ok ? 'var(--green)' : 'var(--red)'; }
 
 function renderLogin() {
     const list = savedUsers();
-    $('quickBlock').classList.toggle('hidden', !list.length || !!S.loginPick);
+    const showManual = !S.loginPick && (S.manualLogin || !list.length);
+    $('quickBlock').classList.toggle('hidden', !list.length || !!S.loginPick || showManual);
     $('quickUsers').innerHTML = list.map((u, i) => `
         <div class="qu" onclick="pickUser(${i})">
             <button class="qu-x" title="Remove from this device" onclick="forgetUser(${i}, event)">×</button>
-            <div class="qu-av">${esc((u.name || u.username).charAt(0).toUpperCase())}</div>
-            <div class="qu-name">${esc(u.name || u.username)}</div>
-            <div class="qu-shop">${esc(u.shop)}</div>
+            <div class="qu-av">${esc((u.name || '?').charAt(0).toUpperCase())}</div>
+            <div class="qu-name">${esc(u.name || u.id)}</div>
+            <div class="qu-shop">${esc(u.shop || '')}</div>
         </div>`).join('');
-    const showManual = !S.loginPick && (S.manualLogin || !list.length);
     $('manualFields').classList.toggle('hidden', !showManual);
     $('pickedHello').classList.toggle('hidden', !S.loginPick);
-    if (S.loginPick) $('pickedHello').textContent = `Hi ${S.loginPick.name || S.loginPick.username} 👋 enter your PIN`;
-    $('loginPin').classList.toggle('hidden', !S.loginPick && !showManual);
-    $('loginBtn').classList.toggle('hidden', !S.loginPick && !showManual);
+    if (S.loginPick) $('pickedHello').textContent = `Hi ${S.loginPick.name.split(' ')[0]} 👋 enter your PIN`;
+    const canType = !!S.loginPick || showManual;
+    ['loginPin', 'loginBtn', 'forgotBtn'].forEach(id => $(id).classList.toggle('hidden', !canType));
     $('otherAccountBtn').classList.toggle('hidden', !list.length);
-    $('otherAccountBtn').textContent = S.loginPick ? 'Not you? Choose another' : showManual ? '← Back to saved users' : 'Use another account';
+    $('otherAccountBtn').textContent = S.loginPick ? 'Not you?' : showManual ? '← Saved accounts' : 'Use another account';
 }
-function otherAccount() { pickUser(null, !S.loginPick && !S.manualLogin); }
-function pickUser(i, manual) {
+function otherAccount() {
+    if (S.loginPick) { S.loginPick = null; S.manualLogin = false; }
+    else S.manualLogin = !S.manualLogin;
+    loginError(''); renderLogin();
+    if (S.manualLogin) setTimeout(() => $('loginId').focus(), 50);
+}
+function pickUser(i) {
     loginError('');
-    S.manualLogin = !!manual;
-    S.loginPick = (i === null || i === undefined) ? null : savedUsers()[i];
-    if (manual) S.loginPick = null;
+    S.loginPick = savedUsers()[i] || null; S.manualLogin = false;
     renderLogin();
-    setTimeout(() => (S.loginPick ? $('loginPin') : $('loginShop')).focus(), 50);
+    setTimeout(() => $('loginPin').focus(), 50);
 }
+const typedLoginId = () => S.loginPick ? S.loginPick.id : normLoginId($('loginId').value);
 
 async function doLogin() {
     loginError('');
-    let shop, username;
-    if (S.loginPick) { shop = S.loginPick.shop; username = S.loginPick.username; }
-    else { shop = $('loginShop').value.trim().toLowerCase(); username = $('loginUser').value.trim().toLowerCase(); }
-    const pin = $('loginPin').value.trim();
-    if (!shop || !username) return loginError('Enter your shop code and username.');
-    if (!/^[a-z0-9][a-z0-9-]{2,29}$/.test(shop)) return loginError('Shop code uses lowercase letters, numbers and dashes.');
-    if (!/^[a-z0-9_-]{2,20}$/.test(username)) return loginError('Username uses lowercase letters and numbers.');
+    const id = typedLoginId(), pin = $('loginPin').value.trim();
+    if (!id) return loginError('Enter your phone number or email.');
     if (pin.length < 6) return loginError('PIN must be at least 6 digits.');
     if (!navigator.onLine) return loginError('Signing in needs internet. Connect and try again — selling works offline once you are in.');
     const btn = $('loginBtn'); btn.disabled = true; btn.textContent = 'CHECKING...';
     try {
-        await auth.signInWithEmailAndPassword(emailFor(shop, username), pin);
+        const { email } = await resolveLogin(id);
+        S.pendingLoginId = id;
+        await auth.signInWithEmailAndPassword(email, pin);
     } catch (e) {
         const c = e.code || '';
         loginError(c.includes('too-many') ? 'Too many tries. Wait a few minutes and try again.'
             : c.includes('network') ? 'No connection. Check your internet.'
-            : 'Wrong shop code, username or PIN.');
+            : c.startsWith('auth/') ? 'Wrong phone/email or PIN.'
+            : (e.message || 'Could not sign in.'));
         $('loginPin').value = '';
     } finally { btn.disabled = false; btn.textContent = 'UNLOCK'; }
+}
+
+async function forgotPin() {
+    const id = typedLoginId();
+    if (!id) return loginError('Type your phone number or email first, then tap Forgot PIN.');
+    if (!navigator.onLine) return loginError('Resetting a PIN needs internet.');
+    try {
+        const { email, owner } = await resolveLogin(id);
+        if (!owner) return loginError('Ask your shop owner to reset your PIN — they can do it from 👥 Team.');
+        await auth.sendPasswordResetEmail(email);
+        loginError(`📧 We sent a link to ${maskEmail(email)}. Open it to set a new PIN (check spam too).`, true);
+    } catch (e) {
+        loginError(e.code === 'auth/user-not-found' ? 'No account uses that email.' : (e.message || 'Could not send the reset email.'));
+    }
 }
 
 async function rejectLogin(msg) {
@@ -1077,22 +1137,22 @@ async function rejectLogin(msg) {
 auth.onAuthStateChanged(async user => {
     stopListeners();
     if (!user) { loader(false); showLogin(); return; }
-    const who = parseEmail((user.email || '').toLowerCase());
-    if (!who || !(user.email || '').toLowerCase().endsWith('@' + SHOP_DOMAIN)) {
-        return rejectLogin('This account cannot open the till. Use your shop code, username and PIN.');
-    }
-    S.tenant = who.shop;
     loader(true, 'OPENING SHOP...');
     try {
+        const link = await db.collection('users').doc(user.uid).get();
+        if (!link.exists || !link.data().shop) return rejectLogin('This login is not linked to any shop. Contact Matinyo support.');
+        S.tenant = link.data().shop;
         const [tSnap, stSnap] = await Promise.all([tRef().get(), col('staff').doc(user.uid).get()]);
         if (!tSnap.exists) return rejectLogin('Shop not found. Contact Matinyo support.');
         if (tSnap.data().status !== 'active') return rejectLogin('This shop subscription is suspended. Contact Matinyo to reactivate.');
         if (!stSnap.exists) return rejectLogin('Your staff account is not set up. Ask the shop owner.');
         const st = stSnap.data();
+        if (st.replacedBy) return rejectLogin('Your PIN was reset. Sign in with your new PIN.');
         if (st.active === false) return rejectLogin('Your account has been switched off. Ask the shop owner.');
         S.tenantInfo = tSnap.data();
-        S.me = { uid: user.uid, username: who.username, name: st.name || who.username, role: st.role === 'admin' ? 'admin' : 'cashier' };
-        rememberUser(who.shop, who.username, S.me.name);
+        S.me = { uid: user.uid, email: user.email, loginId: st.loginId || '', name: st.name || 'Staff', role: st.role === 'admin' ? 'admin' : 'cashier' };
+        rememberUser(S.pendingLoginId || st.loginId || user.email, S.me.name, S.tenantInfo.name || S.tenant);
+        S.pendingLoginId = null;
         enterApp();
     } catch (e) {
         rejectLogin('Could not open the shop: ' + friendlyErr(e));
@@ -1105,8 +1165,6 @@ function showLogin() {
     $('mainApp').style.display = 'none';
     $('loginPage').style.display = 'flex';
     $('loginPin').value = '';
-    const list = savedUsers();
-    if (list.length) S.loginPick = null;
     renderLogin();
 }
 
@@ -1133,6 +1191,24 @@ function logout(msg) {
     closeModals();
     auth.signOut();
     if (msg) setTimeout(() => toast(msg), 300);
+}
+
+// Change my own PIN (anyone)
+function openPin() { ['pinOld', 'pinNew', 'pinNew2'].forEach(id => $(id).value = ''); openSheet('sheetPin'); setTimeout(() => $('pinOld').focus(), 250); }
+async function changeMyPin() {
+    const old = $('pinOld').value.trim(), nw = $('pinNew').value.trim();
+    if (!/^\d{6,12}$/.test(nw)) return toast('⚠️ New PIN must be 6 to 12 digits.', 'err');
+    if (nw !== $('pinNew2').value.trim()) return toast('⚠️ The two new PINs do not match.', 'err');
+    if (!navigator.onLine) return toast('⚠️ Changing your PIN needs internet.', 'err');
+    const btn = $('pinBtn'); btn.disabled = true; btn.textContent = 'SAVING...';
+    try {
+        const u = auth.currentUser;
+        await u.reauthenticateWithCredential(firebase.auth.EmailAuthProvider.credential(u.email, old));
+        await u.updatePassword(nw);
+        closeModals(); toast('✅ PIN changed');
+    } catch (e) {
+        toast((e.code || '').includes('wrong-password') || (e.code || '').includes('credential') ? '⚠️ Current PIN is wrong.' : '⚠️ ' + friendlyErr(e), 'err');
+    } finally { btn.disabled = false; btn.textContent = 'SAVE NEW PIN'; }
 }
 
 // Sign out automatically after a period with no taps
@@ -1162,7 +1238,8 @@ function startListeners() {
     });
     L(col('staff').doc(S.me.uid), s => {
         const d = s.data();
-        if (!d || d.active === false) rejectLogin('Your account has been switched off. Ask the shop owner.');
+        if (d && d.replacedBy) rejectLogin('Your PIN was reset. Sign in with your new PIN.');
+        else if (!d || d.active === false) rejectLogin('Your account has been switched off. Ask the shop owner.');
     });
     L(col('products'), s => {
         S.products = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
@@ -2231,46 +2308,119 @@ S.staff = [];
 function openTeam() {
     const st = S.tenantInfo.settings || {};
     $('setTarget').value = st.dailyTarget || ''; $('setWa').value = st.whatsapp || '';
-    ['stName', 'stUser', 'stPin'].forEach(id => $(id).value = ''); $('stRole').value = 'cashier';
+    ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = ''); $('stRole').value = 'cashier';
     openSheet('sheetTeam');
     $('staffList').innerHTML = '<div style="font-size:0.75rem;color:var(--gray);padding:8px 0;">Loading…</div>';
     S.sheetListeners.push(col('staff').onSnapshot(s => {
-        S.staff = s.docs.map(d => ({ uid: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        S.staff = s.docs.map(d => ({ uid: d.id, ...d.data() })).filter(p => !p.replacedBy).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         $('staffList').innerHTML = S.staff.map(p => {
-            const me = p.uid === S.me.uid, off = p.active === false;
-            return `<div class="staff-line">
-                <div class="staff-av">${esc((p.name || p.username || '?').charAt(0).toUpperCase())}</div>
-                <div style="flex:1;min-width:0;">
+            const me = p.uid === S.me.uid, off = p.active === false, byEmail = (p.loginId || '').includes('@');
+            const login = byEmail ? esc(p.loginId) : '📱 ' + esc(prettyPhone(p.loginId || ''));
+            return `<div class="staff-line" style="flex-wrap:wrap;">
+                <div class="staff-av">${esc((p.name || '?').charAt(0).toUpperCase())}</div>
+                <div style="flex:1;min-width:150px;">
                     <div style="font-size:0.85rem;font-weight:800;">${esc(p.name)}${me ? ' <span style="font-size:0.65rem;color:var(--gray);">(you)</span>' : ''}</div>
-                    <div style="font-size:0.68rem;color:var(--gray);">username: <b>${esc(p.username)}</b> · <span class="role-pill ${off ? 'off' : p.role}">${off ? 'switched off' : p.role}</span></div>
+                    <div style="font-size:0.68rem;color:var(--gray);">${login} · <span class="role-pill ${off ? 'off' : p.role}">${off ? 'switched off' : p.role}</span></div>
                 </div>
-                ${me ? '' : `<button class="tiny-btn" onclick="toggleRole('${p.uid}')">${p.role === 'admin' ? '↓ Cashier' : '↑ Admin'}</button>
-                <button class="tiny-btn ${off ? '' : 'red'}" onclick="toggleStaff('${p.uid}')">${off ? 'Switch on' : 'Switch off'}</button>`}
+                ${me ? `<button class="tiny-btn" onclick="openPin()">🔑 My PIN</button>` : `<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
+                    <button class="tiny-btn" onclick="resetStaffPin('${p.uid}')">🔑 ${byEmail ? 'Email reset' : 'Reset PIN'}</button>
+                    <button class="tiny-btn" onclick="toggleRole('${p.uid}')">${p.role === 'admin' ? '↓ Cashier' : '↑ Admin'}</button>
+                    <button class="tiny-btn ${off ? '' : 'red'}" onclick="toggleStaff('${p.uid}')">${off ? 'Switch on' : 'Switch off'}</button></div>`}
             </div>`;
-        }).join('') + `<div style="font-size:0.68rem;color:var(--gray);margin-top:8px;">Staff sign in with shop code <b>${esc(S.tenant)}</b>, their username and PIN. Forgot a PIN? Switch them off and add them again with a new username.</div>`;
+        }).join('') + `<div style="font-size:0.68rem;color:var(--gray);margin-top:8px;">Sellers sign in with their phone number and PIN.</div>`;
     }, e => { $('staffList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
 }
+
+// Ask for a value in a small dialog (mobile-safe replacement for prompt())
+function askValue(message, placeholder, okLabel = 'Save') {
+    return new Promise(resolve => {
+        const o = document.createElement('div');
+        o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        o.innerHTML = `<div style="background:#fff;border-radius:20px;padding:22px;max-width:330px;width:100%;text-align:center;">
+            <div style="font-size:0.88rem;font-weight:600;margin-bottom:12px;line-height:1.45;">${message}</div>
+            <input type="tel" inputmode="numeric" placeholder="${placeholder}" style="margin-bottom:14px;text-align:center;letter-spacing:4px;">
+            <div style="display:flex;gap:10px;">
+                <button data-a="no" style="flex:1;padding:12px;border-radius:12px;border:2px solid #e3e8ef;background:#fff;font-weight:800;">Cancel</button>
+                <button data-a="yes" style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--blue);color:#fff;font-weight:800;">${okLabel}</button>
+            </div></div>`;
+        document.body.appendChild(o);
+        const inp = o.querySelector('input'); setTimeout(() => inp.focus(), 50);
+        o.addEventListener('click', e => {
+            const a = e.target.dataset && e.target.dataset.a; if (!a) return;
+            o.remove(); resolve(a === 'yes' ? inp.value.trim() : null);
+        });
+    });
+}
+
+// Creates a hidden Firebase login for a seller. A separate Firebase instance
+// is used so the owner stays signed in on this device.
+async function makeSellerLogin(pin) {
+    const helper = firebase.apps.find(a => a.name === 'staffmaker') || firebase.initializeApp(firebaseConfig, 'staffmaker');
+    await helper.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+    const email = 's' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8) + '@' + SHOP_DOMAIN;
+    const cred = await helper.auth().createUserWithEmailAndPassword(email, pin);
+    await helper.auth().signOut();
+    return { uid: cred.user.uid, email };
+}
+
+async function sendLoginDetails(name, phone, pin, isNew) {
+    const link = location.href.split('#')[0].split('?')[0];
+    const text = `Habari ${name.split(' ')[0]}! ${isNew ? 'Your Matinyo POS account for' : 'Your new PIN for'} *${S.tenantInfo.name || S.tenant}* is ready.\n\n📱 Phone: ${prettyPhone(phone)}\n🔑 PIN: ${pin}\n\nOpen: ${link}`;
+    const ok = await showConfirm(`<b>${esc(name)}</b> can sign in with<br><br>📱 <b>${esc(prettyPhone(phone))}</b><br>🔑 PIN <b>${esc(pin)}</b><br><br>Send these details to them on WhatsApp?`, '📲 WhatsApp', 'var(--pos)');
+    if (ok) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
 async function addStaff() {
-    const name = $('stName').value.trim(), username = $('stUser').value.trim().toLowerCase(), role = $('stRole').value, pin = $('stPin').value.trim();
+    const name = $('stName').value.trim(), phone = normPhone($('stPhone').value), role = $('stRole').value, pin = $('stPin').value.trim();
     if (!name) return toast('⚠️ Enter their name.', 'err');
-    if (!/^[a-z0-9_-]{2,20}$/.test(username)) return toast('⚠️ Username: 2–20 lowercase letters or numbers, no spaces.', 'err');
+    if (!/^255[67]\d{8}$/.test(phone) && !/^\d{10,15}$/.test(phone)) return toast('⚠️ Enter a valid phone number, e.g. 0712 345 678.', 'err');
     if (!/^\d{6,12}$/.test(pin)) return toast('⚠️ PIN must be 6 to 12 digits.', 'err');
-    if (!navigator.onLine) return toast('⚠️ Adding staff needs internet.', 'err');
+    if (!navigator.onLine) return toast('⚠️ Adding a seller needs internet.', 'err');
     const btn = $('stBtn'); btn.disabled = true; btn.textContent = 'ADDING...';
     try {
-        // A separate Firebase instance creates the login, so you stay signed in here.
-        const helper = firebase.apps.find(a => a.name === 'staffmaker') || firebase.initializeApp(firebaseConfig, 'staffmaker');
-        await helper.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
-        const cred = await helper.auth().createUserWithEmailAndPassword(emailFor(S.tenant, username), pin);
-        await helper.auth().signOut();
-        await col('staff').doc(cred.user.uid).set({ username, name, role, active: true, createdAt: now(), createdBy: S.me.name });
-        ['stName', 'stUser', 'stPin'].forEach(id => $(id).value = '');
-        await showConfirm(`<b>${esc(name)}</b> can now sign in.<br><br>Shop code: <b>${esc(S.tenant)}</b><br>Username: <b>${esc(username)}</b><br>PIN: <b>${esc(pin)}</b>`, 'Done', 'var(--pos)');
+        const taken = await db.collection('logins').doc(phone).get({ source: 'server' });
+        if (taken.exists) return toast('⚠️ That phone number already has an account.', 'err');
+        const { uid, email } = await makeSellerLogin(pin);
+        const b = db.batch();
+        b.set(col('staff').doc(uid), { name, loginId: phone, role, active: true, createdAt: now(), createdBy: S.me.name });
+        b.set(db.collection('users').doc(uid), { shop: S.tenant });
+        b.set(db.collection('logins').doc(phone), { email, shop: S.tenant, uid });
+        await b.commit();
+        ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = '');
+        await sendLoginDetails(name, phone, pin, true);
     } catch (e) {
-        const c = e.code || '';
-        toast(c.includes('email-already-in-use') ? '⚠️ That username is already used in this shop.' : '⚠️ ' + friendlyErr(e), 'err');
-    } finally { btn.disabled = false; btn.textContent = '➕ ADD STAFF'; }
+        toast('⚠️ ' + friendlyErr(e), 'err');
+    } finally { btn.disabled = false; btn.textContent = '➕ ADD SELLER'; }
 }
+
+async function resetStaffPin(uid) {
+    const p = S.staff.find(x => x.uid === uid); if (!p) return;
+    if (!navigator.onLine) return toast('⚠️ Resetting a PIN needs internet.', 'err');
+    if ((p.loginId || '').includes('@')) {
+        if (!await showConfirm(`Email <b>${esc(p.name)}</b> a link to set a new PIN?<br><span style="font-size:0.78rem;color:#6b7280;">${esc(maskEmail(p.loginId))}</span>`, 'Send email', 'var(--blue)')) return;
+        return auth.sendPasswordResetEmail(p.loginId).then(() => toast('📧 Reset email sent')).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
+    }
+    const pin = await askValue(`New PIN for <b>${esc(p.name)}</b><br><span style="font-size:0.75rem;color:#6b7280;">6 to 12 digits. Their old PIN stops working.</span>`, '••••••', 'Reset');
+    if (pin === null) return;
+    if (!/^\d{6,12}$/.test(pin)) return toast('⚠️ PIN must be 6 to 12 digits.', 'err');
+    loader(true, 'RESETTING PIN...');
+    try {
+        // A new login replaces the old one; the old one is switched off.
+        const { uid: newUid, email } = await makeSellerLogin(pin);
+        const b = db.batch();
+        b.set(col('staff').doc(newUid), { name: p.name, loginId: p.loginId, role: p.role, active: p.active !== false, createdAt: now(), createdBy: S.me.name, previousUid: uid });
+        b.update(col('staff').doc(uid), { active: false, replacedBy: newUid });
+        b.set(db.collection('users').doc(newUid), { shop: S.tenant });
+        b.delete(db.collection('users').doc(uid));
+        b.set(db.collection('logins').doc(p.loginId), { email, shop: S.tenant, uid: newUid });
+        await b.commit();
+        loader(false);
+        await sendLoginDetails(p.name, p.loginId, pin, false);
+    } catch (e) {
+        toast('⚠️ ' + friendlyErr(e), 'err');
+    } finally { loader(false); }
+}
+
 function toggleStaff(uid) {
     const p = S.staff.find(x => x.uid === uid); if (!p) return;
     col('staff').doc(uid).update({ active: p.active === false }).then(() => toast(p.active === false ? `✅ ${p.name} switched on` : `⛔ ${p.name} switched off`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
