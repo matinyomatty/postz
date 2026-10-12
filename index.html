@@ -1,0 +1,2318 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
+    <title>Matinyo POS</title>
+
+    <!-- Install as an app (works once the files are hosted) -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Matinyo POS">
+    <meta name="theme-color" content="#0b0d12">
+    <link rel="apple-touch-icon" href="icon-192.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --ink: #0b0d12;          /* Matinyo black */
+            --ink2: #161b27;
+            --blue: #1a56db;         /* Matinyo blue */
+            --blue-d: #1442b0;
+            --yellow: #ffc72c;       /* Matinyo yellow */
+            --light: #f2f4f8;
+            --green: #16a34a;
+            --pos: #00875a;
+            --pos-l: #e6f6f0;
+            --gray: #6b7280;
+            --red: #dc2626;
+            --amber: #f59e0b;
+            --line: #e3e8ef;
+            --ai: linear-gradient(135deg, #1a56db 0%, #7c3aed 100%);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
+        html, body { min-height: 100vh; }
+        html { background: var(--ink); }
+        body { background: var(--ink); font-family: 'DM Sans', system-ui, sans-serif; color: var(--ink); }
+        body.unlocked { background: var(--light); }
+        button { font-family: inherit; }
+        .hidden { display: none !important; }
+        .is-cashier .role-admin { display: none !important; }
+
+        /* ── LOGIN ── */
+        #loginPage {
+            position: fixed; inset: 0; z-index: 100; overflow-y: auto;
+            background: radial-gradient(circle at 15% 0%, #16245a 0, var(--ink) 55%);
+            display: flex; align-items: center; justify-content: center;
+            padding: calc(24px + env(safe-area-inset-top)) 20px 24px;
+        }
+        .login-card {
+            background: #fff; width: 100%; max-width: 400px;
+            padding: 30px 22px 22px; border-radius: 24px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        .login-logo { font-family: 'Syne', sans-serif; font-size: 2rem; letter-spacing: 6px; color: var(--ink); }
+        .login-logo span { color: var(--blue); margin-left: 10px; }
+        .login-bar { width: 56px; height: 4px; border-radius: 2px; background: var(--yellow); margin: 8px auto 6px; }
+        .login-sub { color: var(--gray); font-size: 0.75rem; margin-bottom: 22px; }
+        .login-q { font-size: 0.68rem; font-weight: 800; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+        .quick-users { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 8px; margin-bottom: 14px; }
+        .qu { border: 2px solid var(--line); background: #f8fafc; border-radius: 14px; padding: 10px 6px; cursor: pointer; position: relative; }
+        .qu.sel { border-color: var(--blue); background: #eef3ff; }
+        .qu-av { width: 38px; height: 38px; border-radius: 50%; background: var(--ink); color: var(--yellow); font-weight: 800; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px; font-size: 1rem; }
+        .qu-name { font-size: 0.78rem; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .qu-shop { font-size: 0.58rem; color: var(--gray); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .qu-x { position: absolute; top: 2px; right: 6px; font-size: 0.8rem; color: #9ca3af; background: none; border: none; cursor: pointer; }
+        .login-field {
+            width: 100%; padding: 14px; border: 2px solid var(--line); border-radius: 14px;
+            font-size: 1rem; background: #f8fafc; outline: none; margin-bottom: 10px; font-family: inherit; display: block;
+        }
+        .login-field:focus { border-color: var(--blue); background: #fff; }
+        .pass-input { text-align: center; letter-spacing: 6px; font-size: 1.25rem; }
+        #loginError { color: var(--red); font-size: 0.78rem; min-height: 18px; margin-top: 10px; }
+        .link-btn { background: none; border: none; color: var(--blue); font-weight: 700; font-size: 0.75rem; cursor: pointer; margin-top: 10px; }
+        .login-hello { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; }
+
+        /* ── APP SHELL ── */
+        #mainApp { display: none; }
+        .tab-nav {
+            position: sticky; top: 0; z-index: 600; background: var(--ink);
+            display: flex; border-bottom: 3px solid var(--yellow);
+            padding-top: env(safe-area-inset-top, 0px);
+        }
+        .tab-btn {
+            flex: 1; border: none; background: transparent; cursor: pointer;
+            font-size: 0.62rem; font-weight: 800; color: rgba(255,255,255,0.45); letter-spacing: 1px; text-transform: uppercase;
+            display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 10px 4px 8px;
+            transition: color .2s, background .2s;
+        }
+        .tab-btn .tab-icon { font-size: 1.1rem; }
+        .tab-btn.active { color: var(--yellow); background: rgba(255,199,44,0.08); }
+        .tab-page { display: none; padding-bottom: 100px; }
+        .tab-page.active { display: block; }
+
+        .header {
+            background: var(--ink); color: #fff; padding: 14px 16px 16px;
+            border-bottom: 3px solid rgba(255,199,44,0.3); box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+        }
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; gap: 8px; }
+        .header-logo { font-family: 'Syne', sans-serif; font-size: 1.1rem; letter-spacing: 2px; color: var(--yellow); line-height: 1.2; min-width: 0; overflow-wrap: anywhere; }
+        .header-meta { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+        .who { font-size: 0.62rem; color: rgba(255,255,255,0.6); letter-spacing: 1px; text-transform: uppercase; }
+        .hdr-date { font-size: 0.62rem; color: rgba(255,255,255,0.45); }
+        .icon-btn { background: none; border: none; color: rgba(255,255,255,0.45); font-size: 0.85rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; }
+        .icon-btn:active { background: rgba(255,255,255,0.08); }
+        .today-panel {
+            display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
+            background: rgba(255,255,255,0.04); border: 1px solid rgba(255,199,44,0.2);
+            border-radius: 14px; padding: 10px 12px;
+        }
+        .today-stat h4 { font-size: 0.52rem; color: var(--yellow); text-transform: uppercase; letter-spacing: .8px; margin-bottom: 4px; }
+        .today-stat p { font-size: 0.85rem; font-weight: 800; color: #fff; }
+        .today-stat.right { text-align: right; }
+        .today-stat.mid { text-align: center; }
+        .trend-badge { display: inline-block; font-size: 0.55rem; padding: 1px 5px; border-radius: 4px; font-weight: 800; }
+        .trend-up { background: rgba(22,163,74,0.25); color: #4ade80; }
+        .trend-down { background: rgba(220,38,38,0.25); color: #f87171; }
+        .target-bar { height: 4px; background: rgba(255,255,255,0.1); border-radius: 3px; margin-top: 6px; overflow: hidden; }
+        .target-bar div { height: 100%; background: var(--yellow); }
+
+        .container { padding: 16px; max-width: 480px; margin: auto; }
+
+        .primary-cta {
+            background: var(--blue); color: #fff; width: 100%; padding: 16px; border: none; border-radius: 16px;
+            font-size: 0.95rem; font-weight: 800; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+            margin-bottom: 14px; box-shadow: 0 8px 20px rgba(26,86,219,0.3); letter-spacing: 1.2px; text-transform: uppercase;
+            transition: transform .15s;
+        }
+        .primary-cta:active { transform: scale(0.98); }
+        .primary-cta:disabled { opacity: .6; }
+        .primary-cta.green { background: var(--pos); box-shadow: 0 8px 20px rgba(0,135,90,0.3); }
+        .primary-cta.red { background: var(--red); box-shadow: 0 8px 20px rgba(220,38,38,0.25); }
+        .primary-cta.yellow { background: var(--yellow); color: var(--ink); box-shadow: 0 8px 20px rgba(255,199,44,0.3); }
+        .summary-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .stat-card { background: #fff; padding: 14px; border-radius: 16px; border-left: 4px solid var(--blue); box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+        .stat-card h4 { font-size: 0.58rem; color: var(--gray); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+        .stat-card p { font-size: 0.9rem; font-weight: 800; }
+        .row-btns { display: flex; gap: 10px; margin-bottom: 10px; }
+        .btn-sec {
+            flex: 1; padding: 12px; border-radius: 12px; border: 1px solid var(--line); background: #fff;
+            font-weight: 800; cursor: pointer; font-size: 0.75rem; transition: background .15s; color: var(--ink);
+        }
+        .btn-sec:active { background: #eef0f3; }
+        .btn-sec.wide { width: 100%; display: block; margin-bottom: 8px; }
+        .btn-sec.ghost { border: none; background: transparent; }
+        .section-label { font-size: 0.65rem; font-weight: 800; color: var(--gray); text-transform: uppercase; letter-spacing: 1px; display: block; margin-bottom: 10px; }
+        .entry-item {
+            background: #fff; padding: 13px 14px 13px 16px; border-radius: 16px; margin-bottom: 10px;
+            display: flex; justify-content: space-between; align-items: center; gap: 10px;
+            border-left: 4px solid #e0e6ef; box-shadow: 0 2px 6px rgba(0,0,0,0.04); cursor: pointer;
+        }
+        .entry-item.is-today { border-left-color: var(--yellow); background: #fffdf3; }
+        .entry-date { font-size: 0.88rem; font-weight: 800; }
+        .entry-meta { font-size: 0.72rem; color: var(--gray); margin-top: 3px; }
+        .tag { display: inline-block; font-size: 0.5rem; padding: 2px 6px; border-radius: 4px; font-weight: 900; margin-left: 6px; vertical-align: middle; letter-spacing: .5px; }
+        .tag-today { background: var(--yellow); color: var(--ink); }
+        .tag-closed { background: #dcfce7; color: #166534; }
+        .tag-open { background: #fef3c7; color: #92400e; }
+        .tag-prog { background: #e0e7ff; color: #3730a3; }
+        .empty-state { text-align: center; padding: 30px 20px; color: var(--gray); font-size: 0.85rem; }
+        .empty-state .icon { font-size: 2rem; margin-bottom: 10px; }
+        .btn-circle {
+            border: none; background: #f0f3f6; width: 36px; height: 36px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 0.85rem; flex-shrink: 0;
+        }
+        .btn-circle:active { background: #e0e3e6; }
+
+        /* ── SHEETS (bottom modals) ── */
+        .modal-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 1500;
+            backdrop-filter: blur(3px); justify-content: center; align-items: flex-end; overscroll-behavior: contain;
+        }
+        .modal-overlay.active { display: flex; }
+        body.modal-open, html.modal-open { overflow: hidden; }
+        .modal {
+            background: #fff; width: 100%; max-width: 480px; border-radius: 28px 28px 0 0; border-top: 5px solid var(--blue);
+            padding: 22px 20px calc(30px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto;
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.2); animation: slideUp .25s ease; overscroll-behavior: contain;
+        }
+        .modal.green { border-top-color: var(--pos); }
+        .modal.yellow { border-top-color: var(--yellow); }
+        @keyframes slideUp { from { transform: translateY(40px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .modal-handle { width: 36px; height: 4px; border-radius: 2px; background: #ddd; margin: 0 auto 18px; }
+        .modal-title { font-family: 'Syne', sans-serif; font-size: 1.1rem; text-align: center; margin-bottom: 18px; }
+        .field-group { margin-bottom: 14px; }
+        .field-label { font-size: 0.65rem; font-weight: 800; color: var(--blue); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; display: block; }
+        input[type=date], input[type=number], input[type=month], input[type=text], input[type=tel], input[type=password], select, textarea {
+            width: 100%; min-width: 0; display: block; padding: 13px; border: 1.5px solid var(--line); border-radius: 12px;
+            font-size: 0.95rem; background: #fafbfc; outline: none; font-family: inherit; color: var(--ink);
+        }
+        input:focus, select:focus, textarea:focus { border-color: var(--blue); background: #fff; }
+        textarea { height: 70px; resize: none; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 14px; }
+        .form-row .field-group { margin-bottom: 0; }
+        .save-bar { position: sticky; bottom: calc(-30px - env(safe-area-inset-bottom)); background: #fff; padding: 12px 0 6px; margin-top: 6px; }
+        .hint { border-radius: 12px; padding: 10px 14px; margin-bottom: 12px; font-size: 0.75rem; }
+        .hint.blue { background: #eff6ff; color: #1d4ed8; }
+        .hint.amber { background: #fef9c3; color: #854d0e; }
+        .hint.purple { background: #f3e8ff; color: #6b21a8; }
+        .hint.green { background: var(--pos-l); color: #065f46; }
+        .hint.gray { background: #f3f4f6; color: #374151; }
+        .seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; margin-bottom: 16px; }
+        .seg button { padding: 9px 4px; border-radius: 12px; border: 2px solid var(--line); background: #fff; color: var(--gray); font-weight: 800; font-size: 0.7rem; cursor: pointer; }
+        .seg button.on { color: #fff; }
+        .sum-box { background: #f8fafc; border-radius: 14px; padding: 12px 14px; margin-bottom: 10px; }
+        .sum-row { display: flex; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid #eceff3; font-size: 0.8rem; }
+        .sum-row:last-child { border-bottom: none; }
+        .sum-row span { color: var(--gray); }
+        .sum-row.big { font-size: 0.9rem; border-top: 2px solid #e5e7eb; margin-top: 4px; }
+        .sum-row.big span { color: var(--ink); font-weight: 800; }
+        .mini-cards { display: flex; gap: 8px; margin-bottom: 10px; }
+        .mini-cards div { flex: 1; border-radius: 12px; padding: 10px; text-align: center; background: #f0fdf4; }
+        .mini-cards b { display: block; font-size: 1.15rem; }
+        .mini-cards small { font-size: 0.62rem; color: var(--gray); }
+        .list-line {
+            display: flex; align-items: center; justify-content: space-between; gap: 8px;
+            padding: 9px 11px; border-radius: 11px; margin-bottom: 7px; background: #fffbeb; border-left: 3px solid var(--yellow);
+        }
+        .list-line .ll-main { flex: 1; min-width: 0; }
+        .list-line .ll-title { font-size: 0.76rem; font-weight: 800; }
+        .list-line .ll-sub { font-size: 0.66rem; color: var(--gray); margin-top: 1px; }
+        .list-line .ll-amt { font-size: 0.82rem; font-weight: 800; white-space: nowrap; }
+        .tiny-btn { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 4px 8px; font-size: 0.7rem; cursor: pointer; }
+        .tiny-btn.red { border-color: #fca5a5; color: var(--red); }
+        .voided { opacity: .5; text-decoration: line-through; }
+
+        /* ── LOADER / TOAST / BANNERS ── */
+        .loading-overlay {
+            display: none; position: fixed; inset: 0; background: rgba(11,13,18,0.82); z-index: 9999;
+            justify-content: center; align-items: center; flex-direction: column; gap: 14px; color: #fff;
+        }
+        .spinner { width: 36px; height: 36px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--yellow); border-radius: 50%; animation: spin .7s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loading-text { font-size: 0.8rem; letter-spacing: 2px; opacity: .75; }
+        .toast {
+            position: fixed; top: calc(64px + env(safe-area-inset-top)); left: 50%; transform: translateX(-50%); max-width: 92vw;
+            background: var(--ink); color: #fff; padding: 12px 20px; border-radius: 12px; font-size: 0.82rem; font-weight: 700;
+            z-index: 9998; opacity: 0; transition: opacity .3s; pointer-events: none; text-align: center;
+        }
+        .toast.show { opacity: 1; }
+        .toast.err { background: var(--red); }
+        #offlineBanner {
+            display: none; position: fixed; top: 0; left: 0; right: 0; z-index: 9999; background: var(--amber); color: #fff;
+            text-align: center; font-size: 0.72rem; font-weight: 800; padding: calc(8px + env(safe-area-inset-top)) 16px 8px;
+        }
+        #offlineBanner.show { display: block; }
+        #pendingBadge {
+            display: none; position: fixed; bottom: 90px; right: 14px; z-index: 1100; background: var(--amber); color: #fff;
+            border-radius: 10px; font-size: 0.62rem; font-weight: 800; padding: 4px 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+        #pendingBadge.show { display: block; }
+        #installBanner {
+            display: none; position: fixed; bottom: 90px; left: 12px; right: 12px; z-index: 2000; max-width: 460px; margin: auto;
+            background: var(--ink); color: #fff; border-radius: 18px; padding: 14px 16px; box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+            border: 1px solid rgba(255,199,44,0.3); align-items: center; gap: 12px;
+        }
+        #installBanner.show { display: flex; }
+        #installBanner strong { display: block; font-size: 0.85rem; color: var(--yellow); }
+        #installBanner span { font-size: 0.7rem; color: rgba(255,255,255,0.6); }
+        .install-btn { background: var(--yellow); color: var(--ink); border: none; border-radius: 10px; padding: 9px 14px; font-weight: 800; font-size: 0.75rem; cursor: pointer; }
+
+        /* ── AI ── */
+        .fab-ai {
+            position: fixed; bottom: 24px; right: 22px; width: 58px; height: 58px; border-radius: 50%; background: var(--ai);
+            color: #fff; border: none; box-shadow: 0 8px 24px rgba(26,86,219,0.4); font-size: 1.4rem; cursor: pointer; z-index: 1000;
+        }
+        .fab-ai:active { transform: scale(0.88); }
+        .ai-bubble { background: #f4f6fb; border-radius: 16px; padding: 14px; font-size: 0.84rem; line-height: 1.6; border-left: 4px solid var(--blue); margin-bottom: 12px; }
+        .ai-bubble h5 { font-size: 0.68rem; text-transform: uppercase; color: #888; margin-bottom: 6px; letter-spacing: .5px; }
+        .ai-stat { display: flex; justify-content: space-between; border-bottom: 1px dashed #ddd; padding: 5px 0; font-size: 0.8rem; }
+        .ai-stat:last-child { border: none; }
+
+        /* ── POS ── */
+        .pos-header { background: var(--ink); color: #fff; padding: 14px 16px 12px; border-bottom: 3px solid var(--blue); }
+        .pos-header .header-top { margin-bottom: 10px; }
+        .pos-logo { font-family: 'Syne', sans-serif; font-size: 1.05rem; letter-spacing: 3px; color: #60a5fa; }
+        .pos-strip { font-size: 0.66rem; color: rgba(255,255,255,0.55); margin-bottom: 10px; }
+        .pos-strip b { color: var(--yellow); }
+        .search-wrap { position: relative; }
+        .dark-search {
+            width: 100%; padding: 11px 14px 11px 38px !important; border: 1.5px solid rgba(255,255,255,0.15) !important;
+            border-radius: 12px !important; background: rgba(255,255,255,0.07) !important; color: #fff !important; font-size: 0.9rem !important;
+        }
+        .dark-search::placeholder { color: rgba(255,255,255,0.4); }
+        .dark-search:focus { border-color: var(--yellow) !important; }
+        .search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); font-size: 0.95rem; opacity: .55; }
+        .cat-filter { display: flex; gap: 6px; padding: 10px 16px; overflow-x: auto; background: var(--ink); scrollbar-width: none; }
+        .cat-filter::-webkit-scrollbar { display: none; }
+        .cat-chip {
+            flex-shrink: 0; padding: 6px 13px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.2); background: transparent;
+            color: rgba(255,255,255,0.6); font-size: 0.7rem; font-weight: 800; cursor: pointer; white-space: nowrap;
+        }
+        .cat-chip.active { background: var(--yellow); color: var(--ink); border-color: var(--yellow); }
+        .pos-items { padding: 12px 12px 0; max-width: 480px; margin: auto; }
+        .pos-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .item-card {
+            background: #fff; border-radius: 16px; padding: 14px 12px 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.06); cursor: pointer;
+            transition: transform .12s; position: relative; border: 2px solid transparent; overflow: hidden; text-align: left; width: 100%;
+        }
+        .item-card:active { transform: scale(0.96); }
+        .item-card.in-cart { border-color: var(--pos); background: var(--pos-l); }
+        .item-card.out { opacity: .45; cursor: not-allowed; }
+        .ic-emoji { font-size: 1.7rem; margin-bottom: 6px; display: block; }
+        .ic-name { font-size: 0.8rem; font-weight: 800; line-height: 1.2; margin-bottom: 3px; color: var(--ink); }
+        .ic-price { font-size: 0.78rem; color: var(--pos); font-weight: 800; }
+        .ic-stock { font-size: 0.62rem; color: var(--gray); margin-top: 3px; }
+        .ic-badge {
+            position: absolute; top: 8px; right: 8px; background: var(--pos); color: #fff; width: 24px; height: 24px; border-radius: 50%;
+            font-size: 0.72rem; font-weight: 800; display: none; align-items: center; justify-content: center;
+        }
+        .item-card.in-cart .ic-badge { display: flex; }
+        .ic-low { position: absolute; top: 8px; left: 8px; background: var(--amber); color: #fff; font-size: 0.5rem; font-weight: 800; padding: 2px 5px; border-radius: 4px; }
+        .cart-bar {
+            position: fixed; bottom: 0; left: 0; right: 0; z-index: 800; display: none; justify-content: center;
+            padding: 10px 16px calc(16px + env(safe-area-inset-bottom)); background: linear-gradient(to top, rgba(242,244,248,1) 70%, transparent); pointer-events: none;
+        }
+        .cart-bar.show { display: flex; }
+        .cart-bar-inner {
+            width: 100%; max-width: 448px; background: var(--ink); color: #fff; border-radius: 20px; padding: 13px 16px;
+            display: flex; align-items: center; justify-content: space-between; box-shadow: 0 8px 32px rgba(11,13,18,0.35);
+            pointer-events: all; cursor: pointer; border: none;
+        }
+        .cart-bar-inner:active { transform: scale(0.98); }
+        .cart-left { display: flex; align-items: center; gap: 12px; text-align: left; }
+        .cart-bubble { background: var(--yellow); color: var(--ink); width: 34px; height: 34px; border-radius: 50%; font-size: 0.9rem; font-weight: 800; display: flex; align-items: center; justify-content: center; }
+        .cart-label { font-size: 0.74rem; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+        .cart-sub { font-size: 0.64rem; color: rgba(255,255,255,0.55); margin-top: 1px; }
+        .cart-total { font-size: 1.02rem; font-weight: 800; color: var(--yellow); }
+        .cart-line { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .cart-line:last-child { border-bottom: none; }
+        .cl-emoji { font-size: 1.25rem; }
+        .cl-name { font-size: 0.85rem; font-weight: 800; }
+        .cl-price { font-size: 0.75rem; color: var(--gray); margin-top: 2px; }
+        .qty-ctrl { display: flex; align-items: center; gap: 8px; flex-shrink: 0; }
+        .qty-btn { width: 32px; height: 32px; border-radius: 50%; border: none; font-size: 1.1rem; font-weight: 800; cursor: pointer; }
+        .qty-minus { background: #fee2e2; color: var(--red); }
+        .qty-plus { background: #d1fae5; color: var(--pos); }
+        .qty-num { font-size: 0.95rem; font-weight: 800; min-width: 20px; text-align: center; }
+        .cart-total-row { display: flex; justify-content: space-between; align-items: center; padding: 14px 0 0; border-top: 2px solid var(--ink); margin-top: 4px; }
+        .cart-total-row span { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; color: var(--gray); }
+        .cart-total-row b { font-size: 1.25rem; color: var(--pos); }
+
+        /* ── STOCK ── */
+        .inv-header { background: var(--ink); padding: 14px 16px 12px; border-bottom: 3px solid rgba(255,199,44,0.3); }
+        .inv-logo { font-family: 'Syne', sans-serif; font-size: 1.05rem; letter-spacing: 3px; color: var(--yellow); }
+        .hdr-chip { background: rgba(255,255,255,0.1); border: none; border-radius: 10px; padding: 8px 12px; font-size: 0.7rem; font-weight: 800; cursor: pointer; color: #fff; letter-spacing: .5px; }
+        .hdr-chip.yellow { background: var(--yellow); color: var(--ink); }
+        .inv-strip { display: flex; gap: 8px; padding: 10px 16px; background: var(--ink); overflow-x: auto; scrollbar-width: none; }
+        .inv-strip::-webkit-scrollbar { display: none; }
+        .inv-strip-card { flex-shrink: 0; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px 14px; min-width: 90px; }
+        .inv-strip-card h4 { font-size: 0.5rem; color: rgba(255,255,255,0.5); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 3px; }
+        .inv-strip-card p { font-size: 0.82rem; font-weight: 800; color: #fff; }
+        .inv-strip-card.alert p { color: #f87171; }
+        .inv-list { padding: 12px 16px; max-width: 480px; margin: auto; }
+        .inv-row {
+            background: #fff; border-radius: 14px; margin-bottom: 8px; padding: 12px 14px; display: flex; align-items: center; gap: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04); border-left: 4px solid #e0e6ef;
+        }
+        .inv-row.low { border-left-color: var(--amber); }
+        .inv-row.out { border-left-color: var(--red); background: #fff5f5; }
+        .inv-emoji { font-size: 1.4rem; flex-shrink: 0; }
+        .inv-info { flex: 1; min-width: 0; }
+        .inv-name { font-size: 0.85rem; font-weight: 800; }
+        .inv-detail { font-size: 0.67rem; color: var(--gray); margin-top: 2px; }
+        .inv-stock { text-align: right; flex-shrink: 0; }
+        .inv-stock b { font-size: 0.98rem; display: block; }
+        .inv-stock b.low { color: var(--amber); }
+        .inv-stock b.out { color: var(--red); }
+        .inv-stock small { font-size: 0.58rem; color: var(--gray); }
+        .inv-actions { display: flex; flex-direction: column; gap: 4px; flex-shrink: 0; margin-left: 6px; }
+        .emoji-row { display: flex; flex-wrap: wrap; gap: 6px; }
+        .emoji-opt { width: 38px; height: 38px; border-radius: 10px; border: 1.5px solid var(--line); background: #fafbfc; font-size: 1.2rem; cursor: pointer; }
+        .emoji-opt.sel { border-color: var(--blue); background: #e8f0fe; }
+        .stk-line { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; gap: 10px; }
+        .stk-line input { width: 78px; padding: 8px 10px; text-align: center; }
+
+        /* ── TEAM ── */
+        .staff-line { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
+        .staff-av { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: var(--yellow); display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
+        .role-pill { font-size: 0.58rem; font-weight: 800; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: .5px; }
+        .role-pill.admin { background: #e0e7ff; color: #3730a3; }
+        .role-pill.cashier { background: #dcfce7; color: #166534; }
+        .role-pill.off { background: #fee2e2; color: #991b1b; }
+
+        /* Wider screens: more product columns */
+        @media (min-width: 820px) {
+            .pos-items { max-width: 1100px; }
+            .pos-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
+            .inv-list { max-width: 760px; }
+        }
+    </style>
+</head>
+<body>
+
+<div id="offlineBanner">📵 Offline — sales are saved on this device and will sync when you reconnect</div>
+<div id="pendingBadge">⏳ Waiting to sync</div>
+<div id="installBanner">
+    <div style="font-size:1.8rem;">📲</div>
+    <div style="flex:1;"><strong>Install Matinyo POS</strong><span>Add to home screen — opens like an app</span></div>
+    <button class="install-btn" onclick="doInstall()">INSTALL</button>
+    <button class="icon-btn" onclick="dismissInstall()">✕</button>
+</div>
+<div id="loadingOverlay" class="loading-overlay"><div class="spinner"></div><div class="loading-text" id="loadingText">LOADING...</div></div>
+<div id="toast" class="toast"></div>
+
+<!-- ══════════════ LOGIN ══════════════ -->
+<div id="loginPage">
+    <div class="login-card">
+        <div class="login-logo">MATINYO<span>POS</span></div>
+        <div class="login-bar"></div>
+        <div class="login-sub">Authorized staff only</div>
+
+        <div id="quickBlock">
+            <div class="login-q">Who's working?</div>
+            <div class="quick-users" id="quickUsers"></div>
+        </div>
+        <div id="pickedHello" class="login-hello hidden"></div>
+
+        <div id="manualFields">
+            <input type="text" id="loginShop" class="login-field" placeholder="Shop code (e.g. mwanza-store)" autocapitalize="none" autocomplete="organization">
+            <input type="text" id="loginUser" class="login-field" placeholder="Username (e.g. amina)" autocapitalize="none" autocomplete="username">
+        </div>
+        <input type="password" id="loginPin" class="login-field pass-input" inputmode="numeric" placeholder="PIN" autocomplete="current-password"
+               onkeydown="if(event.key==='Enter') doLogin()">
+        <button class="primary-cta" id="loginBtn" style="margin:4px 0 0;" onclick="doLogin()">UNLOCK</button>
+        <div id="loginError"></div>
+        <button class="link-btn hidden" id="otherAccountBtn" onclick="otherAccount()">Use another account</button>
+    </div>
+</div>
+
+<!-- ══════════════ APP ══════════════ -->
+<div id="mainApp">
+    <div class="tab-nav">
+        <button class="tab-btn role-admin" id="tab-dashboard" onclick="switchTab('dashboard')"><span class="tab-icon">📊</span>Dashboard</button>
+        <button class="tab-btn" id="tab-pos" onclick="switchTab('pos')"><span class="tab-icon">🛒</span>Point of Sale</button>
+        <button class="tab-btn" id="tab-inventory" onclick="switchTab('inventory')"><span class="tab-icon">📦</span>Stock</button>
+    </div>
+
+    <!-- ── DASHBOARD (owner/admin) ── -->
+    <div class="tab-page role-admin" id="page-dashboard">
+        <div class="header">
+            <div class="header-top">
+                <div class="header-logo shop-name">MATINYO</div>
+                <div class="header-meta">
+                    <span class="who me-name"></span>
+                    <button class="icon-btn" onclick="openTeam()" title="Team & settings">👥</button>
+                    <button class="icon-btn" onclick="forceUpdate()" title="Refresh app">🔄</button>
+                    <button class="icon-btn" onclick="logout()" title="Sign out">⏻</button>
+                </div>
+            </div>
+            <div id="monthBanner" style="margin-bottom:8px;"></div>
+            <div class="today-panel">
+                <div class="today-stat">
+                    <h4>Today Sales</h4>
+                    <p id="daySales">— TZS</p>
+                    <div id="heroSalesTrend" style="margin-top:4px;"></div>
+                    <div id="targetWrap"></div>
+                </div>
+                <div class="today-stat right">
+                    <h4>💵 Cash Balance</h4>
+                    <p id="balCash" style="color:var(--yellow)">— TZS</p>
+                    <div style="font-size:0.58rem;color:rgba(255,255,255,0.45);margin-top:4px;" id="todayTx"></div>
+                </div>
+            </div>
+            <div class="today-panel" style="margin-top:8px;grid-template-columns:1fr 1fr 1fr;">
+                <div class="today-stat"><h4>📱 Mobile</h4><p id="balMobile" style="color:#4ade80">— TZS</p></div>
+                <div class="today-stat mid"><h4>🏦 Bank</h4><p id="balBank" style="color:#60a5fa">— TZS</p></div>
+                <div class="today-stat right"><h4>💰 Savings</h4><p id="balSavings" style="color:var(--yellow)">— TZS</p></div>
+            </div>
+        </div>
+
+        <div class="container">
+            <div class="row-btns" style="margin-top:2px;">
+                <button class="primary-cta" style="flex:1;margin-bottom:0;" onclick="openEntry()">📒 Accounting</button>
+                <button class="primary-cta green" style="flex:1;margin-bottom:0;" onclick="openManualSale()">✍️ Manual Sale</button>
+            </div>
+            <div style="height:14px;"></div>
+            <div class="summary-grid">
+                <div class="stat-card"><h4 id="lblMSales">Sales · Month</h4><p id="mSales">—</p></div>
+                <div class="stat-card"><h4 id="lblMStock">Stock · Month</h4><p id="mStock">—</p></div>
+                <div class="stat-card"><h4 id="lblMExp">Expenses · Month</h4><p id="mExp">—</p></div>
+                <div class="stat-card" style="border-left-color:var(--yellow);"><h4 id="lblMProfit">Profit · Month</h4><p id="mProfit">—</p></div>
+            </div>
+            <div class="row-btns">
+                <button class="btn-sec" onclick="openDay()">🔍 FIND DATE</button>
+                <button class="btn-sec" onclick="openReport()">📄 REPORTS</button>
+            </div>
+            <button class="btn-sec wide" style="border-color:var(--red);color:var(--red);" onclick="openCloseDay()">🔒 CLOSE DAY</button>
+            <button class="btn-sec wide" style="border-color:var(--blue);color:var(--blue);margin-bottom:18px;" onclick="openMonth()">📅 MONTHLY PROFIT & CLOSE MONTH</button>
+
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span class="section-label" id="historyLabel" style="margin-bottom:0;">Days</span>
+                <button class="link-btn" style="margin:0;" id="historyToggle" onclick="toggleHistory()">Show all months</button>
+            </div>
+            <div id="historyList"></div>
+            <button id="historyMore" class="btn-sec wide hidden" onclick="S.historyLimit += 7; renderHistory();">VIEW MORE</button>
+        </div>
+        <button class="fab-ai" onclick="openAI()" title="Business insights">✨</button>
+    </div>
+
+    <!-- ── POINT OF SALE ── -->
+    <div class="tab-page" id="page-pos">
+        <div class="pos-header">
+            <div class="header-top">
+                <div class="pos-logo">POS · <span class="shop-name" style="color:#fff;">MATINYO</span></div>
+                <div class="header-meta">
+                    <span class="who me-name"></span>
+                    <span class="hdr-date today-label"></span>
+                    <button class="icon-btn" onclick="forceUpdate()" title="Refresh app">🔄</button>
+                    <button class="icon-btn" onclick="logout()" title="Sign out">⏻</button>
+                </div>
+            </div>
+            <div class="pos-strip" id="posStrip">Today: <b>0</b> sales</div>
+            <div class="search-wrap">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="dark-search" id="posSearch" placeholder="Search items..." oninput="renderPOS()">
+            </div>
+        </div>
+        <div class="cat-filter" id="catFilter"></div>
+        <div class="pos-items">
+            <div class="pos-grid" id="posGrid"></div>
+            <div id="posEmpty" class="empty-state hidden"></div>
+        </div>
+        <div class="cart-bar" id="cartBar">
+            <button class="cart-bar-inner" onclick="openCart()">
+                <div class="cart-left">
+                    <div class="cart-bubble" id="cartCount">0</div>
+                    <div><div class="cart-label">View Cart</div><div class="cart-sub" id="cartSummary">No items</div></div>
+                </div>
+                <div class="cart-total" id="cartBarTotal">0 TZS</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- ── STOCK ── -->
+    <div class="tab-page" id="page-inventory">
+        <div class="inv-header">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <div class="inv-logo">STOCK</div>
+                <div style="display:flex;gap:6px;">
+                    <button class="hdr-chip" onclick="openStocktake()">📋 STOCKTAKE</button>
+                    <button class="hdr-chip yellow role-admin" onclick="openItem()">+ ADD ITEM</button>
+                </div>
+            </div>
+        </div>
+        <div class="inv-strip" id="invStrip"></div>
+        <div class="inv-list">
+            <div class="search-wrap" style="margin-bottom:10px;">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="dark-search" id="invSearch" placeholder="Search items..." oninput="renderInventory()" style="background:var(--ink)!important;">
+            </div>
+            <span class="section-label" id="invLabel">All stock items</span>
+            <div id="invList"></div>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ SHEETS ══════════════ -->
+
+<!-- Cart -->
+<div class="modal-overlay" id="sheetCart" onclick="overlayClose(event)">
+    <div class="modal green">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🛒 Current Cart</div>
+        <div id="cartLines"></div>
+        <div class="cart-total-row"><span>Total</span><b id="cartModalTotal">0 TZS</b></div>
+        <div class="field-group" style="margin-top:14px;">
+            <span class="field-label">💳 Payment</span>
+            <div class="row-btns">
+                <button type="button" class="btn-sec" onclick="setPay('cash')">💵 All Cash</button>
+                <button type="button" class="btn-sec" onclick="setPay('mobile')">📱 All Lipa kwa Simu</button>
+            </div>
+            <div class="form-row" style="margin-bottom:0;">
+                <div><span class="field-label" style="font-size:0.6rem;">💵 Cash (TZS)</span><input type="number" id="payCash" inputmode="decimal" oninput="S.payTouched=true;checkPay()"></div>
+                <div><span class="field-label" style="font-size:0.6rem;">📱 Lipa kwa Simu (TZS)</span><input type="number" id="payMobile" inputmode="decimal" oninput="S.payTouched=true;checkPay()"></div>
+            </div>
+            <div id="payWarn" style="font-size:0.72rem;color:var(--red);margin-top:6px;display:none;">⚠️ Cash + Lipa kwa Simu must add up to the total.</div>
+        </div>
+        <div class="save-bar">
+            <button class="primary-cta green" onclick="confirmSale()">✅ CONFIRM SALE</button>
+            <button class="btn-sec wide ghost" style="color:var(--red);" onclick="clearCart();closeModals();">CLEAR CART</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add / edit item -->
+<div class="modal-overlay" id="sheetItem" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title" id="itemTitle">Add New Item</div>
+        <input type="hidden" id="itemId">
+        <div class="field-group"><span class="field-label">Icon</span><div class="emoji-row" id="emojiPicker"></div></div>
+        <div class="field-group"><span class="field-label">Item name</span><input type="text" id="itemName" placeholder="e.g. Bottled Water 500ml"></div>
+        <div class="field-group"><span class="field-label">Category</span><input type="text" id="itemCat" placeholder="e.g. Drinks, Snacks, Bread..." list="catList"><datalist id="catList"></datalist></div>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">Sell price / unit (TZS)</span><input type="number" id="itemSell" inputmode="decimal" placeholder="0"></div>
+            <div class="field-group"><span class="field-label">Cost / unit (TZS)</span><input type="number" id="itemCost" inputmode="decimal" placeholder="0"></div>
+        </div>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">Units in stock</span><input type="number" id="itemStock" inputmode="numeric" placeholder="0"></div>
+            <div class="field-group"><span class="field-label">Warn when below</span><input type="number" id="itemReorder" inputmode="numeric" placeholder="5"></div>
+        </div>
+        <div class="save-bar">
+            <button class="primary-cta" onclick="saveItem()">SAVE ITEM</button>
+            <button class="btn-sec wide ghost" style="color:var(--red);" id="itemDeleteBtn" onclick="deleteItem()">DELETE ITEM</button>
+            <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- Restock -->
+<div class="modal-overlay" id="sheetRestock" onclick="overlayClose(event)">
+    <div class="modal green">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📥 Restock Item</div>
+        <input type="hidden" id="restockId">
+        <div class="hint green" id="restockInfo"></div>
+        <div class="field-group"><span class="field-label">Units received</span><input type="number" id="restockQty" inputmode="numeric" placeholder="0" oninput="restockTotal()"></div>
+        <div class="role-admin">
+            <div class="field-group"><span class="field-label">Cost per unit (TZS)</span><input type="number" id="restockCost" inputmode="decimal" placeholder="0" oninput="restockTotal()"></div>
+            <div class="field-group">
+                <span class="field-label">Payment for this stock</span>
+                <select id="restockPaid">
+                    <option value="">Don't record a payment (credit / already recorded)</option>
+                    <option value="cash">Paid now from 💵 Cash</option>
+                    <option value="mobile">Paid now from 📱 Lipa kwa Simu</option>
+                    <option value="bank">Paid now from 🏦 Bank</option>
+                </select>
+            </div>
+            <div style="font-size:0.78rem;color:var(--gray);text-align:center;margin-bottom:6px;">Total cost: <strong id="restockTotalLbl">0 TZS</strong></div>
+        </div>
+        <div class="save-bar">
+            <button class="primary-cta green" onclick="confirmRestock()">ADD STOCK</button>
+            <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- Stocktake -->
+<div class="modal-overlay" id="sheetStocktake" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📋 Stocktake</div>
+        <div style="font-size:0.74rem;color:var(--gray);margin-bottom:10px;">Type the real count for each item. Leave blank to skip.</div>
+        <input type="text" id="stkSearch" placeholder="🔍 Find item..." oninput="filterStocktake()" style="margin-bottom:6px;">
+        <div id="stkList"></div>
+        <div class="save-bar">
+            <button class="primary-cta" onclick="confirmStocktake()">✅ SAVE STOCKTAKE</button>
+            <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- Accounting entry -->
+<div class="modal-overlay" id="sheetEntry" onclick="overlayClose(event)">
+    <div class="modal yellow">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📒 Accounting</div>
+        <div class="seg" id="entryTabs">
+            <button data-t="expense" onclick="entryTab('expense')">💸 Expense</button>
+            <button data-t="banking" onclick="entryTab('banking')">🏦 Bank In</button>
+            <button data-t="withdrawal" onclick="entryTab('withdrawal')">💳 Bank Out</button>
+            <button data-t="transfer" onclick="entryTab('transfer')">🔄 Transfer</button>
+            <button data-t="savings" onclick="entryTab('savings')">💰 To Savings</button>
+            <button data-t="adjust" onclick="entryTab('adjust')">⚖️ Set Balance</button>
+        </div>
+        <div class="field-group"><span class="field-label">📅 Date</span><input type="date" id="entryDate" onchange="watchEntryDay()"></div>
+
+        <div class="ef" data-for="expense">
+            <div class="field-group"><span class="field-label">Category</span><select id="expCat"></select></div>
+            <div class="field-group"><span class="field-label">Paid from</span>
+                <select id="expFrom"><option value="cash">💵 Cash</option><option value="mobile">📱 Lipa kwa Simu</option><option value="bank">🏦 Bank</option></select></div>
+        </div>
+        <div class="ef" data-for="banking">
+            <div class="hint blue">💡 Money deposited into the bank. It leaves the account you pick here.</div>
+            <div class="field-group"><span class="field-label">From</span>
+                <select id="bankFrom"><option value="cash">💵 Cash</option><option value="mobile">📱 Lipa kwa Simu</option></select></div>
+        </div>
+        <div class="ef" data-for="withdrawal">
+            <div class="hint amber">💡 Money taken out of the bank, into the account you pick here.</div>
+            <div class="field-group"><span class="field-label">To</span>
+                <select id="wdTo"><option value="cash">💵 Cash</option><option value="mobile">📱 Lipa kwa Simu</option></select></div>
+        </div>
+        <div class="ef" data-for="transfer">
+            <div class="hint purple">💡 Move money between the till and mobile money — e.g. cashing out Lipa kwa Simu.</div>
+            <div class="field-group"><span class="field-label">Direction</span>
+                <select id="trDir"><option value="cash>mobile">💵 Cash → 📱 Lipa kwa Simu</option><option value="mobile>cash">📱 Lipa kwa Simu → 💵 Cash</option></select></div>
+        </div>
+        <div class="ef" data-for="savings">
+            <div class="hint green">💡 Put money aside as savings. It stops counting as working money.</div>
+            <div class="field-group"><span class="field-label">From</span>
+                <select id="savFrom"><option value="bank">🏦 Bank</option><option value="cash">💵 Cash</option><option value="mobile">📱 Lipa kwa Simu</option></select></div>
+        </div>
+        <div class="ef" data-for="adjust">
+            <div class="hint gray">💡 Use this to enter opening balances, or to correct a balance after counting. Type what the account really holds now.</div>
+            <div class="field-group"><span class="field-label">Account</span>
+                <select id="adjAcct" onchange="adjHint()"><option value="cash">💵 Cash</option><option value="mobile">📱 Lipa kwa Simu</option><option value="bank">🏦 Bank</option><option value="savings">💰 Savings</option></select></div>
+            <div style="font-size:0.72rem;color:var(--gray);margin:-6px 0 10px;" id="adjNow"></div>
+        </div>
+
+        <div class="field-group"><span class="field-label" id="entryAmtLbl">Amount (TZS)</span><input type="number" id="entryAmt" inputmode="decimal" placeholder="0"></div>
+        <div class="field-group"><span class="field-label">Note (optional)</span><input type="text" id="entryNote" placeholder="e.g. LUKU, fuel, CRDB..."></div>
+        <div class="save-bar">
+            <button class="primary-cta" onclick="saveEntry()">➕ ADD ENTRY</button>
+            <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+        </div>
+        <span class="section-label" style="margin-top:12px;">📋 Entries on this date</span>
+        <div id="entryDayList"></div>
+    </div>
+</div>
+
+<!-- Manual sale -->
+<div class="modal-overlay" id="sheetManual" onclick="overlayClose(event)">
+    <div class="modal green">
+        <div class="modal-handle"></div>
+        <div class="modal-title">✍️ Manual Sale</div>
+        <div class="hint gray">For money taken without the POS screen — e.g. bulk orders or sales made while the app was closed. Stock is not changed.</div>
+        <div class="field-group"><span class="field-label">📅 Date</span><input type="date" id="msDate"></div>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">💵 Cash (TZS)</span><input type="number" id="msCash" inputmode="decimal" placeholder="0" oninput="msTotal()"></div>
+            <div class="field-group"><span class="field-label">📱 Lipa kwa Simu</span><input type="number" id="msMobile" inputmode="decimal" placeholder="0" oninput="msTotal()"></div>
+        </div>
+        <div style="text-align:center;font-size:0.82rem;color:var(--gray);margin-bottom:12px;">Total: <strong id="msTotalLbl">0 TZS</strong></div>
+        <div class="field-group"><span class="field-label">📝 Note</span><textarea id="msNote" placeholder="e.g. Bulk order for Mama Asha"></textarea></div>
+        <div class="save-bar">
+            <button class="primary-cta green" onclick="saveManualSale()">✅ ADD MANUAL SALE</button>
+            <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
+        </div>
+    </div>
+</div>
+
+<!-- Find date / day detail -->
+<div class="modal-overlay" id="sheetDay" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🔍 Day Detail</div>
+        <div class="field-group"><span class="field-label">Date</span><input type="date" id="dayPick" onchange="watchDay()"></div>
+        <div id="dayBody"></div>
+        <button class="btn-sec wide ghost" style="margin-top:10px;" onclick="closeModals()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Close day -->
+<div class="modal-overlay" id="sheetCloseDay" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🔒 Close Day</div>
+        <div id="cdStep1">
+            <div class="hint amber" style="text-align:center;">Count the money, type it below, and the app compares it with what the system expects.</div>
+            <div class="field-group"><span class="field-label">📅 Date</span><input type="date" id="cdDate"></div>
+            <div class="field-group"><span class="field-label">💵 Cash in hand (counted)</span><input type="number" id="cdCash" inputmode="decimal" placeholder="Leave blank to skip"></div>
+            <div class="field-group"><span class="field-label">📱 Lipa kwa Simu balance</span><input type="number" id="cdMobile" inputmode="decimal" placeholder="Leave blank to skip"></div>
+            <div class="field-group"><span class="field-label">🏦 Bank balance</span><input type="number" id="cdBank" inputmode="decimal" placeholder="Leave blank to skip"></div>
+            <div class="save-bar">
+                <button class="primary-cta" onclick="confirmCloseDay()">✅ CLOSE & SEND SUMMARY</button>
+                <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
+            </div>
+        </div>
+        <div id="cdStep2" class="hidden">
+            <div id="cdSummary"></div>
+            <div class="save-bar">
+                <button class="primary-cta green" onclick="shareText(S.closeDayMsg)">📲 SEND ON WHATSAPP</button>
+                <button class="btn-sec wide ghost" onclick="closeModals()">DONE</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Month -->
+<div class="modal-overlay" id="sheetMonth" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📅 Monthly Profit</div>
+        <div id="mcHistory"></div>
+        <div class="field-group" style="margin-top:12px;"><span class="field-label">Month</span><input type="month" id="mcPick" onchange="renderMonthClose()"></div>
+        <div id="mcBody"></div>
+        <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Reports -->
+<div class="modal-overlay" id="sheetReport" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📄 Monthly Report</div>
+        <div class="field-group"><span class="field-label">Month</span><input type="month" id="rpMonth" onchange="previewReport()"></div>
+        <div id="rpPreview"></div>
+        <div class="save-bar">
+            <button class="primary-cta" onclick="generatePDF()">⬇️ DOWNLOAD PDF</button>
+            <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+        </div>
+    </div>
+</div>
+
+<!-- AI -->
+<div class="modal-overlay" id="sheetAI" onclick="overlayClose(event)">
+    <div class="modal" style="background:#fbfcff;">
+        <div class="modal-handle"></div>
+        <div class="modal-title">✨ Business Insights</div>
+        <div id="aiOut"></div>
+        <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Team & settings -->
+<div class="modal-overlay" id="sheetTeam" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">👥 Team & Settings</div>
+        <span class="section-label">Staff</span>
+        <div id="staffList"></div>
+        <span class="section-label" style="margin-top:16px;">Add staff member</span>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">Full name</span><input type="text" id="stName" placeholder="e.g. Amina Juma"></div>
+            <div class="field-group"><span class="field-label">Username</span><input type="text" id="stUser" placeholder="e.g. amina" autocapitalize="none"></div>
+        </div>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">Role</span>
+                <select id="stRole"><option value="cashier">Cashier — sells & restocks</option><option value="admin">Admin — full access</option></select></div>
+            <div class="field-group"><span class="field-label">PIN (6+ digits)</span><input type="tel" id="stPin" inputmode="numeric" placeholder="e.g. 482915"></div>
+        </div>
+        <button class="primary-cta" id="stBtn" onclick="addStaff()">➕ ADD STAFF</button>
+
+        <span class="section-label" style="margin-top:6px;">Shop settings</span>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">Daily sales target (TZS)</span><input type="number" id="setTarget" inputmode="decimal" placeholder="e.g. 50000"></div>
+            <div class="field-group"><span class="field-label">WhatsApp for summaries</span><input type="tel" id="setWa" placeholder="2557XXXXXXXX"></div>
+        </div>
+        <button class="btn-sec wide" onclick="saveSettings()">💾 SAVE SETTINGS</button>
+        <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+    </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+// ════════════════════════════════════════════════
+//  CONFIG
+// ════════════════════════════════════════════════
+const firebaseConfig = {
+    apiKey: "AIzaSyCaDZILjLrWg2VGvFElzU08Je-kJTGHKiU",
+    authDomain: "matinyopos.firebaseapp.com",
+    projectId: "matinyopos",
+    storageBucket: "matinyopos.firebasestorage.app",
+    messagingSenderId: "891386548810",
+    appId: "1:891386548810:web:26f1ef407a053a3f6f4cb3",
+    measurementId: "G-FSDR5WGPFD"
+};
+// Every staff login is <shop>.<username>@ this hidden domain. Nobody types it.
+const SHOP_DOMAIN = 'tenants.matinyopos.app';
+const IDLE_LIMIT = 10 * 60 * 1000; // sign out after 10 minutes without a tap
+const EMOJIS = ['📦','🍞','🥛','🍫','🍬','🥤','💧','🧃','🍺','🧂','🫙','🍗','🥚','🍌','🍎','🍚','🌽','🧅','🍅','🥫','🧈','☕','🍵','🧴','🧻','🪥','🧼','🧹','🔋','💊','🛍️','🍜','🌶️','🥜','🫘','🍪','🚬','📱','✏️','🕯️'];
+const EXPENSE_CATS = [
+    ['Supplier', '📦 Supplier / Restock'], ['Electricity', '⚡ Electricity (LUKU)'], ['Transport', '🚗 Transport'],
+    ['Rent', '🏠 Rent'], ['Salaries', '👷 Salaries / Labour'], ['Repairs', '🔧 Repairs & Maintenance'],
+    ['Taxes', '🧾 Taxes & Licences'], ['Other', '📝 Other']
+];
+const ACCT = { cash: '💵 Cash', mobile: '📱 Lipa kwa Simu', bank: '🏦 Bank', savings: '💰 Savings' };
+const ENTRY_COLORS = {
+    expense: ['var(--yellow)', '#fffbeb'], banking: ['var(--blue)', '#eff6ff'], withdrawal: ['#854d0e', '#fefce8'],
+    transfer: ['#7c3aed', '#f3e8ff'], savings: ['#a16207', '#fef9c3'], adjust: ['#6b7280', '#f3f4f6']
+};
+
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+// Keep data on the device so the till keeps working when the internet drops.
+db.enablePersistence({ synchronizeTabs: true }).catch(e => console.warn('Offline storage unavailable:', e.code));
+const FV = firebase.firestore.FieldValue;
+const inc = n => FV.increment(n);
+const now = () => FV.serverTimestamp();
+
+// ════════════════════════════════════════════════
+//  STATE
+// ════════════════════════════════════════════════
+const S = {
+    tenant: null, tenantInfo: {}, me: null,
+    products: [], costs: {}, balances: { cash: 0, mobile: 0, bank: 0, savings: 0 },
+    days: {}, months: {}, todaySales: [], today: null,
+    cart: {}, payTouched: false, activeCat: 'All', emoji: '📦',
+    historyAll: false, historyLimit: 7,
+    listeners: [], sheetListeners: [], pending: 0,
+    loginPick: null, entryType: 'expense', reportCache: {}, closeDayMsg: '', mc: null
+};
+
+// ════════════════════════════════════════════════
+//  HELPERS
+// ════════════════════════════════════════════════
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const num = v => { const n = parseFloat(String(v ?? '').replace(/,/g, '')); return isFinite(n) ? n : 0; };
+const n0 = v => Math.round(Number(v) || 0).toLocaleString('en-US');
+const fmt = v => n0(v) + ' TZS';
+const signed = v => (v >= 0 ? '+' : '') + n0(v);
+const dayStr = (d = new Date()) => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+const shiftDay = (d, n) => { const x = new Date(d + 'T12:00:00'); x.setDate(x.getDate() + n); return dayStr(x); };
+const monthName = m => new Date(m + '-15T12:00:00').toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+const monthShort = m => new Date(m + '-15T12:00:00').toLocaleDateString('en-GB', { month: 'short' });
+const prevMonth = m => { const [y, mo] = m.split('-').map(Number); return dayStr(new Date(y, mo - 2, 15)).slice(0, 7); };
+const prettyDay = d => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+const shortDay = d => new Date(d + 'T12:00:00').toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+const timeOf = t => t && t.toDate ? t.toDate().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'saving…';
+const isAdmin = () => !!(S.me && S.me.role === 'admin');
+const tRef = () => db.collection('tenants').doc(S.tenant);
+const col = name => tRef().collection(name);
+const productById = id => S.products.find(p => p.id === id);
+const sGet = k => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+const sSet = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+
+function toast(msg, type) {
+    const t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast show' + (type === 'err' ? ' err' : '');
+    clearTimeout(t._h);
+    t._h = setTimeout(() => t.classList.remove('show'), type === 'err' ? 4500 : 2600);
+}
+function loader(on, text) {
+    $('loadingOverlay').style.display = on ? 'flex' : 'none';
+    $('loadingText').textContent = text || 'LOADING...';
+}
+function friendlyErr(e) {
+    const c = (e && e.code) || '';
+    if (c.includes('permission-denied')) return 'your account is not allowed to do this';
+    if (c.includes('unavailable')) return 'no connection to the server';
+    return (e && e.message) || String(e);
+}
+
+// Save a batch. It is applied on this device straight away (works offline) and
+// synced to the cloud in the background. A badge shows anything still waiting.
+function commit(batch, okMsg) {
+    S.pending++; updatePending();
+    const p = batch.commit()
+        .catch(err => { console.error(err); toast('⚠️ Not saved: ' + friendlyErr(err), 'err'); throw err; })
+        .finally(() => { S.pending--; updatePending(); });
+    if (okMsg) toast(okMsg);
+    return p.catch(() => {});
+}
+function updatePending() {
+    const b = $('pendingBadge');
+    b.textContent = `⏳ ${S.pending} waiting to sync`;
+    b.classList.toggle('show', S.pending > 0 && !navigator.onLine);
+}
+
+// Mobile-safe confirm dialog
+function showConfirm(message, yesLabel = 'Delete', yesColor = 'var(--red)') {
+    return new Promise(resolve => {
+        const o = document.createElement('div');
+        o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        o.innerHTML = `<div style="background:#fff;border-radius:20px;padding:22px;max-width:330px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.3);">
+            <div style="font-size:1.5rem;margin-bottom:10px;">⚠️</div>
+            <div style="font-size:0.88rem;font-weight:600;margin-bottom:18px;line-height:1.45;">${message}</div>
+            <div style="display:flex;gap:10px;">
+                <button data-a="no" style="flex:1;padding:12px;border-radius:12px;border:2px solid #e3e8ef;background:#fff;font-weight:800;cursor:pointer;">Cancel</button>
+                <button data-a="yes" style="flex:1;padding:12px;border-radius:12px;border:none;background:${yesColor};color:#fff;font-weight:800;cursor:pointer;">${yesLabel}</button>
+            </div></div>`;
+        document.body.appendChild(o);
+        o.addEventListener('click', e => {
+            const a = e.target.dataset && e.target.dataset.a;
+            if (!a) return;
+            o.remove(); resolve(a === 'yes');
+        });
+    });
+}
+
+// ════════════════════════════════════════════════
+//  SHEETS (bottom modals)
+// ════════════════════════════════════════════════
+function openSheet(id) {
+    closeModals();
+    $(id).classList.add('active');
+    document.body.classList.add('modal-open'); document.documentElement.classList.add('modal-open');
+}
+function closeModals() {
+    document.querySelectorAll('.modal-overlay').forEach(o => o.classList.remove('active'));
+    document.body.classList.remove('modal-open'); document.documentElement.classList.remove('modal-open');
+    S.sheetListeners.forEach(u => u()); S.sheetListeners = [];
+}
+function overlayClose(e) { if (e.target.classList.contains('modal-overlay')) closeModals(); }
+(function swipeToClose() {
+    let y0 = 0, x0 = 0;
+    document.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; }, { passive: true });
+    document.addEventListener('touchend', e => {
+        const dy = e.changedTouches[0].clientY - y0, dx = Math.abs(e.changedTouches[0].clientX - x0);
+        if (dy < 80 || dx > 60) return;
+        const o = document.querySelector('.modal-overlay.active'); if (!o) return;
+        const m = o.querySelector('.modal'); if (m && y0 < m.getBoundingClientRect().top + 70) closeModals();
+    }, { passive: true });
+})();
+
+// ════════════════════════════════════════════════
+//  LOGIN
+// ════════════════════════════════════════════════
+const emailFor = (shop, user) => `${shop}.${user}@${SHOP_DOMAIN}`;
+function parseEmail(email) {
+    const local = (email || '').split('@')[0];
+    const i = local.indexOf('.');
+    return i < 1 ? null : { shop: local.slice(0, i), username: local.slice(i + 1) };
+}
+function savedUsers() { try { return JSON.parse(sGet('matinyo.users') || '[]'); } catch (e) { return []; } }
+function rememberUser(shop, username, name) {
+    const list = savedUsers().filter(u => !(u.shop === shop && u.username === username));
+    list.unshift({ shop, username, name });
+    sSet('matinyo.users', JSON.stringify(list.slice(0, 8)));
+}
+function forgetUser(i, ev) {
+    ev.stopPropagation();
+    const list = savedUsers(); list.splice(i, 1);
+    sSet('matinyo.users', JSON.stringify(list));
+    pickUser(null, list.length === 0);
+}
+function loginError(msg) { $('loginError').textContent = msg || ''; }
+
+function renderLogin() {
+    const list = savedUsers();
+    $('quickBlock').classList.toggle('hidden', !list.length || !!S.loginPick);
+    $('quickUsers').innerHTML = list.map((u, i) => `
+        <div class="qu" onclick="pickUser(${i})">
+            <button class="qu-x" title="Remove from this device" onclick="forgetUser(${i}, event)">×</button>
+            <div class="qu-av">${esc((u.name || u.username).charAt(0).toUpperCase())}</div>
+            <div class="qu-name">${esc(u.name || u.username)}</div>
+            <div class="qu-shop">${esc(u.shop)}</div>
+        </div>`).join('');
+    const showManual = !S.loginPick && (S.manualLogin || !list.length);
+    $('manualFields').classList.toggle('hidden', !showManual);
+    $('pickedHello').classList.toggle('hidden', !S.loginPick);
+    if (S.loginPick) $('pickedHello').textContent = `Hi ${S.loginPick.name || S.loginPick.username} 👋 enter your PIN`;
+    $('loginPin').classList.toggle('hidden', !S.loginPick && !showManual);
+    $('loginBtn').classList.toggle('hidden', !S.loginPick && !showManual);
+    $('otherAccountBtn').classList.toggle('hidden', !list.length);
+    $('otherAccountBtn').textContent = S.loginPick ? 'Not you? Choose another' : showManual ? '← Back to saved users' : 'Use another account';
+}
+function otherAccount() { pickUser(null, !S.loginPick && !S.manualLogin); }
+function pickUser(i, manual) {
+    loginError('');
+    S.manualLogin = !!manual;
+    S.loginPick = (i === null || i === undefined) ? null : savedUsers()[i];
+    if (manual) S.loginPick = null;
+    renderLogin();
+    setTimeout(() => (S.loginPick ? $('loginPin') : $('loginShop')).focus(), 50);
+}
+
+async function doLogin() {
+    loginError('');
+    let shop, username;
+    if (S.loginPick) { shop = S.loginPick.shop; username = S.loginPick.username; }
+    else { shop = $('loginShop').value.trim().toLowerCase(); username = $('loginUser').value.trim().toLowerCase(); }
+    const pin = $('loginPin').value.trim();
+    if (!shop || !username) return loginError('Enter your shop code and username.');
+    if (!/^[a-z0-9][a-z0-9-]{2,29}$/.test(shop)) return loginError('Shop code uses lowercase letters, numbers and dashes.');
+    if (!/^[a-z0-9_-]{2,20}$/.test(username)) return loginError('Username uses lowercase letters and numbers.');
+    if (pin.length < 6) return loginError('PIN must be at least 6 digits.');
+    if (!navigator.onLine) return loginError('Signing in needs internet. Connect and try again — selling works offline once you are in.');
+    const btn = $('loginBtn'); btn.disabled = true; btn.textContent = 'CHECKING...';
+    try {
+        await auth.signInWithEmailAndPassword(emailFor(shop, username), pin);
+    } catch (e) {
+        const c = e.code || '';
+        loginError(c.includes('too-many') ? 'Too many tries. Wait a few minutes and try again.'
+            : c.includes('network') ? 'No connection. Check your internet.'
+            : 'Wrong shop code, username or PIN.');
+        $('loginPin').value = '';
+    } finally { btn.disabled = false; btn.textContent = 'UNLOCK'; }
+}
+
+async function rejectLogin(msg) {
+    stopListeners();
+    await auth.signOut();
+    loginError(msg);
+}
+
+auth.onAuthStateChanged(async user => {
+    stopListeners();
+    if (!user) { loader(false); showLogin(); return; }
+    const who = parseEmail((user.email || '').toLowerCase());
+    if (!who || !(user.email || '').toLowerCase().endsWith('@' + SHOP_DOMAIN)) {
+        return rejectLogin('This account cannot open the till. Use your shop code, username and PIN.');
+    }
+    S.tenant = who.shop;
+    loader(true, 'OPENING SHOP...');
+    try {
+        const [tSnap, stSnap] = await Promise.all([tRef().get(), col('staff').doc(user.uid).get()]);
+        if (!tSnap.exists) return rejectLogin('Shop not found. Contact Matinyo support.');
+        if (tSnap.data().status !== 'active') return rejectLogin('This shop subscription is suspended. Contact Matinyo to reactivate.');
+        if (!stSnap.exists) return rejectLogin('Your staff account is not set up. Ask the shop owner.');
+        const st = stSnap.data();
+        if (st.active === false) return rejectLogin('Your account has been switched off. Ask the shop owner.');
+        S.tenantInfo = tSnap.data();
+        S.me = { uid: user.uid, username: who.username, name: st.name || who.username, role: st.role === 'admin' ? 'admin' : 'cashier' };
+        rememberUser(who.shop, who.username, S.me.name);
+        enterApp();
+    } catch (e) {
+        rejectLogin('Could not open the shop: ' + friendlyErr(e));
+    } finally { loader(false); }
+});
+
+function showLogin() {
+    S.me = null; S.cart = {}; S.loginPick = null; S.manualLogin = false;
+    document.body.classList.remove('unlocked', 'is-admin', 'is-cashier');
+    $('mainApp').style.display = 'none';
+    $('loginPage').style.display = 'flex';
+    $('loginPin').value = '';
+    const list = savedUsers();
+    if (list.length) S.loginPick = null;
+    renderLogin();
+}
+
+function enterApp() {
+    loginError('');
+    $('loginPage').style.display = 'none';
+    $('mainApp').style.display = 'block';
+    document.body.classList.add('unlocked');
+    document.body.classList.toggle('is-admin', isAdmin());
+    document.body.classList.toggle('is-cashier', !isAdmin());
+    document.querySelectorAll('.me-name').forEach(e => e.textContent = S.me.name.split(' ')[0]);
+    renderShopName();
+    S.today = dayStr();
+    startListeners();
+    switchTab(isAdmin() ? 'dashboard' : 'pos');
+    touch();
+}
+
+function logout(msg) {
+    if (Object.keys(S.cart).length && !msg) {
+        showConfirm('There are items in the cart. Sign out anyway?', 'Sign out').then(ok => { if (ok) { S.cart = {}; auth.signOut(); } });
+        return;
+    }
+    closeModals();
+    auth.signOut();
+    if (msg) setTimeout(() => toast(msg), 300);
+}
+
+// Sign out automatically after a period with no taps
+let lastTouch = Date.now();
+function touch() { lastTouch = Date.now(); }
+['click', 'touchstart', 'keyup', 'scroll'].forEach(ev => document.addEventListener(ev, touch, { passive: true }));
+setInterval(() => {
+    // Only when online: signing back in needs internet, and the till must keep working offline.
+    if (S.me && navigator.onLine && Date.now() - lastTouch > IDLE_LIMIT) logout('🔒 Signed out after 10 minutes idle');
+    if (S.me && dayStr() !== S.today) { S.today = dayStr(); stopListeners(); startListeners(); renderAll(); }
+}, 15000);
+
+// ════════════════════════════════════════════════
+//  LIVE DATA
+// ════════════════════════════════════════════════
+function startListeners() {
+    const onErr = e => { console.warn(e); if (e.code === 'permission-denied') toast('⚠️ Access problem: ' + friendlyErr(e), 'err'); };
+    const L = (q, fn) => S.listeners.push(q.onSnapshot(fn, onErr));
+
+    L(tRef(), s => {
+        S.tenantInfo = s.data() || {};
+        if (S.tenantInfo.status && S.tenantInfo.status !== 'active') {
+            rejectLogin('This shop subscription has been suspended. Contact Matinyo to reactivate.');
+            return;
+        }
+        renderShopName(); if (isAdmin()) renderDashboard();
+    });
+    L(col('staff').doc(S.me.uid), s => {
+        const d = s.data();
+        if (!d || d.active === false) rejectLogin('Your account has been switched off. Ask the shop owner.');
+    });
+    L(col('products'), s => {
+        S.products = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        Object.keys(S.cart).forEach(id => { if (!productById(id)) delete S.cart[id]; });
+        renderPOS(); renderInventory(); if (isAdmin()) renderDashboard();
+    });
+    L(col('sales').where('day', '==', S.today), s => {
+        S.todaySales = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderPosStrip(); if (isAdmin()) renderDashboard();
+    });
+    if (isAdmin()) {
+        L(col('costs'), s => { S.costs = {}; s.docs.forEach(d => S.costs[d.id] = Number(d.data().costPrice) || 0); renderInventory(); });
+        L(col('meta').doc('balances'), s => { S.balances = { cash: 0, mobile: 0, bank: 0, savings: 0, ...(s.data() || {}) }; renderDashboard(); });
+        const from = dayStr(new Date(new Date().getFullYear(), new Date().getMonth() - 12, 1));
+        L(col('days').where('day', '>=', from), s => { S.days = {}; s.docs.forEach(d => S.days[d.id] = d.data()); renderDashboard(); });
+        L(col('months'), s => { S.months = {}; s.docs.forEach(d => S.months[d.id] = d.data()); renderDashboard(); });
+    }
+}
+function stopListeners() {
+    S.listeners.forEach(u => u()); S.listeners = [];
+    S.sheetListeners.forEach(u => u()); S.sheetListeners = [];
+}
+
+function renderAll() { renderPOS(); renderInventory(); renderPosStrip(); if (isAdmin()) renderDashboard(); }
+function renderShopName() {
+    const n = (S.tenantInfo.name || S.tenant || 'MATINYO').toUpperCase();
+    document.querySelectorAll('.shop-name').forEach(e => e.textContent = n);
+    document.querySelectorAll('.today-label').forEach(e => e.textContent = shortDay(dayStr()));
+}
+
+// ════════════════════════════════════════════════
+//  TABS
+// ════════════════════════════════════════════════
+function switchTab(tab) {
+    if (tab === 'dashboard' && !isAdmin()) tab = 'pos';
+    document.querySelectorAll('.tab-page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    $('page-' + tab).classList.add('active');
+    $('tab-' + tab).classList.add('active');
+    $('cartBar').style.visibility = tab === 'pos' ? 'visible' : 'hidden';
+    window.scrollTo(0, 0);
+    if (tab === 'pos') renderPOS();
+    if (tab === 'inventory') renderInventory();
+    if (tab === 'dashboard') renderDashboard();
+}
+
+// ════════════════════════════════════════════════
+//  FIGURES
+// ════════════════════════════════════════════════
+function dayFig(d) {
+    const x = S.days[d] || {};
+    return {
+        sales: +x.sales || 0, cash: +x.cash || 0, mobile: +x.mobile || 0, tx: +x.txCount || 0,
+        supplier: +x.supplier || 0, expense: +x.expense || 0, bankIn: +x.bankIn || 0, bankOut: +x.bankOut || 0,
+        toSavings: +x.toSavings || 0, closing: x.closing || null, exists: !!S.days[d]
+    };
+}
+function monthFig(m) {
+    const f = { sales: 0, cash: 0, mobile: 0, tx: 0, supplier: 0, expense: 0, bankIn: 0, bankOut: 0, toSavings: 0, days: 0 };
+    Object.keys(S.days).forEach(d => {
+        if (d.slice(0, 7) !== m) return;
+        const x = dayFig(d);
+        ['sales', 'cash', 'mobile', 'tx', 'supplier', 'expense', 'bankIn', 'bankOut', 'toSavings'].forEach(k => f[k] += x[k]);
+        if (x.sales) f.days++;
+    });
+    f.profit = f.sales - f.supplier - f.expense;
+    f.hasData = !!(f.sales || f.supplier || f.expense);
+    return f;
+}
+function trendBadge(curr, prev, label) {
+    if (!prev) return '';
+    const diff = (curr - prev) / Math.abs(prev) * 100;
+    return `<span class="trend-badge ${diff >= 0 ? 'trend-up' : 'trend-down'}">${diff >= 0 ? '↑' : '↓'} ${Math.abs(diff).toFixed(0)}% ${label}</span>`;
+}
+
+// ════════════════════════════════════════════════
+//  DASHBOARD
+// ════════════════════════════════════════════════
+function renderDashboard() {
+    if (!isAdmin() || !$('page-dashboard').classList.contains('active')) return;
+    const today = dayStr();
+    const t = dayFig(today), y = dayFig(shiftDay(today, -1));
+    $('daySales').textContent = fmt(t.sales);
+    $('heroSalesTrend').innerHTML = trendBadge(t.sales, y.sales, 'vs yesterday');
+    const target = Number((S.tenantInfo.settings || {}).dailyTarget) || 0;
+    $('targetWrap').innerHTML = target ? `<div class="target-bar"><div style="width:${Math.min(100, Math.round(t.sales / target * 100))}%"></div></div>
+        <div style="font-size:0.55rem;color:rgba(255,255,255,0.5);margin-top:3px;">${Math.round(t.sales / target * 100)}% of ${n0(target)} target</div>` : '';
+    $('todayTx').textContent = `${t.tx} POS sale${t.tx === 1 ? '' : 's'} today`;
+    const b = S.balances;
+    $('balCash').textContent = fmt(b.cash); $('balMobile').textContent = fmt(b.mobile);
+    $('balBank').textContent = fmt(b.bank); $('balSavings').textContent = fmt(b.savings);
+
+    const m = today.slice(0, 7), f = monthFig(m), mon = monthShort(m);
+    $('lblMSales').textContent = 'Sales · ' + mon; $('mSales').textContent = fmt(f.sales);
+    $('lblMStock').textContent = 'Stock bought · ' + mon; $('mStock').textContent = fmt(f.supplier);
+    $('lblMExp').textContent = 'Expenses · ' + mon; $('mExp').textContent = fmt(f.expense);
+    $('lblMProfit').textContent = 'Profit · ' + mon; $('mProfit').textContent = fmt(f.profit);
+    $('mProfit').style.color = f.profit >= 0 ? 'var(--green)' : 'var(--red)';
+    renderMonthBanner();
+    renderHistory();
+}
+
+function renderMonthBanner() {
+    const now = new Date(), m = dayStr().slice(0, 7);
+    const dim = new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate();
+    const f = monthFig(m), pm = prevMonth(m), pf = monthFig(pm);
+    let prev = '';
+    if (pf.hasData) {
+        const closed = S.months[pm] && S.months[pm].closed;
+        prev = closed
+            ? `<div onclick="openMonth('${pm}')" style="cursor:pointer;margin-top:8px;background:rgba(74,222,128,0.12);border:1px solid rgba(74,222,128,0.35);border-radius:12px;padding:9px 12px;font-size:0.74rem;color:#bbf7d0;">
+                ✅ <strong>${monthName(pm)} closed</strong> · Profit ${n0(pf.profit)} · Saved ${n0(S.months[pm].saved)} TZS</div>`
+            : `<div onclick="openMonth('${pm}')" style="cursor:pointer;margin-top:8px;background:rgba(245,158,11,0.15);border:1px solid rgba(245,158,11,0.5);border-radius:12px;padding:9px 12px;font-size:0.74rem;color:#fde68a;display:flex;justify-content:space-between;align-items:center;gap:8px;">
+                <span>⚠️ <strong>${monthName(pm)} not closed</strong> · Profit ${n0(pf.profit)} TZS</span>
+                <span style="background:var(--amber);color:var(--ink);font-weight:800;border-radius:8px;padding:4px 9px;white-space:nowrap;">CLOSE ›</span></div>`;
+    }
+    $('monthBanner').innerHTML = `
+        <div style="background:rgba(255,199,44,0.08);border:1px solid rgba(255,199,44,0.35);border-radius:14px;padding:10px 12px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div style="font-family:'Syne',sans-serif;font-size:0.95rem;color:var(--yellow);letter-spacing:1px;">${monthName(m).toUpperCase()}</div>
+                    <div style="font-size:0.6rem;color:rgba(255,255,255,0.5);margin-top:1px;">Day ${now.getDate()} of ${dim}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:0.5rem;color:var(--yellow);text-transform:uppercase;letter-spacing:.8px;">Profit so far</div>
+                    <div style="font-size:1.05rem;font-weight:800;color:${f.profit >= 0 ? '#4ade80' : '#f87171'};">${n0(f.profit)} <span style="font-size:0.6rem;">TZS</span></div>
+                </div>
+            </div>
+            <div style="height:4px;background:rgba(255,255,255,0.1);border-radius:3px;margin-top:8px;overflow:hidden;">
+                <div style="height:100%;width:${Math.round(now.getDate() / dim * 100)}%;background:var(--yellow);"></div>
+            </div>${prev}
+        </div>`;
+}
+
+function toggleHistory() { S.historyAll = !S.historyAll; S.historyLimit = 7; renderHistory(); }
+function renderHistory() {
+    const today = dayStr(), m = today.slice(0, 7);
+    const keys = Object.keys(S.days).filter(d => S.historyAll || d.slice(0, 7) === m).sort().reverse();
+    $('historyLabel').textContent = S.historyAll ? 'Days · last 12 months' : 'Days · ' + monthName(m);
+    $('historyToggle').textContent = S.historyAll ? 'This month only' : 'Show all months';
+    const list = $('historyList');
+    if (!keys.length) {
+        list.innerHTML = `<div class="empty-state"><div class="icon">🗓️</div>Nothing recorded in ${monthName(m)} yet.<br><span style="font-size:0.75rem;">Sales from the POS appear here automatically.</span></div>`;
+        $('historyMore').classList.add('hidden');
+        return;
+    }
+    list.innerHTML = keys.slice(0, S.historyLimit).map(d => {
+        const x = dayFig(d), p = dayFig(shiftDay(d, -1));
+        const spent = x.supplier + x.expense, banked = x.bankIn - x.bankOut;
+        return `<div class="entry-item ${d === today ? 'is-today' : ''}" onclick="openDay('${d}')">
+            <div style="min-width:0;flex:1;">
+                <div class="entry-date">${shortDay(d)}${d === today ? '<span class="tag tag-today">TODAY</span>' : ''}${x.closing ? '<span class="tag tag-closed">🔒 CLOSED</span>' : ''}</div>
+                <div class="entry-meta">🛒 ${n0(x.sales)} TZS${x.tx ? ` · ${x.tx} sale${x.tx === 1 ? '' : 's'}` : ''}${spent ? ` · 💸 ${n0(spent)}` : ''}${banked ? ` · 🏦 ${n0(banked)}` : ''}</div>
+                ${p.sales ? `<div style="margin-top:4px;">${trendBadge(x.sales, p.sales, 'vs day before')}</div>` : ''}
+            </div>
+            <div class="btn-circle">›</div>
+        </div>`;
+    }).join('');
+    $('historyMore').classList.toggle('hidden', keys.length <= S.historyLimit);
+}
+
+// ════════════════════════════════════════════════
+//  POINT OF SALE
+// ════════════════════════════════════════════════
+function renderPosStrip() {
+    const live = S.todaySales.filter(s => !s.voided);
+    const pos = live.filter(s => s.kind !== 'manual');
+    const mine = pos.filter(s => S.me && s.staffUid === S.me.uid);
+    $('posStrip').innerHTML = `Today: <b>${pos.length}</b> sale${pos.length === 1 ? '' : 's'}` +
+        (isAdmin() ? ` · <b>${fmt(live.reduce((a, s) => a + (s.total || 0), 0))}</b>` : '') +
+        (mine.length !== pos.length ? ` · you: <b>${mine.length}</b>` : '');
+}
+
+function renderPOS() {
+    if (!S.me) return;
+    const q = ($('posSearch').value || '').toLowerCase().trim();
+    const cats = ['All', ...new Set(S.products.map(p => p.category || 'General'))];
+    if (!cats.includes(S.activeCat)) S.activeCat = 'All';
+    $('catFilter').innerHTML = cats.map(c => `<button class="cat-chip ${c === S.activeCat ? 'active' : ''}" data-cat="${esc(c)}" onclick="setCat(this.dataset.cat)">${esc(c)}</button>`).join('');
+    const words = q ? q.split(/\s+/) : [];
+    const list = S.products.filter(p => {
+        if (S.activeCat !== 'All' && (p.category || 'General') !== S.activeCat) return false;
+        const hay = [p.name, p.category, p.sellPrice].join(' ').toLowerCase();
+        return words.every(w => hay.includes(w));
+    });
+    const empty = $('posEmpty');
+    if (!list.length) {
+        $('posGrid').innerHTML = '';
+        empty.classList.remove('hidden');
+        empty.innerHTML = S.products.length
+            ? '<div class="icon">🔍</div>No items match your search.'
+            : `<div class="icon">📦</div>No items yet.<br><span style="font-size:0.78rem;">${isAdmin() ? 'Go to <b>Stock → + ADD ITEM</b> to add your products.' : 'Ask the shop owner to add products.'}</span>`;
+    } else {
+        empty.classList.add('hidden');
+        $('posGrid').innerHTML = list.map(p => {
+            const qty = S.cart[p.id] || 0, stock = Number(p.stock) || 0;
+            const out = stock <= 0, low = !out && stock <= (Number(p.reorderLevel) || 5);
+            return `<button class="item-card ${qty ? 'in-cart' : ''} ${out ? 'out' : ''}" ${out ? 'disabled' : ''} onclick="addToCart('${p.id}')">
+                ${low ? '<span class="ic-low">LOW</span>' : ''}
+                <span class="ic-badge">${qty}</span>
+                <span class="ic-emoji">${esc(p.emoji || '📦')}</span>
+                <div class="ic-name">${esc(p.name)}</div>
+                <div class="ic-price">${n0(p.sellPrice)} TZS</div>
+                <div class="ic-stock">${out ? '❌ Out of stock' : stock + ' left'}</div>
+            </button>`;
+        }).join('');
+    }
+    updateCartBar();
+}
+function setCat(c) { S.activeCat = c; renderPOS(); }
+
+function addToCart(id) {
+    const p = productById(id); if (!p) return;
+    const q = S.cart[id] || 0;
+    if (q + 1 > (Number(p.stock) || 0)) { toast(`⚠️ Only ${p.stock || 0} ${p.name} in stock`, 'err'); return; }
+    S.cart[id] = q + 1;
+    navigator.vibrate?.(25);
+    renderPOS();
+    if ($('sheetCart').classList.contains('active')) renderCart();
+}
+function removeFromCart(id) {
+    if (!S.cart[id]) return;
+    if (--S.cart[id] <= 0) delete S.cart[id];
+    renderPOS(); renderCart();
+}
+function clearCart() { S.cart = {}; S.payTouched = false; renderPOS(); }
+const cartTotal = () => Object.entries(S.cart).reduce((s, [id, q]) => s + (Number((productById(id) || {}).sellPrice) || 0) * q, 0);
+const cartCount = () => Object.values(S.cart).reduce((s, q) => s + q, 0);
+
+function updateCartBar() {
+    const c = cartCount();
+    $('cartCount').textContent = c;
+    $('cartBarTotal').textContent = fmt(cartTotal());
+    const ids = Object.keys(S.cart);
+    const names = ids.slice(0, 2).map(id => (productById(id) || {}).name || '').map(n => n.split(' ')[0]);
+    $('cartSummary').textContent = c ? names.join(', ') + (ids.length > 2 ? ` +${ids.length - 2} more` : '') : 'No items';
+    $('cartBar').classList.toggle('show', c > 0);
+}
+
+function openCart() { S.payTouched = false; renderCart(); openSheet('sheetCart'); }
+function renderCart() {
+    const lines = Object.entries(S.cart);
+    $('cartLines').innerHTML = lines.length ? lines.map(([id, q]) => {
+        const p = productById(id); if (!p) return '';
+        return `<div class="cart-line">
+            <span class="cl-emoji">${esc(p.emoji || '📦')}</span>
+            <div style="flex:1;min-width:0;"><div class="cl-name">${esc(p.name)}</div><div class="cl-price">${n0(p.sellPrice)} × ${q} = ${n0(p.sellPrice * q)}</div></div>
+            <div class="qty-ctrl">
+                <button class="qty-btn qty-minus" onclick="removeFromCart('${id}')">−</button>
+                <span class="qty-num">${q}</span>
+                <button class="qty-btn qty-plus" onclick="addToCart('${id}')">+</button>
+            </div></div>`;
+    }).join('') : '<div class="empty-state"><div class="icon">🛒</div>Cart is empty.</div>';
+    const total = cartTotal();
+    $('cartModalTotal').textContent = fmt(total);
+    if (!S.payTouched) { $('payCash').value = total; $('payMobile').value = 0; }
+    checkPay();
+}
+function setPay(mode) {
+    const t = cartTotal();
+    $('payCash').value = mode === 'cash' ? t : 0;
+    $('payMobile').value = mode === 'cash' ? 0 : t;
+    S.payTouched = true; checkPay();
+}
+function checkPay() {
+    const ok = Math.abs(num($('payCash').value) + num($('payMobile').value) - cartTotal()) < 1;
+    $('payWarn').style.display = ok ? 'none' : 'block';
+    return ok;
+}
+
+function confirmSale() {
+    const lines = Object.entries(S.cart);
+    if (!lines.length) return toast('Cart is empty');
+    if (!checkPay()) return toast('⚠️ Cash + Lipa kwa Simu must add up to the total.', 'err');
+    const items = [];
+    for (const [id, qty] of lines) {
+        const p = productById(id);
+        if (!p) return toast('An item was removed from stock. Check the cart.', 'err');
+        if ((Number(p.stock) || 0) < qty) return toast(`⚠️ Only ${p.stock} ${p.name} left`, 'err');
+        items.push({ productId: id, name: p.name, emoji: p.emoji || '📦', qty, unitPrice: Number(p.sellPrice) || 0, subtotal: (Number(p.sellPrice) || 0) * qty });
+    }
+    const total = items.reduce((s, i) => s + i.subtotal, 0);
+    const cash = num($('payCash').value), mobile = num($('payMobile').value);
+    const day = dayStr(), month = day.slice(0, 7);
+
+    const b = db.batch();
+    b.set(col('sales').doc(), {
+        kind: 'pos', items, total, cash, mobile, day, month, voided: false,
+        staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
+    });
+    items.forEach(i => b.update(col('products').doc(i.productId), { stock: inc(-i.qty), updatedAt: now() }));
+    b.set(col('days').doc(day), { day, month, sales: inc(total), cash: inc(cash), mobile: inc(mobile), txCount: inc(1), updatedAt: now() }, { merge: true });
+    b.set(col('meta').doc('balances'), { cash: inc(cash), mobile: inc(mobile), updatedAt: now() }, { merge: true });
+    b.update(tRef(), { txnCount: inc(1), lastSaleAt: now() });
+
+    closeModals();
+    S.cart = {}; S.payTouched = false;
+    renderPOS();
+    navigator.vibrate?.(80);
+    commit(b, `✅ Sale recorded · ${fmt(total)}`);
+}
+
+// ════════════════════════════════════════════════
+//  STOCK
+// ════════════════════════════════════════════════
+function renderInventory() {
+    if (!S.me) return;
+    const P = S.products;
+    const low = P.filter(p => p.stock > 0 && p.stock <= (Number(p.reorderLevel) || 5)).length;
+    const out = P.filter(p => (Number(p.stock) || 0) <= 0).length;
+    const value = P.reduce((s, p) => s + (S.costs[p.id] || 0) * Math.max(0, Number(p.stock) || 0), 0);
+    $('invStrip').innerHTML = `
+        <div class="inv-strip-card"><h4>Items</h4><p>${P.length}</p></div>
+        <div class="inv-strip-card ${low ? 'alert' : ''}"><h4>Low stock</h4><p>${low}</p></div>
+        <div class="inv-strip-card ${out ? 'alert' : ''}"><h4>Out of stock</h4><p>${out}</p></div>
+        ${isAdmin() ? `<div class="inv-strip-card"><h4>Stock value (cost)</h4><p style="font-size:0.74rem;">${fmt(value)}</p></div>` : ''}`;
+
+    const raw = ($('invSearch').value || '').trim(), q = raw.toLowerCase();
+    const words = q ? q.split(/\s+/) : [];
+    let list = P.filter(p => {
+        const hay = [p.name, p.category, p.emoji, p.sellPrice, p.stock].join(' ').toLowerCase();
+        return words.every(w => hay.includes(w));
+    });
+    if (!q) list = [...list].sort((a, b) => (a.stock || 0) - (b.stock || 0));
+    $('invLabel').textContent = !q ? 'All stock items · lowest first' : list.length ? `"${raw}" — ${list.length} item${list.length > 1 ? 's' : ''}` : `Nothing found for "${raw}"`;
+    const box = $('invList');
+    if (!P.length) {
+        box.innerHTML = `<div class="empty-state"><div class="icon">📦</div>No items yet.${isAdmin() ? '<br>Tap <strong>+ ADD ITEM</strong> to get started.' : ''}</div>`;
+        return;
+    }
+    box.innerHTML = list.map(p => {
+        const st = Number(p.stock) || 0, isOut = st <= 0, isLow = !isOut && st <= (Number(p.reorderLevel) || 5);
+        return `<div class="inv-row ${isOut ? 'out' : isLow ? 'low' : ''}">
+            <span class="inv-emoji">${esc(p.emoji || '📦')}</span>
+            <div class="inv-info">
+                <div class="inv-name">${esc(p.name)}</div>
+                <div class="inv-detail">${esc(p.category || 'General')} · Sell ${n0(p.sellPrice)}${isAdmin() ? ' · Cost ' + n0(S.costs[p.id] || 0) : ''}</div>
+            </div>
+            <div class="inv-stock"><b class="${isOut ? 'out' : isLow ? 'low' : ''}">${st}</b><small>units</small></div>
+            <div class="inv-actions">
+                <button class="btn-circle" title="Restock" onclick="openRestock('${p.id}')">📥</button>
+                ${isAdmin() ? `<button class="btn-circle" title="Edit" onclick="openItem('${p.id}')">✏️</button>` : ''}
+            </div>
+        </div>`;
+    }).join('');
+}
+
+function buildEmojiPicker() {
+    $('emojiPicker').innerHTML = EMOJIS.map(e => `<button type="button" class="emoji-opt ${e === S.emoji ? 'sel' : ''}" onclick="pickEmoji(this)">${e}</button>`).join('');
+}
+function pickEmoji(el) {
+    S.emoji = el.textContent;
+    document.querySelectorAll('.emoji-opt').forEach(x => x.classList.toggle('sel', x === el));
+}
+
+function openItem(id) {
+    if (!isAdmin()) return;
+    const p = id ? productById(id) : null;
+    $('itemTitle').textContent = p ? 'Edit Item' : 'Add New Item';
+    $('itemId').value = p ? p.id : '';
+    $('itemName').value = p ? p.name : '';
+    $('itemCat').value = p ? (p.category || '') : '';
+    $('itemSell').value = p ? (p.sellPrice ?? '') : '';
+    $('itemCost').value = p ? (S.costs[p.id] ?? '') : '';
+    $('itemStock').value = p ? (p.stock ?? '') : '';
+    $('itemReorder').value = p ? (p.reorderLevel ?? 5) : '';
+    $('itemDeleteBtn').classList.toggle('hidden', !p);
+    $('catList').innerHTML = [...new Set(S.products.map(x => x.category).filter(Boolean))].map(c => `<option value="${esc(c)}">`).join('');
+    S.emoji = p ? (p.emoji || '📦') : '📦';
+    buildEmojiPicker();
+    openSheet('sheetItem');
+    if (!p) setTimeout(() => $('itemName').focus(), 250);
+}
+
+function saveItem() {
+    const id = $('itemId').value;
+    const name = $('itemName').value.trim();
+    if (!name) return toast('⚠️ Item name is required.', 'err');
+    if (S.products.some(p => p.id !== id && (p.name || '').toLowerCase() === name.toLowerCase())) return toast('⚠️ An item with that name already exists.', 'err');
+    const sellPrice = num($('itemSell').value), cost = num($('itemCost').value);
+    if (sellPrice <= 0) return toast('⚠️ Enter a selling price.', 'err');
+    const stock = Math.round(num($('itemStock').value)), reorderLevel = Math.round(num($('itemReorder').value)) || 5;
+    const ref = id ? col('products').doc(id) : col('products').doc();
+    const before = id ? productById(id) : null;
+    const b = db.batch();
+    b.set(ref, { name, emoji: S.emoji, category: $('itemCat').value.trim() || 'General', sellPrice, stock, reorderLevel, updatedAt: now() }, { merge: true });
+    b.set(col('costs').doc(ref.id), { costPrice: cost, updatedAt: now() }, { merge: true });
+    if (!before || (Number(before.stock) || 0) !== stock) {
+        b.set(col('movements').doc(), {
+            productId: ref.id, name, type: before ? 'edit' : 'opening', qty: stock - (before ? Number(before.stock) || 0 : 0),
+            before: before ? Number(before.stock) || 0 : 0, after: stock, day: dayStr(), staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
+        });
+    }
+    closeModals();
+    commit(b, id ? '✅ Item updated' : '✅ Item added');
+}
+
+async function deleteItem() {
+    const id = $('itemId').value, p = productById(id); if (!p) return;
+    if (!await showConfirm(`Delete <b>${esc(p.name)}</b>?<br><span style="font-size:0.78rem;color:#6b7280;">Past sales stay in your records.</span>`)) return;
+    const b = db.batch();
+    b.delete(col('products').doc(id));
+    b.delete(col('costs').doc(id));
+    delete S.cart[id];
+    closeModals();
+    commit(b, '🗑️ Item deleted');
+}
+
+function openRestock(id) {
+    const p = productById(id); if (!p) return;
+    $('restockId').value = id;
+    $('restockInfo').innerHTML = `<strong>${esc(p.emoji || '📦')} ${esc(p.name)}</strong><br>In stock now: <strong>${p.stock || 0}</strong> · warn below ${p.reorderLevel || 5}`;
+    $('restockQty').value = '';
+    $('restockCost').value = S.costs[id] || '';
+    $('restockPaid').value = '';
+    restockTotal();
+    openSheet('sheetRestock');
+    setTimeout(() => $('restockQty').focus(), 250);
+}
+function restockTotal() { $('restockTotalLbl').textContent = fmt(num($('restockQty').value) * num($('restockCost').value)); }
+
+function confirmRestock() {
+    const id = $('restockId').value, p = productById(id); if (!p) return;
+    const qty = Math.round(num($('restockQty').value));
+    if (qty <= 0) return toast('⚠️ Enter how many units came in.', 'err');
+    const cost = isAdmin() ? num($('restockCost').value) : 0;
+    const paid = isAdmin() ? $('restockPaid').value : '';
+    if (paid && cost <= 0) return toast('⚠️ Enter the cost per unit to record the payment.', 'err');
+    const day = dayStr();
+    const b = db.batch();
+    b.update(col('products').doc(id), { stock: inc(qty), updatedAt: now() });
+    b.set(col('movements').doc(), {
+        productId: id, name: p.name, type: 'restock', qty, unitCost: isAdmin() ? cost : null,
+        day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
+    });
+    if (isAdmin() && cost > 0) b.set(col('costs').doc(id), { costPrice: cost, updatedAt: now() }, { merge: true });
+    if (paid) writeEntries(b, [{ type: 'expense', category: 'Supplier', from: paid, to: null, amount: qty * cost, note: `Restock ${qty} × ${p.name}`, day }]);
+    closeModals();
+    commit(b, `✅ +${qty} ${p.name}`);
+}
+
+function openStocktake() {
+    $('stkSearch').value = '';
+    $('stkList').innerHTML = S.products.map(p => `
+        <div class="stk-line" data-name="${esc((p.name || '').toLowerCase())}">
+            <div style="flex:1;min-width:0;">
+                <div style="font-size:0.82rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.emoji || '📦')} ${esc(p.name)}</div>
+                <div style="font-size:0.68rem;color:var(--gray);">System: <strong>${p.stock || 0}</strong></div>
+            </div>
+            <input type="number" inputmode="numeric" placeholder="${p.stock || 0}" data-id="${p.id}" data-sys="${p.stock || 0}">
+        </div>`).join('') || '<div class="empty-state">No items yet.</div>';
+    openSheet('sheetStocktake');
+}
+function filterStocktake() {
+    const q = $('stkSearch').value.trim().toLowerCase();
+    document.querySelectorAll('#stkList .stk-line').forEach(r => r.style.display = !q || r.dataset.name.includes(q) ? '' : 'none');
+}
+function confirmStocktake() {
+    const changes = [];
+    document.querySelectorAll('#stkList input[data-id]').forEach(i => {
+        if (i.value.trim() === '') return;
+        const actual = Math.round(num(i.value)), sys = Number(i.dataset.sys) || 0;
+        if (actual !== sys) changes.push({ id: i.dataset.id, actual, sys });
+    });
+    if (!changes.length) { closeModals(); return toast('No differences found 👍'); }
+    const day = dayStr();
+    for (let i = 0; i < changes.length; i += 200) {          // 2 writes per item, 500 max per batch
+        const b = db.batch();
+        changes.slice(i, i + 200).forEach(c => {
+            const p = productById(c.id);
+            b.update(col('products').doc(c.id), { stock: c.actual, updatedAt: now() });
+            b.set(col('movements').doc(), {
+                productId: c.id, name: p ? p.name : '', type: 'stocktake', qty: c.actual - c.sys, before: c.sys, after: c.actual,
+                day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
+            });
+        });
+        commit(b);
+    }
+    closeModals();
+    toast(`✅ Stocktake saved — ${changes.length} item${changes.length > 1 ? 's' : ''} corrected`);
+}
+
+// ════════════════════════════════════════════════
+//  MONEY ENTRIES  (expenses, banking, transfers, savings, balance fixes)
+//  Each entry moves money between accounts. Running balances and the
+//  day totals are updated in the same save, so the dashboard never has
+//  to re-read history.
+// ════════════════════════════════════════════════
+function entryDayField(e) {
+    if (e.type === 'expense') return e.category === 'Supplier' ? 'supplier' : 'expense';
+    return { banking: 'bankIn', withdrawal: 'bankOut', savings: 'toSavings' }[e.type] || null;
+}
+// sign = +1 to apply an entry, -1 to undo it
+function writeEntries(b, entries, sign = 1, refs) {
+    const bal = {}, days = {};
+    entries.forEach((e, i) => {
+        const a = (Number(e.amount) || 0) * sign;
+        if (e.from) bal[e.from] = (bal[e.from] || 0) - a;
+        if (e.to) bal[e.to] = (bal[e.to] || 0) + a;
+        const f = entryDayField(e);
+        if (f) { days[e.day] = days[e.day] || {}; days[e.day][f] = (days[e.day][f] || 0) + a; }
+        if (sign > 0) b.set(col('entries').doc(), { ...e, month: e.day.slice(0, 7), staffUid: S.me.uid, staffName: S.me.name, createdAt: now() });
+        else if (refs && refs[i]) b.delete(col('entries').doc(refs[i]));
+    });
+    const bu = {}; Object.entries(bal).forEach(([k, v]) => { if (v) bu[k] = inc(v); });
+    if (Object.keys(bu).length) b.set(col('meta').doc('balances'), { ...bu, updatedAt: now() }, { merge: true });
+    Object.entries(days).forEach(([d, f]) => {
+        const du = {}; Object.entries(f).forEach(([k, v]) => du[k] = inc(v));
+        b.set(col('days').doc(d), { day: d, month: d.slice(0, 7), ...du, updatedAt: now() }, { merge: true });
+    });
+}
+
+function openEntry(date) {
+    $('expCat').innerHTML = '<option value="">— Choose category —</option>' + EXPENSE_CATS.map(([v, l]) => `<option value="${v}">${l}</option>`).join('');
+    $('entryDate').value = date || dayStr();
+    $('entryAmt').value = ''; $('entryNote').value = '';
+    entryTab('expense');
+    openSheet('sheetEntry');
+    watchEntryDay();
+}
+function entryTab(t) {
+    S.entryType = t;
+    document.querySelectorAll('#entryTabs button').forEach(b => {
+        const on = b.dataset.t === t;
+        b.classList.toggle('on', on);
+        b.style.background = on ? ENTRY_COLORS[b.dataset.t][0] : '#fff';
+        b.style.borderColor = on ? ENTRY_COLORS[b.dataset.t][0] : 'var(--line)';
+        b.style.color = on ? (b.dataset.t === 'expense' ? 'var(--ink)' : '#fff') : 'var(--gray)';
+    });
+    document.querySelectorAll('#sheetEntry .ef').forEach(el => el.classList.toggle('hidden', el.dataset.for !== t));
+    $('entryAmtLbl').textContent = t === 'adjust' ? 'Real balance now (TZS)' : 'Amount (TZS)';
+    if (t === 'adjust') adjHint();
+}
+function adjHint() { const a = $('adjAcct').value; $('adjNow').textContent = `System says ${ACCT[a]} holds ${fmt(S.balances[a] || 0)}.`; }
+
+function saveEntry() {
+    const day = $('entryDate').value;
+    if (!day) return toast('⚠️ Choose a date.', 'err');
+    const amt = num($('entryAmt').value), note = $('entryNote').value.trim(), t = S.entryType;
+    let e;
+    if (t === 'adjust') {
+        const a = $('adjAcct').value, delta = amt - (Number(S.balances[a]) || 0);
+        if ($('entryAmt').value.trim() === '') return toast('⚠️ Type the real balance.', 'err');
+        if (Math.abs(delta) < 1) return toast('Balance already matches 👍');
+        e = { type: 'adjust', category: 'Balance correction', from: delta < 0 ? a : null, to: delta > 0 ? a : null, amount: Math.abs(delta), note: note || `${ACCT[a]} set to ${n0(amt)}`, day };
+    } else {
+        if (amt <= 0) return toast('⚠️ Enter an amount.', 'err');
+        if (t === 'expense') {
+            const cat = $('expCat').value;
+            if (!cat) return toast('⚠️ Choose a category.', 'err');
+            e = { type: 'expense', category: cat, from: $('expFrom').value, to: null };
+        } else if (t === 'banking') e = { type: 'banking', category: 'Bank In', from: $('bankFrom').value, to: 'bank' };
+        else if (t === 'withdrawal') e = { type: 'withdrawal', category: 'Bank Out', from: 'bank', to: $('wdTo').value };
+        else if (t === 'transfer') { const [f, to] = $('trDir').value.split('>'); e = { type: 'transfer', category: 'Transfer', from: f, to }; }
+        else if (t === 'savings') e = { type: 'savings', category: 'Savings', from: $('savFrom').value, to: 'savings' };
+        Object.assign(e, { amount: amt, note, day });
+    }
+    const b = db.batch();
+    writeEntries(b, [e]);
+    commit(b, '✅ Entry added');
+    navigator.vibrate?.(40);
+    $('entryAmt').value = ''; $('entryNote').value = '';
+    if (t === 'adjust') setTimeout(adjHint, 300);
+}
+
+function entryLabel(e) {
+    const a = k => ACCT[k] || '';
+    switch (e.type) {
+        case 'expense': return `💸 ${esc(e.category)} · ${a(e.from)}`;
+        case 'banking': return `🏦 Bank in ← ${a(e.from)}`;
+        case 'withdrawal': return `💳 Bank out → ${a(e.to)}`;
+        case 'transfer': return `🔄 ${a(e.from)} → ${a(e.to)}`;
+        case 'savings': return `💰 To savings ← ${a(e.from)}`;
+        case 'adjust': return `⚖️ ${e.to ? a(e.to) + ' +' : a(e.from) + ' −'} correction`;
+        default: return esc(e.type);
+    }
+}
+function entryLine(e) {
+    const [bar, bg] = ENTRY_COLORS[e.type] || ENTRY_COLORS.expense;
+    return `<div class="list-line" style="background:${bg};border-left-color:${bar};">
+        <div class="ll-main"><div class="ll-title">${entryLabel(e)}</div>
+            <div class="ll-sub">${timeOf(e.createdAt)}${e.note ? ' · ' + esc(e.note) : ''}${e.staffName ? ' · ' + esc(e.staffName) : ''}</div></div>
+        <div class="ll-amt">${n0(e.amount)}</div>
+        <button class="tiny-btn red" onclick="deleteEntry('${e.id}')">🗑️</button>
+    </div>`;
+}
+S.entryCache = {};
+function watchEntryDay() {
+    S.sheetListeners.forEach(u => u()); S.sheetListeners = [];
+    const d = $('entryDate').value; if (!d) return;
+    $('entryDayList').innerHTML = '<div style="font-size:0.75rem;color:var(--gray);text-align:center;padding:8px;">Loading…</div>';
+    S.sheetListeners.push(col('entries').where('day', '==', d).onSnapshot(s => {
+        const list = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (a.createdAt?.toMillis?.() || 9e15) - (b.createdAt?.toMillis?.() || 9e15));
+        list.forEach(e => S.entryCache[e.id] = e);
+        $('entryDayList').innerHTML = list.length ? list.map(entryLine).join('') : '<div style="font-size:0.75rem;color:var(--gray);text-align:center;padding:8px;">No entries for this date yet</div>';
+    }, e => { $('entryDayList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
+}
+async function deleteEntry(id) {
+    const e = S.entryCache[id]; if (!e) return;
+    if (!await showConfirm(`Delete this entry?<br><b>${entryLabel(e)} · ${fmt(e.amount)}</b><br><span style="font-size:0.75rem;color:#6b7280;">Balances will be corrected.</span>`)) return;
+    const b = db.batch();
+    writeEntries(b, [e], -1, [id]);
+    commit(b, '🗑️ Entry deleted');
+}
+
+// ════════════════════════════════════════════════
+//  MANUAL SALE
+// ════════════════════════════════════════════════
+function openManualSale() {
+    $('msDate').value = dayStr(); $('msCash').value = ''; $('msMobile').value = ''; $('msNote').value = '';
+    msTotal(); openSheet('sheetManual');
+    setTimeout(() => $('msCash').focus(), 250);
+}
+function msTotal() { $('msTotalLbl').textContent = fmt(num($('msCash').value) + num($('msMobile').value)); }
+function saveManualSale() {
+    const day = $('msDate').value, cash = num($('msCash').value), mobile = num($('msMobile').value), total = cash + mobile;
+    if (!day) return toast('⚠️ Choose a date.', 'err');
+    if (total <= 0) return toast('⚠️ Enter an amount.', 'err');
+    const month = day.slice(0, 7), b = db.batch();
+    b.set(col('sales').doc(), {
+        kind: 'manual', items: [], total, cash, mobile, day, month, note: $('msNote').value.trim() || 'Manual sale', voided: false,
+        staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
+    });
+    b.set(col('days').doc(day), { day, month, sales: inc(total), cash: inc(cash), mobile: inc(mobile), updatedAt: now() }, { merge: true });
+    b.set(col('meta').doc('balances'), { cash: inc(cash), mobile: inc(mobile), updatedAt: now() }, { merge: true });
+    closeModals();
+    commit(b, `✅ Manual sale of ${fmt(total)} recorded`);
+}
+
+// ════════════════════════════════════════════════
+//  DAY DETAIL  (find date — view, void sales, delete entries)
+// ════════════════════════════════════════════════
+S.saleCache = {};
+function openDay(d) { $('dayPick').value = d || dayStr(); openSheet('sheetDay'); watchDay(); }
+function watchDay() {
+    S.sheetListeners.forEach(u => u()); S.sheetListeners = [];
+    const d = $('dayPick').value; if (!d) return;
+    const state = { sales: null, entries: null };
+    const draw = () => { if (state.sales && state.entries) renderDayBody(d, state.sales, state.entries); };
+    $('dayBody').innerHTML = '<div class="empty-state">Loading…</div>';
+    const fail = e => { $('dayBody').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; };
+    S.sheetListeners.push(col('sales').where('day', '==', d).onSnapshot(s => { state.sales = s.docs.map(x => ({ id: x.id, ...x.data() })); draw(); }, fail));
+    S.sheetListeners.push(col('entries').where('day', '==', d).onSnapshot(s => { state.entries = s.docs.map(x => ({ id: x.id, ...x.data() })); draw(); }, fail));
+}
+function renderDayBody(d, sales, entries) {
+    const byTime = (a, b) => (a.createdAt?.toMillis?.() || 9e15) - (b.createdAt?.toMillis?.() || 9e15);
+    sales.sort(byTime); entries.sort(byTime);
+    sales.forEach(s => S.saleCache[s.id] = s); entries.forEach(e => S.entryCache[e.id] = e);
+    const x = dayFig(d);
+    const c = x.closing;
+    let html = `<div style="font-size:0.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">${prettyDay(d)}</div>
+        <div class="sum-box">
+            <div class="sum-row"><span>🛒 Sales</span><strong style="color:var(--green);">${fmt(x.sales)}</strong></div>
+            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu</span><span>${n0(x.cash)} / ${n0(x.mobile)}</span></div>
+            <div class="sum-row"><span>📦 Stock bought</span><strong style="color:var(--red);">${fmt(x.supplier)}</strong></div>
+            <div class="sum-row"><span>💸 Expenses</span><strong style="color:var(--red);">${fmt(x.expense)}</strong></div>
+            <div class="sum-row"><span>🏦 Banked (net)</span><strong style="color:var(--blue);">${fmt(x.bankIn - x.bankOut)}</strong></div>
+            <div class="sum-row big"><span>📈 Day profit</span><strong style="color:${x.sales - x.supplier - x.expense >= 0 ? 'var(--green)' : 'var(--red)'};">${fmt(x.sales - x.supplier - x.expense)}</strong></div>
+        </div>`;
+    if (c) html += `<div class="hint green">🔒 Closed by ${esc(c.by || '')}${c.countedCash != null ? ` · cash counted ${n0(c.countedCash)} (${signed(c.countedCash - c.systemCash)})` : ''}</div>`;
+    html += `<button class="btn-sec wide" onclick="openEntry('${d}')">➕ Add expense / banking for this date</button>`;
+    if (entries.length) html += `<span class="section-label" style="margin-top:12px;">📒 Money entries (${entries.length})</span>` + entries.map(entryLine).join('');
+    if (sales.length) {
+        html += `<span class="section-label" style="margin-top:12px;">🛒 Sales (${sales.filter(s => !s.voided).length})</span>`;
+        html += sales.map(s => {
+            const pay = s.cash && s.mobile ? `💵${n0(s.cash)} / 📱${n0(s.mobile)}` : s.mobile ? '📱 Lipa kwa Simu' : '💵 Cash';
+            const manual = s.kind === 'manual';
+            return `<div class="list-line ${s.voided ? 'voided' : ''}" style="background:${manual ? '#fefce8' : '#f0fdf4'};border-left-color:${manual ? 'var(--yellow)' : 'var(--pos)'};display:block;">
+                <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
+                    <div class="ll-title">${manual ? '✍️ Manual' : '🛒 Sale'} · ${timeOf(s.createdAt)} · ${esc(s.staffName || '')}${s.voided ? ' · VOIDED' : ''}</div>
+                    <div class="ll-amt">${n0(s.total)}</div>
+                </div>
+                <div class="ll-sub">${pay}${s.note ? ' · ' + esc(s.note) : ''}</div>
+                ${(s.items || []).map(i => `<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#444;padding:1px 0;"><span>${esc(i.emoji || '')} ${esc(i.name)}${i.qty > 1 ? ' × ' + i.qty : ''}</span><span>${n0(i.subtotal)}</span></div>`).join('')}
+                ${s.voided ? '' : `<div style="text-align:right;margin-top:6px;"><button class="tiny-btn red" onclick="voidSale('${s.id}')">↩️ Void sale</button></div>`}
+            </div>`;
+        }).join('');
+    }
+    if (!sales.length && !entries.length) html += '<div class="empty-state" style="padding:16px;">Nothing recorded on this date.</div>';
+    $('dayBody').innerHTML = html;
+}
+async function voidSale(id) {
+    const s = S.saleCache[id]; if (!s || s.voided) return;
+    if (!await showConfirm(`Void this sale of <b>${fmt(s.total)}</b>?<br><span style="font-size:0.78rem;color:#6b7280;">The money is taken off the day's sales and the items go back into stock. The sale stays visible, marked VOIDED.</span>`, 'Void sale')) return;
+    const b = db.batch();
+    b.update(col('sales').doc(id), { voided: true, voidedAt: now(), voidedBy: S.me.name });
+    (s.items || []).forEach(i => { if (productById(i.productId)) b.update(col('products').doc(i.productId), { stock: inc(i.qty), updatedAt: now() }); });
+    b.set(col('days').doc(s.day), { day: s.day, month: s.day.slice(0, 7), sales: inc(-s.total), cash: inc(-(s.cash || 0)), mobile: inc(-(s.mobile || 0)), txCount: inc(s.kind === 'manual' ? 0 : -1), updatedAt: now() }, { merge: true });
+    b.set(col('meta').doc('balances'), { cash: inc(-(s.cash || 0)), mobile: inc(-(s.mobile || 0)), updatedAt: now() }, { merge: true });
+    commit(b, '↩️ Sale voided');
+}
+
+// ════════════════════════════════════════════════
+//  CLOSE DAY  → WhatsApp summary
+// ════════════════════════════════════════════════
+function openCloseDay() {
+    $('cdStep1').classList.remove('hidden'); $('cdStep2').classList.add('hidden');
+    $('cdDate').value = dayStr();
+    ['cdCash', 'cdMobile', 'cdBank'].forEach(id => $(id).value = '');
+    openSheet('sheetCloseDay');
+    setTimeout(() => $('cdCash').focus(), 250);
+}
+function confirmCloseDay() {
+    const d = $('cdDate').value || dayStr();
+    const val = id => $(id).value.trim() === '' ? null : num($(id).value);
+    const counted = { cash: val('cdCash'), mobile: val('cdMobile'), bank: val('cdBank') };
+    const x = dayFig(d), bal = S.balances;
+    const profit = x.sales - x.supplier - x.expense;
+    const outItems = S.products.filter(p => (Number(p.stock) || 0) <= 0);
+    const lowItems = S.products.filter(p => p.stock > 0 && p.stock <= (Number(p.reorderLevel) || 5));
+    const isToday = d === dayStr();
+
+    const b = db.batch();
+    b.set(col('days').doc(d), {
+        day: d, month: d.slice(0, 7), updatedAt: now(),
+        closing: {
+            countedCash: counted.cash, countedMobile: counted.mobile, countedBank: counted.bank,
+            systemCash: bal.cash, systemMobile: bal.mobile, systemBank: bal.bank, by: S.me.name, at: now()
+        }
+    }, { merge: true });
+    commit(b);
+
+    const recon = [];
+    const diffRow = (label, c, sys) => {
+        if (c === null) return '';
+        recon.push(`${label}: counted ${n0(c)} vs system ${n0(sys)} → ${signed(c - sys)}`);
+        const ok = Math.abs(c - sys) < 1;
+        return `<div class="sum-row"><span>${label} counted</span><strong style="color:${ok ? 'var(--green)' : 'var(--red)'};">${n0(c)} ${ok ? '✓' : '(' + signed(c - sys) + ')'}</strong></div>`;
+    };
+    $('cdSummary').innerHTML = `
+        <div style="font-size:0.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">${prettyDay(d)}</div>
+        <div class="sum-box">
+            <div class="sum-row"><span>🛒 Sales</span><strong style="color:var(--green);">+${fmt(x.sales)}</strong></div>
+            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu</span><span>${n0(x.cash)} / ${n0(x.mobile)}</span></div>
+            <div class="sum-row"><span>📦 Stock bought</span><strong style="color:var(--red);">-${fmt(x.supplier)}</strong></div>
+            <div class="sum-row"><span>💸 Expenses</span><strong style="color:var(--red);">-${fmt(x.expense)}</strong></div>
+            <div class="sum-row"><span>🏦 Banked</span><strong style="color:var(--blue);">${fmt(x.bankIn)}${x.bankOut ? ' / out ' + n0(x.bankOut) : ''}</strong></div>
+            <div class="sum-row big"><span>📈 Day profit</span><strong style="color:${profit >= 0 ? 'var(--green)' : 'var(--red)'};">${fmt(profit)}</strong></div>
+        </div>
+        ${counted.cash !== null || counted.mobile !== null || counted.bank !== null ? `<div class="sum-box">
+            ${!isToday ? '<div class="hint amber" style="margin-bottom:6px;">Comparing with balances as they are right now, not at the end of that day.</div>' : ''}
+            ${diffRow('💵 Cash', counted.cash, bal.cash)}${diffRow('📱 Lipa kwa Simu', counted.mobile, bal.mobile)}${diffRow('🏦 Bank', counted.bank, bal.bank)}
+        </div>` : ''}
+        <div class="mini-cards">
+            <div><b style="color:var(--pos);">${x.tx}</b><small>POS sales</small></div>
+            <div style="background:${outItems.length ? '#fff5f5' : '#f0fdf4'};"><b style="color:${outItems.length ? 'var(--red)' : 'var(--green)'};">${outItems.length}</b><small>Out of stock</small></div>
+            <div style="background:#fffbeb;"><b style="color:var(--amber);">${lowItems.length}</b><small>Low stock</small></div>
+        </div>
+        ${outItems.length ? `<div class="hint amber" style="background:#fff5f5;color:var(--red);">🚨 Out of stock: ${esc(outItems.slice(0, 6).map(p => p.name).join(', '))}${outItems.length > 6 ? ' +more' : ''}</div>` : ''}`;
+
+    S.closeDayMsg = `🏪 *${(S.tenantInfo.name || S.tenant).toUpperCase()}* — ${prettyDay(d)}
+
+🛒 Sales: ${n0(x.sales)} (💵 ${n0(x.cash)} / 📱 ${n0(x.mobile)})
+📦 Stock bought: ${n0(x.supplier)}
+💸 Expenses: ${n0(x.expense)}
+🏦 Banked: ${n0(x.bankIn)}${x.bankOut ? ` | 💳 Out: ${n0(x.bankOut)}` : ''}
+━━━━━━━━━━
+📈 Day profit: ${n0(profit)}
+💵 Cash balance: ${n0(bal.cash)}
+📱 Mobile balance: ${n0(bal.mobile)}${recon.length ? '\n\n' + recon.join('\n') : ''}
+
+🧾 ${x.tx} POS sales${outItems.length ? `\n🚨 Out of stock: ${outItems.length} items` : ''}${lowItems.length ? `\n⚠️ Low stock: ${lowItems.length} items` : ''}
+Closed by ${S.me.name}`;
+
+    $('cdStep1').classList.add('hidden'); $('cdStep2').classList.remove('hidden');
+    shareText(S.closeDayMsg);
+}
+function shareText(text) {
+    if (!text) return;
+    const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, '');
+    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+// ════════════════════════════════════════════════
+//  MONTHLY PROFIT & CLOSE MONTH
+// ════════════════════════════════════════════════
+function openMonth(m) {
+    const thisM = dayStr().slice(0, 7);
+    $('mcPick').value = m || (new Date().getDate() <= 7 ? prevMonth(thisM) : thisM);
+    renderMonthHistory(); renderMonthClose();
+    openSheet('sheetMonth');
+}
+function renderMonthHistory() {
+    let m = dayStr().slice(0, 7); const rows = [];
+    for (let i = 0; i < 6; i++) { const f = monthFig(m); if (f.hasData) rows.push([m, f]); m = prevMonth(m); }
+    const cur = dayStr().slice(0, 7);
+    $('mcHistory').innerHTML = '<span class="section-label">Profit by month</span>' + (rows.length ? rows.map(([m, f]) => {
+        const pct = f.sales ? Math.round(f.profit / f.sales * 100) : 0;
+        const tag = m === cur ? '<span class="tag tag-prog">IN PROGRESS</span>' : (S.months[m] && S.months[m].closed) ? '<span class="tag tag-closed">✅ CLOSED</span>' : '<span class="tag tag-open">NOT CLOSED</span>';
+        return `<div class="entry-item" style="padding:10px 14px;" onclick="$('mcPick').value='${m}';renderMonthClose();">
+            <div><div class="entry-date">${monthName(m)}${tag}</div><div class="entry-meta">Sales ${n0(f.sales)} · Spent ${n0(f.supplier + f.expense)}</div></div>
+            <div style="text-align:right;font-weight:800;color:${f.profit >= 0 ? 'var(--green)' : 'var(--red)'};">${signed(f.profit)}<div style="font-size:0.62rem;color:var(--gray);font-weight:600;">${pct}% margin</div></div>
+        </div>`;
+    }).join('') : '<div class="empty-state">No data yet.</div>');
+}
+function renderMonthClose() {
+    const m = $('mcPick').value; if (!m) return;
+    const f = monthFig(m), cur = m === dayStr().slice(0, 7), info = S.months[m] || {}, closed = !!info.closed, bal = S.balances;
+    S.mc = { m, f };
+    const row = (l, v, c) => `<div class="sum-row"><span>${l}</span><strong style="color:${c || 'inherit'};">${v}</strong></div>`;
+    let html = `${cur ? `<div class="hint amber">⚠️ ${monthName(m)} isn't over yet — these are month-to-date figures.</div>` : ''}
+        <div class="sum-box">
+            ${row('🛒 Sales', fmt(f.sales), 'var(--green)')}
+            ${row('📦 Stock bought', '-' + fmt(f.supplier), 'var(--red)')}
+            ${row('💸 Expenses', '-' + fmt(f.expense), 'var(--red)')}
+            ${row('📈 Profit', fmt(f.profit), f.profit >= 0 ? 'var(--green)' : 'var(--red)')}
+            ${row('🏦 Banked (net)', fmt(f.bankIn - f.bankOut), 'var(--blue)')}
+            ${row('💰 Put in savings', fmt(f.toSavings), '#a16207')}
+        </div>`;
+    if (closed) html += `<div class="hint green" style="text-align:center;">✅ <b>${monthName(m)} is closed</b> · saved ${fmt(info.saved)} · by ${esc(info.closedBy || '')}</div>`;
+    if (cur && !closed) {
+        html += `<div style="font-size:0.75rem;color:var(--gray);text-align:center;padding:6px 0 12px;">You can close ${monthName(m)} once the month has ended.</div>`;
+    } else {
+        html += `<span class="section-label">${closed ? 'Move more to savings' : 'Close ' + monthName(m) + ' → Savings'}</span>
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:14px;padding:12px;margin-bottom:10px;">
+            <button type="button" class="primary-cta yellow" style="padding:11px;font-size:0.75rem;margin-bottom:12px;" onclick="$('mcBank').value=Math.max(0, S.balances.bank);mcTotal();">💯 Whole bank balance (${n0(bal.bank)})</button>
+            <span class="field-label">🏦 From bank → savings (TZS)</span>
+            <input type="number" id="mcBank" inputmode="decimal" value="${closed ? 0 : Math.max(0, bal.bank)}" oninput="mcTotal()" style="margin-bottom:10px;">
+            <span class="field-label">💵 / 📱 Extra from cash or mobile (TZS)</span>
+            <div style="display:flex;gap:8px;">
+                <input type="number" id="mcExtra" inputmode="decimal" value="0" oninput="mcTotal()" style="flex:1;">
+                <select id="mcFrom" style="flex:1;"><option value="cash">💵 Cash (${n0(bal.cash)})</option><option value="mobile">📱 Mobile (${n0(bal.mobile)})</option></select>
+            </div>
+            <div style="display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px dashed #fcd34d;">
+                <strong style="font-size:0.85rem;">💰 Total to savings</strong><strong id="mcTotalLbl" style="color:#a16207;">0 TZS</strong>
+            </div>
+        </div>
+        <button class="primary-cta ${closed ? '' : 'red'}" onclick="closeMonth()">${closed ? '💰 MOVE TO SAVINGS' : '🔒 CLOSE ' + monthName(m).toUpperCase()}</button>`;
+    }
+    html += `<button class="primary-cta green" onclick="shareText(monthMessage())">📲 SEND MONTH SUMMARY</button>`;
+    $('mcBody').innerHTML = html;
+    mcTotal();
+}
+function mcTotal() { const l = $('mcTotalLbl'); if (l) l.textContent = fmt(num($('mcBank').value) + num($('mcExtra').value)); }
+async function closeMonth() {
+    const { m } = S.mc, info = S.months[m] || {}, already = !!info.closed, bal = S.balances;
+    const bankAmt = num($('mcBank').value), extra = num($('mcExtra').value), from = $('mcFrom').value, total = bankAmt + extra;
+    if (bankAmt < 0 || extra < 0) return toast('⚠️ Amounts cannot be negative.', 'err');
+    if (bankAmt > bal.bank + 1) return toast(`⚠️ Bank only has ${fmt(bal.bank)}.`, 'err');
+    if (extra > (bal[from] || 0) + 1) return toast(`⚠️ ${ACCT[from]} only has ${fmt(bal[from])}.`, 'err');
+    if (already && !total) return toast('⚠️ Enter an amount to move.', 'err');
+    const lines = [];
+    if (bankAmt) lines.push(`🏦 Bank → Savings: ${fmt(bankAmt)}`);
+    if (extra) lines.push(`${ACCT[from]} → Savings: ${fmt(extra)}`);
+    const msg = total ? `${already ? 'Move to savings' : 'Close ' + monthName(m)}?<br><br>${lines.join('<br>')}<br><b>Total: ${fmt(total)}</b>` : `Close ${monthName(m)} without saving anything?`;
+    if (!await showConfirm(msg, already ? 'Move' : 'Close month', 'var(--blue)')) return;
+    const day = dayStr(), note = `Month close – ${monthName(m)}`, entries = [];
+    if (bankAmt) entries.push({ type: 'savings', category: 'Savings', from: 'bank', to: 'savings', amount: bankAmt, note, day });
+    if (extra) entries.push({ type: 'savings', category: 'Savings', from, to: 'savings', amount: extra, note, day });
+    const b = db.batch();
+    if (entries.length) writeEntries(b, entries);
+    b.set(col('months').doc(m), already
+        ? { saved: inc(total), updatedAt: now() }
+        : { month: m, closed: true, saved: total, closedBy: S.me.name, closedAt: now(), figures: monthFig(m) }, { merge: true });
+    commit(b, total ? `💰 ${fmt(total)} moved to savings` : `🔒 ${monthName(m)} closed — tap Send month summary to share`);
+    setTimeout(() => { renderMonthHistory(); renderMonthClose(); }, 400);
+}
+function monthMessage() {
+    if (!S.mc) return '';
+    const { m, f } = S.mc, b = S.balances, pct = f.sales ? Math.round(f.profit / f.sales * 100) : 0;
+    return `🏪 *${(S.tenantInfo.name || S.tenant).toUpperCase()}* — ${monthName(m)}
+
+🛒 Sales: ${n0(f.sales)}
+📦 Stock bought: ${n0(f.supplier)}
+💸 Expenses: ${n0(f.expense)}
+━━━━━━━━━━
+📈 Profit: ${n0(f.profit)} (${pct}%)
+🏦 Banked: ${n0(f.bankIn - f.bankOut)}
+💰 Put in savings: ${n0(f.toSavings)}
+
+Balances now
+💵 Cash: ${n0(b.cash)}
+📱 Mobile: ${n0(b.mobile)}
+🏦 Bank: ${n0(b.bank)}
+💰 Savings: ${n0(b.savings)}`;
+}
+
+// ════════════════════════════════════════════════
+//  REPORTS
+// ════════════════════════════════════════════════
+function openReport() { $('rpMonth').value = dayStr().slice(0, 7); openSheet('sheetReport'); previewReport(); }
+async function loadMonthDetail(m) {
+    if (S.reportCache[m] && m !== dayStr().slice(0, 7)) return S.reportCache[m];
+    const [ss, es] = await Promise.all([col('sales').where('month', '==', m).get(), col('entries').where('month', '==', m).get()]);
+    const sales = ss.docs.map(d => ({ id: d.id, ...d.data() })).filter(s => !s.voided);
+    const entries = es.docs.map(d => ({ id: d.id, ...d.data() }));
+    return (S.reportCache[m] = { sales, entries });
+}
+function itemTotals(sales) {
+    const t = {};
+    sales.forEach(s => (s.items || []).forEach(i => {
+        const k = i.productId || i.name;
+        t[k] = t[k] || { name: i.name, qty: 0, revenue: 0, cogs: 0 };
+        t[k].qty += i.qty; t[k].revenue += i.subtotal; t[k].cogs += (S.costs[i.productId] || 0) * i.qty;
+    }));
+    return Object.values(t).sort((a, b) => b.revenue - a.revenue);
+}
+async function previewReport() {
+    const m = $('rpMonth').value; if (!m) return;
+    const f = monthFig(m), box = $('rpPreview');
+    if (!f.hasData) { box.innerHTML = `<div class="empty-state"><div class="icon">📭</div>No data for ${monthName(m)}.</div>`; return; }
+    const margin = f.sales ? (f.profit / f.sales * 100).toFixed(1) : 0;
+    box.innerHTML = `<div style="font-size:0.75rem;color:var(--gray);text-align:center;margin-bottom:10px;">${monthName(m)} · ${f.days} trading days</div>
+        <div class="sum-box">
+            <div class="sum-row"><span>🛒 Sales</span><strong style="color:var(--green);">${fmt(f.sales)}</strong></div>
+            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu</span><span>${n0(f.cash)} / ${n0(f.mobile)}</span></div>
+            <div class="sum-row"><span>📦 Stock bought</span><strong style="color:var(--red);">${fmt(f.supplier)}</strong></div>
+            <div class="sum-row"><span>💸 Expenses</span><strong style="color:var(--red);">${fmt(f.expense)}</strong></div>
+            <div class="sum-row"><span>🏦 Banked (net)</span><strong style="color:var(--blue);">${fmt(f.bankIn - f.bankOut)}</strong></div>
+            <div class="sum-row big"><span>📈 Profit</span><strong style="color:${f.profit >= 0 ? 'var(--green)' : 'var(--red)'};">${fmt(f.profit)} (${margin}%)</strong></div>
+        </div><div id="rpTop" style="font-size:0.75rem;color:var(--gray);text-align:center;">Loading top sellers…</div>`;
+    try {
+        const { sales } = await loadMonthDetail(m);
+        const top = itemTotals(sales).slice(0, 5);
+        if ($('rpMonth').value !== m) return;
+        $('rpTop').outerHTML = top.length ? `<span class="section-label">Top sellers</span><div class="sum-box">${top.map((t, i) =>
+            `<div class="sum-row"><span>${i + 1}. ${esc(t.name)}</span><strong>${t.qty} · ${n0(t.revenue)}</strong></div>`).join('')}</div>` : '';
+    } catch (e) { const el = $('rpTop'); if (el) el.textContent = 'Top sellers need a connection.'; }
+}
+async function generatePDF() {
+    const m = $('rpMonth').value; if (!m) return;
+    const f = monthFig(m);
+    if (!f.hasData) return toast('No data for ' + monthName(m), 'err');
+    if (!window.jspdf) return toast('PDF tool did not load. Check your connection and refresh.', 'err');
+    loader(true, 'BUILDING PDF...');
+    try {
+        const { sales, entries } = await loadMonthDetail(m);
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+        const W = 210, ink = [11, 13, 18], yellow = [255, 199, 44], blue = [26, 86, 219];
+        const shop = (S.tenantInfo.name || S.tenant).toUpperCase();
+        const header = (title, sub) => {
+            doc.setFillColor(...ink); doc.rect(0, 0, W, 28, 'F');
+            doc.setTextColor(...yellow); doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.text(shop, 14, 12);
+            doc.setTextColor(255, 255, 255); doc.setFontSize(9); doc.setFont('helvetica', 'normal');
+            doc.text(title, 14, 20); doc.text(sub, W - 14, 20, { align: 'right' });
+        };
+        header('Monthly Report — ' + monthName(m), 'Generated ' + new Date().toLocaleDateString('en-GB'));
+        const items = itemTotals(sales), cogs = items.reduce((s, i) => s + i.cogs, 0), itemRevenue = items.reduce((s, i) => s + i.revenue, 0);
+        const margin = f.sales ? (f.profit / f.sales * 100).toFixed(1) : 0;
+        const boxes = [
+            ['Total Sales', fmt(f.sales), [22, 163, 74]], ['Cash Sales', fmt(f.cash), [124, 58, 237]], ['Mobile Sales', fmt(f.mobile), [0, 135, 90]],
+            ['POS Transactions', String(f.tx), ink], ['Stock Bought', fmt(f.supplier), [220, 38, 38]], ['Other Expenses', fmt(f.expense), [220, 38, 38]],
+            ['Profit', fmt(f.profit), f.profit >= 0 ? [22, 163, 74] : [220, 38, 38]], ['Profit Margin', margin + '%', ink],
+            ['Banked (net)', fmt(f.bankIn - f.bankOut), blue], ['To Savings', fmt(f.toSavings), [161, 98, 7]],
+            ['Margin on items sold', cogs ? fmt(itemRevenue - cogs) : '—', ink], ['Trading Days', String(f.days), ink]
+        ];
+        let y = 36;
+        doc.setTextColor(...ink); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('SUMMARY', 14, y); y += 4;
+        boxes.forEach(([l, v, c], i) => {
+            const bx = 14 + (i % 4) * 46, by = y + Math.floor(i / 4) * 17;
+            doc.setFillColor(246, 248, 251); doc.roundedRect(bx, by, 44, 15, 2, 2, 'F');
+            doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.setTextColor(120, 120, 120); doc.text(l, bx + 3, by + 5);
+            doc.setFontSize(8.5); doc.setFont('helvetica', 'bold'); doc.setTextColor(...c); doc.text(v, bx + 3, by + 11.5);
+        });
+        y += Math.ceil(boxes.length / 4) * 17 + 6;
+
+        const dayKeys = Object.keys(S.days).filter(d => d.slice(0, 7) === m).sort();
+        doc.setTextColor(...ink); doc.setFontSize(10); doc.text('DAILY FIGURES', 14, y);
+        doc.autoTable({
+            startY: y + 3, margin: { left: 14, right: 14 },
+            head: [['Date', 'Sales', 'Cash', 'Mobile', 'Stock bought', 'Expenses', 'Banked', 'Profit']],
+            body: dayKeys.map(d => { const x = dayFig(d), p = x.sales - x.supplier - x.expense; return [d, n0(x.sales), n0(x.cash), n0(x.mobile), n0(x.supplier), n0(x.expense), n0(x.bankIn - x.bankOut), n0(p)]; }),
+            styles: { fontSize: 7, cellPadding: 2.2 }, headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
+            alternateRowStyles: { fillColor: [245, 248, 252] },
+            didParseCell: d => { if (d.section === 'body' && d.column.index === 7) { d.cell.styles.fontStyle = 'bold'; d.cell.styles.textColor = String(d.cell.raw).startsWith('-') ? [220, 38, 38] : [22, 163, 74]; } }
+        });
+
+        if (entries.length) {
+            doc.addPage(); header('Money Entries — ' + monthName(m), entries.length + ' entries');
+            doc.autoTable({
+                startY: 34, margin: { left: 14, right: 14 },
+                head: [['Date', 'Type', 'Category', 'From', 'To', 'Amount', 'Note', 'By']],
+                body: entries.sort((a, b) => a.day.localeCompare(b.day)).map(e => [e.day, e.type, e.category || '', e.from || '', e.to || '', n0(e.amount), e.note || '', e.staffName || '']),
+                styles: { fontSize: 6.8, cellPadding: 2 }, headStyles: { fillColor: ink, textColor: yellow, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245, 248, 252] }, columnStyles: { 6: { cellWidth: 40 } }
+            });
+        }
+
+        if (items.length) {
+            doc.addPage(); header('Items Sold — ' + monthName(m), sales.length + ' sales');
+            doc.autoTable({
+                startY: 34, margin: { left: 14, right: 14 },
+                head: [['Item', 'Units', 'Revenue', 'Cost (est.)', 'Margin']],
+                body: items.map(i => [i.name, String(i.qty), n0(i.revenue), i.cogs ? n0(i.cogs) : '—', i.cogs ? n0(i.revenue - i.cogs) : '—']),
+                styles: { fontSize: 7, cellPadding: 2.2 }, headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245, 248, 252] }
+            });
+        }
+
+        if (S.products.length) {
+            doc.addPage(); header('Stock Snapshot', 'As of ' + new Date().toLocaleDateString('en-GB'));
+            const value = S.products.reduce((s, p) => s + (S.costs[p.id] || 0) * Math.max(0, p.stock || 0), 0);
+            doc.setTextColor(...ink); doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+            doc.text(`Items: ${S.products.length}   |   Stock value at cost: ${fmt(value)}`, 14, 34);
+            doc.autoTable({
+                startY: 38, margin: { left: 14, right: 14 },
+                head: [['Item', 'Category', 'Stock', 'Warn at', 'Sell', 'Cost', 'Status']],
+                body: [...S.products].sort((a, b) => (a.stock || 0) - (b.stock || 0)).map(p => {
+                    const st = p.stock || 0, status = st <= 0 ? 'OUT' : st <= (p.reorderLevel || 5) ? 'LOW' : 'OK';
+                    return [p.name, p.category || '', String(st), String(p.reorderLevel || 5), n0(p.sellPrice), n0(S.costs[p.id] || 0), status];
+                }),
+                styles: { fontSize: 7, cellPadding: 2.2 }, headStyles: { fillColor: ink, textColor: yellow, fontStyle: 'bold' },
+                alternateRowStyles: { fillColor: [245, 248, 252] },
+                didParseCell: d => { if (d.section === 'body' && d.column.index === 6) { const r = d.cell.raw; d.cell.styles.fontStyle = 'bold'; d.cell.styles.textColor = r === 'OUT' ? [220, 38, 38] : r === 'LOW' ? [245, 158, 11] : [22, 163, 74]; } }
+            });
+        }
+        doc.save(`${S.tenant}_${m}_report.pdf`);
+        toast('📄 Report downloaded');
+    } catch (e) {
+        console.error(e);
+        toast('⚠️ Could not build the report: ' + friendlyErr(e), 'err');
+    } finally { loader(false); }
+}
+
+// ════════════════════════════════════════════════
+//  BUSINESS INSIGHTS (rule-based)
+// ════════════════════════════════════════════════
+function openAI() {
+    openSheet('sheetAI');
+    const today = dayStr(), from = shiftDay(today, -29), mid = shiftDay(today, -14);
+    const keys = Object.keys(S.days).filter(d => d >= from && d <= today);
+    if (!keys.length) { $('aiOut').innerHTML = '<div class="ai-bubble">Not enough data in the last 30 days yet. Keep selling!</div>'; return; }
+    let sales = 0, stock = 0, other = 0, saved = 0, we = 0, weN = 0, wd = 0, wdN = 0, recent = 0, older = 0;
+    keys.forEach(d => {
+        const x = dayFig(d);
+        sales += x.sales; stock += x.supplier; other += x.expense; saved += x.bankIn - x.bankOut + x.toSavings;
+        const dow = new Date(d + 'T12:00:00').getDay();
+        if (dow === 0 || dow === 6) { we += x.sales; weN++; } else { wd += x.sales; wdN++; }
+        if (d > mid) recent += x.sales; else older += x.sales;
+    });
+    const margin = sales ? (sales - stock - other) / sales * 100 : 0;
+    const stockRatio = sales ? stock / sales * 100 : 0;
+    const momentum = older ? (recent - older) / older * 100 : 0;
+    const avgWe = weN ? we / weN : 0, avgWd = wdN ? wd / wdN : 0;
+    const advice = margin < 15 ? `🚨 <b>Low profit:</b> only <b>${margin.toFixed(1)}%</b> of sales is profit. Check expenses and supplier prices.`
+        : stockRatio > 65 ? `⚠️ <b>Heavy restocking:</b> <b>${stockRatio.toFixed(1)}%</b> of sales goes back into stock. You may be over-ordering.`
+        : momentum < -10 ? `📉 <b>Sales slowing:</b> the last 15 days are <b>${Math.abs(momentum).toFixed(1)}%</b> below the 15 before. Consider a promotion.`
+        : `🚀 <b>Healthy:</b> margin is <b>${margin.toFixed(1)}%</b>. A good time to add a fast-moving product line.`;
+    const rhythm = avgWe > avgWd * 1.3 ? 'Weekends are busiest — restock by Friday.'
+        : avgWd > avgWe * 1.3 ? 'Weekdays are your peak — keep the till fast in the mornings.'
+        : 'Steady trade all week — monthly bulk orders are safe.';
+    const out = S.products.filter(p => (p.stock || 0) <= 0), low = S.products.filter(p => p.stock > 0 && p.stock <= (p.reorderLevel || 5));
+    const inv = (out.length ? `🚨 <b>${out.length} out of stock:</b> ${esc(out.map(p => p.name).join(', '))}<br>` : '')
+        + (low.length ? `⚠️ <b>${low.length} running low:</b> ${esc(low.map(p => p.name).join(', '))}` : '') || '✅ All stock levels are healthy.';
+    $('aiOut').innerHTML = `
+        <div class="ai-bubble" style="background:#eef3ff;">${advice}</div>
+        <div class="ai-bubble"><h5>Last 30 days</h5>
+            <div class="ai-stat"><span>Sales</span><b>${fmt(sales)}</b></div>
+            <div class="ai-stat"><span>Profit margin</span><b style="color:${margin >= 20 ? 'var(--green)' : 'var(--red)'}">${margin.toFixed(1)}%</b></div>
+            <div class="ai-stat"><span>Stock-to-sales</span><b>${stockRatio.toFixed(1)}%</b></div>
+            <div class="ai-stat"><span>15-day momentum</span><b style="color:${momentum >= 0 ? 'var(--green)' : 'var(--red)'}">${momentum >= 0 ? '+' : ''}${momentum.toFixed(1)}%</b></div>
+            <div class="ai-stat"><span>Banked & saved</span><b style="color:#a16207;">${fmt(saved)}</b></div>
+        </div>
+        <div class="ai-bubble" style="border-left-color:var(--yellow);background:#fffdf3;"><h5>Stock</h5>${inv}</div>
+        <div class="ai-bubble" style="border-left-color:var(--pos);background:#f0fdf4;"><h5>Rhythm</h5>${rhythm}
+            <div class="ai-stat" style="margin-top:6px;"><span>Average weekday</span><b>${fmt(avgWd)}</b></div>
+            <div class="ai-stat"><span>Average weekend day</span><b>${fmt(avgWe)}</b></div>
+        </div>`;
+}
+
+// ════════════════════════════════════════════════
+//  TEAM & SETTINGS
+// ════════════════════════════════════════════════
+S.staff = [];
+function openTeam() {
+    const st = S.tenantInfo.settings || {};
+    $('setTarget').value = st.dailyTarget || ''; $('setWa').value = st.whatsapp || '';
+    ['stName', 'stUser', 'stPin'].forEach(id => $(id).value = ''); $('stRole').value = 'cashier';
+    openSheet('sheetTeam');
+    $('staffList').innerHTML = '<div style="font-size:0.75rem;color:var(--gray);padding:8px 0;">Loading…</div>';
+    S.sheetListeners.push(col('staff').onSnapshot(s => {
+        S.staff = s.docs.map(d => ({ uid: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        $('staffList').innerHTML = S.staff.map(p => {
+            const me = p.uid === S.me.uid, off = p.active === false;
+            return `<div class="staff-line">
+                <div class="staff-av">${esc((p.name || p.username || '?').charAt(0).toUpperCase())}</div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:0.85rem;font-weight:800;">${esc(p.name)}${me ? ' <span style="font-size:0.65rem;color:var(--gray);">(you)</span>' : ''}</div>
+                    <div style="font-size:0.68rem;color:var(--gray);">username: <b>${esc(p.username)}</b> · <span class="role-pill ${off ? 'off' : p.role}">${off ? 'switched off' : p.role}</span></div>
+                </div>
+                ${me ? '' : `<button class="tiny-btn" onclick="toggleRole('${p.uid}')">${p.role === 'admin' ? '↓ Cashier' : '↑ Admin'}</button>
+                <button class="tiny-btn ${off ? '' : 'red'}" onclick="toggleStaff('${p.uid}')">${off ? 'Switch on' : 'Switch off'}</button>`}
+            </div>`;
+        }).join('') + `<div style="font-size:0.68rem;color:var(--gray);margin-top:8px;">Staff sign in with shop code <b>${esc(S.tenant)}</b>, their username and PIN. Forgot a PIN? Switch them off and add them again with a new username.</div>`;
+    }, e => { $('staffList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
+}
+async function addStaff() {
+    const name = $('stName').value.trim(), username = $('stUser').value.trim().toLowerCase(), role = $('stRole').value, pin = $('stPin').value.trim();
+    if (!name) return toast('⚠️ Enter their name.', 'err');
+    if (!/^[a-z0-9_-]{2,20}$/.test(username)) return toast('⚠️ Username: 2–20 lowercase letters or numbers, no spaces.', 'err');
+    if (!/^\d{6,12}$/.test(pin)) return toast('⚠️ PIN must be 6 to 12 digits.', 'err');
+    if (!navigator.onLine) return toast('⚠️ Adding staff needs internet.', 'err');
+    const btn = $('stBtn'); btn.disabled = true; btn.textContent = 'ADDING...';
+    try {
+        // A separate Firebase instance creates the login, so you stay signed in here.
+        const helper = firebase.apps.find(a => a.name === 'staffmaker') || firebase.initializeApp(firebaseConfig, 'staffmaker');
+        await helper.auth().setPersistence(firebase.auth.Auth.Persistence.NONE);
+        const cred = await helper.auth().createUserWithEmailAndPassword(emailFor(S.tenant, username), pin);
+        await helper.auth().signOut();
+        await col('staff').doc(cred.user.uid).set({ username, name, role, active: true, createdAt: now(), createdBy: S.me.name });
+        ['stName', 'stUser', 'stPin'].forEach(id => $(id).value = '');
+        await showConfirm(`<b>${esc(name)}</b> can now sign in.<br><br>Shop code: <b>${esc(S.tenant)}</b><br>Username: <b>${esc(username)}</b><br>PIN: <b>${esc(pin)}</b>`, 'Done', 'var(--pos)');
+    } catch (e) {
+        const c = e.code || '';
+        toast(c.includes('email-already-in-use') ? '⚠️ That username is already used in this shop.' : '⚠️ ' + friendlyErr(e), 'err');
+    } finally { btn.disabled = false; btn.textContent = '➕ ADD STAFF'; }
+}
+function toggleStaff(uid) {
+    const p = S.staff.find(x => x.uid === uid); if (!p) return;
+    col('staff').doc(uid).update({ active: p.active === false }).then(() => toast(p.active === false ? `✅ ${p.name} switched on` : `⛔ ${p.name} switched off`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
+}
+function toggleRole(uid) {
+    const p = S.staff.find(x => x.uid === uid); if (!p) return;
+    const role = p.role === 'admin' ? 'cashier' : 'admin';
+    col('staff').doc(uid).update({ role }).then(() => toast(`${p.name} is now ${role}`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
+}
+function saveSettings() {
+    const settings = { dailyTarget: num($('setTarget').value), whatsapp: $('setWa').value.replace(/\D/g, '') };
+    tRef().update({ settings }).then(() => toast('✅ Settings saved')).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
+}
+
+// ════════════════════════════════════════════════
+//  OFFLINE, UPDATE & INSTALL
+// ════════════════════════════════════════════════
+function setOnline() { $('offlineBanner').classList.toggle('show', !navigator.onLine); updatePending(); }
+window.addEventListener('online', () => { setOnline(); if (S.pending) toast('✅ Back online — syncing…'); });
+window.addEventListener('offline', setOnline);
+setOnline();
+
+async function forceUpdate() {
+    try {
+        if ('serviceWorker' in navigator) { const regs = await navigator.serviceWorker.getRegistrations(); await Promise.all(regs.map(r => r.unregister())); }
+        if (window.caches) { const keys = await caches.keys(); await Promise.all(keys.map(k => caches.delete(k))); }
+    } catch (e) {}
+    location.reload();
+}
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e)));
+}
+let installPrompt = null;
+window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault(); installPrompt = e;
+    if (!sGet('matinyo.installDismissed')) setTimeout(() => $('installBanner').classList.add('show'), 4000);
+});
+function doInstall() { $('installBanner').classList.remove('show'); if (installPrompt) { installPrompt.prompt(); installPrompt = null; } }
+function dismissInstall() { $('installBanner').classList.remove('show'); sSet('matinyo.installDismissed', '1'); }
+
+renderLogin();
+loader(true, 'STARTING...');
+</script>
+</body>
+</html>
