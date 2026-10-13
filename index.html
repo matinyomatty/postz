@@ -76,6 +76,18 @@
         .link-btn { background: none; border: none; color: var(--blue); font-weight: 700; font-size: 0.75rem; cursor: pointer; margin-top: 10px; }
         .login-hello { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; }
 
+        /* ── SHIFTS ── */
+        .pos-strip { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+        .strip-btn { background: var(--yellow); color: var(--ink); border: none; border-radius: 10px; padding: 6px 11px; font-size: .68rem; font-weight: 800; letter-spacing: .5px; cursor: pointer; white-space: nowrap; }
+        .badge { display: inline-block; min-width: 18px; padding: 1px 6px; border-radius: 10px; background: var(--red); color: #fff; font-size: .62rem; margin-left: 4px; }
+        .po-row { display: grid; grid-template-columns: 1.3fr 1fr auto; gap: 6px; margin-bottom: 6px; }
+        .po-row input, .po-row select { padding: 10px; font-size: .85rem; }
+        .check { display: flex; gap: 10px; align-items: flex-start; font-size: .8rem; padding: 8px 0; cursor: pointer; }
+        .check input { width: 20px; height: 20px; flex-shrink: 0; margin-top: 1px; }
+        .diff-big { text-align: center; padding: 12px; border-radius: 14px; margin-bottom: 10px; font-weight: 800; }
+        .diff-big small { display: block; font-size: .65rem; font-weight: 700; opacity: .8; text-transform: uppercase; letter-spacing: 1px; }
+        .diff-big span { font-size: 1.35rem; }
+
         /* ── LOCK & NOTICES ── */
         #lockPage { position: fixed; inset: 0; z-index: 90; overflow-y: auto; display: none; align-items: center; justify-content: center;
             padding: calc(24px + env(safe-area-inset-top)) 20px 24px; background: radial-gradient(circle at 85% 0%, #3b1a1a 0, var(--ink) 55%); }
@@ -517,7 +529,10 @@
                 <button class="btn-sec" onclick="openDay()">🔍 FIND DATE</button>
                 <button class="btn-sec" onclick="openReport()">📄 REPORTS</button>
             </div>
-            <button class="btn-sec wide" style="border-color:var(--red);color:var(--red);" onclick="openCloseDay()">🔒 CLOSE DAY</button>
+            <div class="row-btns">
+                <button class="btn-sec" style="border-color:var(--yellow);" onclick="openCashups()">🧾 CASH-UPS<span class="badge hidden" id="cuBadge">0</span></button>
+                <button class="btn-sec" style="border-color:var(--red);color:var(--red);" onclick="openCloseDay()">🔒 CLOSE DAY</button>
+            </div>
             <button class="btn-sec wide" style="border-color:var(--blue);color:var(--blue);margin-bottom:18px;" onclick="openMonth()">📅 MONTHLY PROFIT & CLOSE MONTH</button>
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -543,7 +558,7 @@
                     <button class="icon-btn" onclick="logout()" title="Sign out">⏻</button>
                 </div>
             </div>
-            <div class="pos-strip" id="posStrip">Today: <b>0</b> sales</div>
+            <div class="pos-strip"><span id="posStrip">Today: <b>0</b> sales</span><button class="strip-btn" onclick="openShiftEnd()">🔒 END SHIFT</button></div>
             <div class="search-wrap">
                 <span class="search-icon">🔍</span>
                 <input type="text" class="dark-search" id="posSearch" placeholder="Search items..." oninput="renderPOS()">
@@ -779,11 +794,17 @@
         <div class="modal-handle"></div>
         <div class="modal-title">🔒 Close Day</div>
         <div id="cdStep1">
-            <div class="hint amber" style="text-align:center;">Count the money, type it below, and the app compares it with what the system expects.</div>
-            <div class="field-group"><span class="field-label">📅 Date</span><input type="date" id="cdDate"></div>
-            <div class="field-group"><span class="field-label">💵 Cash in hand (counted)</span><input type="number" id="cdCash" inputmode="decimal" placeholder="Leave blank to skip"></div>
-            <div class="field-group"><span class="field-label">📱 Lipa kwa Simu balance</span><input type="number" id="cdMobile" inputmode="decimal" placeholder="Leave blank to skip"></div>
-            <div class="field-group"><span class="field-label">🏦 Bank balance</span><input type="number" id="cdBank" inputmode="decimal" placeholder="Leave blank to skip"></div>
+            <div class="field-group"><span class="field-label">📅 Date</span><input type="date" id="cdDate" onchange="loadCdCashups()"></div>
+            <span class="section-label">🧾 Sellers' cash-ups</span>
+            <div id="cdCashups"></div>
+            <details style="margin:6px 0 12px;">
+                <summary style="font-size:.75rem;font-weight:800;color:var(--blue);cursor:pointer;padding:6px 0;">I'm at the shop and counted myself (optional)</summary>
+                <div style="padding-top:8px;">
+                    <div class="field-group"><span class="field-label">💵 Cash in hand (counted)</span><input type="number" id="cdCash" inputmode="decimal" placeholder="Leave blank to skip"></div>
+                    <div class="field-group"><span class="field-label">📱 Lipa kwa Simu balance</span><input type="number" id="cdMobile" inputmode="decimal" placeholder="Leave blank to skip"></div>
+                    <div class="field-group"><span class="field-label">🏦 Bank balance</span><input type="number" id="cdBank" inputmode="decimal" placeholder="Leave blank to skip"></div>
+                </div>
+            </details>
             <div class="save-bar">
                 <button class="primary-cta" onclick="confirmCloseDay()">✅ CLOSE & SEND SUMMARY</button>
                 <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
@@ -796,6 +817,46 @@
                 <button class="btn-sec wide ghost" onclick="closeModals()">DONE</button>
             </div>
         </div>
+    </div>
+</div>
+
+<!-- End shift (seller cash-up) -->
+<div class="modal-overlay" id="sheetShift" onclick="overlayClose(event)">
+    <div class="modal yellow">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🔒 End Shift</div>
+        <div class="hint gray" id="shiftInfo"></div>
+        <div class="field-group"><span class="field-label">💵 Cash in the drawer — count it all</span><input type="number" id="shCash" inputmode="decimal" placeholder="e.g. 85000"></div>
+        <div class="field-group"><span class="field-label">📱 Lipa kwa Simu balance (if you can see it)</span><input type="number" id="shMobile" inputmode="decimal" placeholder="Leave blank if you don't know"></div>
+        <span class="field-label">💸 Money you paid out of the drawer</span>
+        <div id="poRows"></div>
+        <button class="btn-sec wide" style="margin-bottom:12px;" onclick="addPaidOut()">➕ Add a payment (e.g. LUKU, transport, supplier)</button>
+        <div class="field-group"><span class="field-label">📝 Note for the owner (optional)</span><textarea id="shNote" placeholder="e.g. A customer will pay 5,000 tomorrow"></textarea></div>
+        <div class="save-bar">
+            <button class="primary-cta yellow" id="shBtn" onclick="submitShift()">✅ SUBMIT CASH-UP</button>
+            <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
+        </div>
+        <div id="shMine"></div>
+    </div>
+</div>
+
+<!-- Cash-ups list (owner) -->
+<div class="modal-overlay" id="sheetCashups" onclick="overlayClose(event)">
+    <div class="modal yellow">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🧾 Cash-ups</div>
+        <div id="cuList"></div>
+        <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Review one cash-up (owner) -->
+<div class="modal-overlay" id="sheetCashup" onclick="overlayClose(event)">
+    <div class="modal yellow">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🧾 Review Cash-up</div>
+        <div id="cuBody"></div>
+        <button class="btn-sec wide ghost" onclick="openCashups()">← ALL CASH-UPS</button>
     </div>
 </div>
 
@@ -1302,6 +1363,14 @@ function startListeners() {
         const from = dayStr(new Date(new Date().getFullYear(), new Date().getMonth() - 12, 1));
         L(col('days').where('day', '>=', from), s => { S.days = {}; s.docs.forEach(d => S.days[d.id] = d.data()); renderDashboard(); });
         L(col('months'), s => { S.months = {}; s.docs.forEach(d => S.months[d.id] = d.data()); renderDashboard(); });
+        L(col('staff'), s => { S.staffAll = s.docs.map(d => ({ uid: d.id, ...d.data() })); });
+        L(col('cashups').where('status', '==', 'pending'), s => {
+            S.pendingCashups = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (tms(a.createdAt) || 9e15) - (tms(b.createdAt) || 9e15));
+            const n = S.pendingCashups.length, bd = $('cuBadge');
+            bd.textContent = n; bd.classList.toggle('hidden', !n);
+            renderNotices();
+            if ($('sheetCashups').classList.contains('active')) renderCashupList();
+        });
     }
 }
 function stopListeners() {
@@ -1343,6 +1412,11 @@ function dayFig(d) {
         supplier: +x.supplier || 0, expense: +x.expense || 0, bankIn: +x.bankIn || 0, bankOut: +x.bankOut || 0,
         toSavings: +x.toSavings || 0, closing: x.closing || null, exists: !!S.days[d]
     };
+}
+// Sales recorded on a day after the owner closed it (e.g. a seller kept selling)
+function afterClose(x) {
+    if (!x.closing || x.closing.sales == null) return 0;
+    return Math.max(0, x.sales - x.closing.sales);
 }
 function monthFig(m) {
     const f = { sales: 0, cash: 0, mobile: 0, tx: 0, supplier: 0, expense: 0, bankIn: 0, bankOut: 0, toSavings: 0, days: 0 };
@@ -1438,7 +1512,7 @@ function renderHistory() {
         const spent = x.supplier + x.expense, banked = x.bankIn - x.bankOut;
         return `<div class="entry-item ${d === today ? 'is-today' : ''}" onclick="openDay('${d}')">
             <div style="min-width:0;flex:1;">
-                <div class="entry-date">${shortDay(d)}${d === today ? '<span class="tag tag-today">TODAY</span>' : ''}${x.closing ? '<span class="tag tag-closed">🔒 CLOSED</span>' : ''}</div>
+                <div class="entry-date">${shortDay(d)}${d === today ? '<span class="tag tag-today">TODAY</span>' : ''}${x.closing ? '<span class="tag tag-closed">🔒 CLOSED</span>' : ''}${afterClose(x) ? '<span class="tag tag-open">+' + n0(afterClose(x)) + ' AFTER CLOSE</span>' : ''}</div>
                 <div class="entry-meta">🛒 ${n0(x.sales)} TZS${x.tx ? ` · ${x.tx} sale${x.tx === 1 ? '' : 's'}` : ''}${spent ? ` · 💸 ${n0(spent)}` : ''}${banked ? ` · 🏦 ${n0(banked)}` : ''}</div>
                 ${p.sales ? `<div style="margin-top:4px;">${trendBadge(x.sales, p.sales, 'vs day before')}</div>` : ''}
             </div>
@@ -1948,7 +2022,7 @@ function renderDayBody(d, sales, entries) {
             <div class="sum-row"><span>🏦 Banked (net)</span><strong style="color:var(--blue);">${fmt(x.bankIn - x.bankOut)}</strong></div>
             <div class="sum-row big"><span>📈 Day profit</span><strong style="color:${x.sales - x.supplier - x.expense >= 0 ? 'var(--green)' : 'var(--red)'};">${fmt(x.sales - x.supplier - x.expense)}</strong></div>
         </div>`;
-    if (c) html += `<div class="hint green">🔒 Closed by ${esc(c.by || '')}${c.countedCash != null ? ` · cash counted ${n0(c.countedCash)} (${signed(c.countedCash - c.systemCash)})` : ''}</div>`;
+    if (c) html += `<div class="hint green">🔒 Closed by ${esc(c.by || '')}${c.countedCash != null ? ` · cash counted ${n0(c.countedCash)} (${signed(c.countedCash - c.systemCash)})` : ''}${afterClose(x) ? `<br>⚠️ ${fmt(afterClose(x))} of sales came in after the day was closed.` : ''}</div>`;
     html += `<button class="btn-sec wide" onclick="openEntry('${d}')">➕ Add expense / banking for this date</button>`;
     if (entries.length) html += `<span class="section-label" style="margin-top:12px;">📒 Money entries (${entries.length})</span>` + entries.map(entryLine).join('');
     if (sales.length) {
@@ -1982,6 +2056,212 @@ async function voidSale(id) {
 }
 
 // ════════════════════════════════════════════════
+//  SHIFT CASH-UPS  — built for an owner who is NOT at the shop
+//  1. The seller ends their shift: counts the drawer (blind — the app never
+//     shows them what it expects) and lists any money paid out of the drawer.
+//  2. The owner reviews each cash-up from anywhere: counted vs expected,
+//     approves the paid-outs as expenses, and records any shortage.
+//  3. The owner closes the day remotely.
+// ════════════════════════════════════════════════
+S.pendingCashups = [];
+const TSms = m => firebase.firestore.Timestamp.fromMillis(m);
+const nowMs = () => Date.now();
+
+function myShiftStart() {
+    const mine = (S.myCashups || []).filter(c => tms(c.createdAt)).map(c => tms(c.createdAt));
+    return mine.length ? Math.max(...mine) : null;
+}
+function poRowHtml() {
+    return `<div class="po-row">
+        <select data-k="category">${EXPENSE_CATS.map(([v, l]) => `<option value="${v}" ${v === 'Other' ? 'selected' : ''}>${l}</option>`).join('')}</select>
+        <input data-k="amount" type="number" inputmode="decimal" placeholder="Amount">
+        <button class="tiny-btn red" onclick="this.parentElement.remove()">✕</button>
+        <input data-k="note" type="text" placeholder="What for? e.g. LUKU token" style="grid-column:1/-1;">
+    </div>`;
+}
+function addPaidOut() { $('poRows').insertAdjacentHTML('beforeend', poRowHtml()); }
+
+function openShiftEnd() {
+    ['shCash', 'shMobile', 'shNote'].forEach(id => $(id).value = '');
+    $('poRows').innerHTML = '';
+    openSheet('sheetShift');
+    renderShiftInfo();
+    S.sheetListeners.push(col('cashups').where('staffUid', '==', S.me.uid).where('day', '==', dayStr()).onSnapshot(s => {
+        S.myCashups = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderShiftInfo();
+        const list = [...S.myCashups].sort((a, b) => (tms(b.createdAt) || 9e15) - (tms(a.createdAt) || 9e15));
+        $('shMine').innerHTML = list.length ? `<span class="section-label" style="margin-top:12px;">Your cash-ups today</span>` + list.map(c => `
+            <div class="list-line" style="background:#f8fafc;border-left-color:${c.status === 'confirmed' ? 'var(--pos)' : 'var(--yellow)'};">
+                <div class="ll-main"><div class="ll-title">${timeOf(c.createdAt)} · counted ${n0(c.countedCash)}</div>
+                <div class="ll-sub">${c.status === 'confirmed' ? '✅ Checked by ' + esc(c.reviewedBy || 'owner') : '⏳ Waiting for the owner'}</div></div>
+            </div>`).join('') : '';
+    }, () => {}));
+    setTimeout(() => $('shCash').focus(), 250);
+}
+function renderShiftInfo() {
+    const since = myShiftStart();
+    const mine = S.todaySales.filter(x => !x.voided && x.kind !== 'manual' && x.staffUid === S.me.uid && (!since || (tms(x.createdAt) || 9e15) > since));
+    $('shiftInfo').innerHTML = `👤 <b>${esc(S.me.name)}</b> · ${since ? 'since your last cash-up at ' + new Date(since).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'today'}<br>
+        You made <b>${mine.length}</b> sale${mine.length === 1 ? '' : 's'}. Count <b>all</b> the cash in the drawer, including change.`;
+}
+
+async function submitShift() {
+    if ($('shCash').value.trim() === '') return toast('⚠️ Count the cash in the drawer and type it.', 'err');
+    const countedCash = num($('shCash').value);
+    const countedMobile = $('shMobile').value.trim() === '' ? null : num($('shMobile').value);
+    const paidOuts = [];
+    for (const r of document.querySelectorAll('#poRows .po-row')) {
+        const amount = num(r.querySelector('[data-k=amount]').value), note = r.querySelector('[data-k=note]').value.trim();
+        if (!amount && !note) continue;
+        if (amount <= 0) return toast('⚠️ Enter the amount for each payment.', 'err');
+        if (!note) return toast('⚠️ Say what each payment was for.', 'err');
+        paidOuts.push({ category: r.querySelector('[data-k=category]').value, amount, note });
+    }
+    const paidOutTotal = paidOuts.reduce((a, p) => a + p.amount, 0);
+    const since = myShiftStart();
+    const salesCount = S.todaySales.filter(x => !x.voided && x.kind !== 'manual' && x.staffUid === S.me.uid && (!since || (tms(x.createdAt) || 9e15) > since)).length;
+    const msg = `Submit your cash-up?<br><br>💵 Cash counted: <b>${fmt(countedCash)}</b>${countedMobile !== null ? `<br>📱 Lipa kwa Simu: <b>${fmt(countedMobile)}</b>` : ''}${paidOuts.length ? `<br>💸 Paid out: <b>${fmt(paidOutTotal)}</b>` : ''}`;
+    if (!await showConfirm(msg, 'Submit', 'var(--pos)')) return;
+    const day = dayStr(), b = db.batch();
+    b.set(col('cashups').doc(), {
+        staffUid: S.me.uid, staffName: S.me.name, day, month: day.slice(0, 7),
+        countedCash, countedMobile, paidOuts, paidOutTotal, note: $('shNote').value.trim(), salesCount,
+        status: 'pending', createdAt: now()
+    });
+    commit(b, '✅ Cash-up sent to the owner');
+    closeModals();
+    const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, '');
+    const text = `🧾 *Cash-up — ${(S.tenantInfo.name || S.tenant)}*\n👤 ${S.me.name} · ${prettyDay(day)} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Lipa kwa Simu: ${n0(countedMobile)}` : ''}\n🛒 My sales this shift: ${salesCount}${paidOuts.length ? '\n\n💸 Paid out of the drawer:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nPlease review it in Matinyo POS.`;
+    if (wa && await showConfirm('Also send the cash-up to the owner on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
+    if (await showConfirm('Your shift is done. Sign out now so the next person can sign in?', 'Sign out', 'var(--blue)')) logout('👋 Shift ended');
+}
+
+// ── Owner side ───────────────────────────────────────────
+// What the system says the shop held at a past moment t:
+// today's balance minus every money movement recorded after t.
+async function balanceAt(t) {
+    const ts = TSms(t);
+    const [after, voided, ents] = await Promise.all([
+        col('sales').where('createdAt', '>', ts).get(),
+        col('sales').where('voidedAt', '>', ts).get(),
+        col('entries').where('createdAt', '>', ts).get()
+    ]);
+    const b = { cash: +S.balances.cash || 0, mobile: +S.balances.mobile || 0, bank: +S.balances.bank || 0, savings: +S.balances.savings || 0 };
+    after.docs.forEach(d => { const x = d.data(); if (x.voided) return; b.cash -= x.cash || 0; b.mobile -= x.mobile || 0; });
+    voided.docs.forEach(d => { const x = d.data(); if ((tms(x.createdAt) || 0) > t) return; b.cash += x.cash || 0; b.mobile += x.mobile || 0; });
+    ents.docs.forEach(d => {
+        const e = d.data(), a = +e.amount || 0;
+        // Entries made when reviewing an EARLIER cash-up describe money that moved before t — keep them.
+        if (tms(e.cashupAt) && tms(e.cashupAt) < t) return;
+        if (e.from) b[e.from] = (b[e.from] || 0) + a;
+        if (e.to) b[e.to] = (b[e.to] || 0) - a;
+    });
+    return b;
+}
+function diffWord(v) {
+    if (Math.abs(v) < 1) return ['✓ Exact', 'var(--green)', '#e6f6f0'];
+    return v < 0 ? ['Short ' + n0(-v), 'var(--red)', '#fee2e2'] : ['Over ' + n0(v), '#1d4ed8', '#eff6ff'];
+}
+
+S.cashupCache = {};
+function openCashups() {
+    openSheet('sheetCashups');
+    renderCashupList();
+    const since = TSms(nowMs() - 14 * 864e5);
+    S.sheetListeners.push(col('cashups').where('createdAt', '>=', since).onSnapshot(s => {
+        S.recentCashups = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderCashupList();
+    }, e => { $('cuList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
+}
+function cashupLine(c) {
+    S.cashupCache[c.id] = c;
+    const done = c.status === 'confirmed';
+    const [w, col_] = done ? diffWord(c.diffCash || 0) : ['⏳ To review', 'var(--amber)'];
+    return `<div class="entry-item" style="padding:11px 13px;border-left-color:${done ? (Math.abs(c.diffCash || 0) < 1 ? 'var(--pos)' : 'var(--red)') : 'var(--yellow)'};" onclick="openCashup('${c.id}')">
+        <div style="min-width:0;flex:1;"><div class="entry-date" style="font-size:.84rem;">${esc(c.staffName)} · ${shortDay(c.day)} ${timeOf(c.createdAt)}</div>
+            <div class="entry-meta">💵 counted ${n0(c.countedCash)}${c.paidOutTotal ? ' · 💸 paid out ' + n0(c.paidOutTotal) : ''}${c.note ? ' · 📝' : ''}</div></div>
+        <div style="font-size:.72rem;font-weight:800;color:${col_};white-space:nowrap;">${w}</div>
+    </div>`;
+}
+function renderCashupList() {
+    const pend = S.pendingCashups || [];
+    const done = (S.recentCashups || []).filter(c => c.status === 'confirmed').sort((a, b) => (tms(b.createdAt) || 0) - (tms(a.createdAt) || 0));
+    const short = done.filter(c => (c.diffCash || 0) < -1).reduce((a, c) => a + c.diffCash, 0);
+    $('cuList').innerHTML = `
+        <span class="section-label">To review${pend.length ? ' (oldest first)' : ''}</span>
+        ${pend.length ? pend.map(cashupLine).join('') : '<div class="empty-state" style="padding:12px;">✅ Nothing waiting.</div>'}
+        <span class="section-label" style="margin-top:10px;">Checked · last 14 days${short ? ` · <span style="color:var(--red);">short ${n0(-short)} total</span>` : ''}</span>
+        ${done.length ? done.map(cashupLine).join('') : '<div class="empty-state" style="padding:12px;">None yet.</div>'}`;
+}
+
+async function openCashup(id) {
+    const c = S.cashupCache[id]; if (!c) return;
+    openSheet('sheetCashup');
+    const box = $('cuBody');
+    box.innerHTML = '<div class="empty-state">Working out what should be in the drawer…</div>';
+    let exp;
+    try {
+        exp = c.status === 'confirmed' ? { cash: c.expectedCash, mobile: c.expectedMobile } : await balanceAt(tms(c.createdAt) || nowMs());
+    } catch (e) { box.innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; return; }
+    const po = c.paidOutTotal || 0, expAfter = exp.cash - po;
+    const dCash = c.countedCash - expAfter, dMob = c.countedMobile == null || exp.mobile == null ? null : c.countedMobile - exp.mobile;
+    const [w, colr, bg] = diffWord(dCash);
+    S.review = { c, exp, dCash, dMob };
+    const done = c.status === 'confirmed';
+    box.innerHTML = `
+        <div style="text-align:center;font-size:.8rem;color:var(--gray);margin-bottom:10px;">👤 <b style="color:var(--ink);">${esc(c.staffName)}</b> · ${prettyDay(c.day)} · ${timeOf(c.createdAt)} · ${c.salesCount || 0} sales</div>
+        <div class="diff-big" style="background:${bg};color:${colr};"><small>Cash in drawer</small><span>${w}</span></div>
+        <div class="sum-box">
+            <div class="sum-row"><span>💵 System expected</span><strong>${fmt(exp.cash)}</strong></div>
+            ${po ? `<div class="sum-row"><span>💸 Paid out by ${esc(c.staffName.split(' ')[0])}</span><strong style="color:var(--red);">−${fmt(po)}</strong></div>
+            <div class="sum-row"><span>Should be in the drawer</span><strong>${fmt(expAfter)}</strong></div>` : ''}
+            <div class="sum-row big"><span>Counted</span><strong>${fmt(c.countedCash)}</strong></div>
+        </div>
+        ${dMob !== null ? `<div class="sum-box">
+            <div class="sum-row"><span>📱 Lipa kwa Simu expected</span><strong>${fmt(exp.mobile)}</strong></div>
+            <div class="sum-row"><span>📱 Balance seen</span><strong style="color:${diffWord(dMob)[1]};">${fmt(c.countedMobile)} · ${diffWord(dMob)[0]}</strong></div>
+        </div>` : ''}
+        ${(c.paidOuts || []).length ? `<span class="section-label">Paid out of the drawer</span>` + c.paidOuts.map(p => `
+            <div class="list-line"><div class="ll-main"><div class="ll-title">${esc(p.note)}</div><div class="ll-sub">${esc((EXPENSE_CATS.find(x => x[0] === p.category) || [, p.category])[1])}</div></div><div class="ll-amt">${n0(p.amount)}</div></div>`).join('') : ''}
+        ${c.note ? `<div class="hint gray">📝 “${esc(c.note)}”</div>` : ''}
+        ${done ? `<div class="hint green">✅ Checked by ${esc(c.reviewedBy || '')}${c.ownerNote ? '<br>📝 ' + esc(c.ownerNote) : ''}${c.corrected ? '<br>Balances were corrected to the count.' : ''}${c.paidOutsRecorded ? '<br>Paid-outs recorded as expenses.' : ''}</div>` : `
+        <span class="section-label">Your decision</span>
+        ${po ? `<label class="check"><input type="checkbox" id="cuRecordPo" checked><span>Record the paid-outs (${fmt(po)}) as expenses from cash</span></label>` : ''}
+        ${Math.abs(dCash) >= 1 || (dMob !== null && Math.abs(dMob) >= 1) ? `<label class="check"><input type="checkbox" id="cuCorrect" checked><span>Set the system balance to what was counted — the ${dCash < 0 ? 'shortage' : 'difference'} is kept on record against ${esc(c.staffName.split(' ')[0])}</span></label>` : ''}
+        <div class="field-group" style="margin-top:6px;"><span class="field-label">Note (optional)</span><input type="text" id="cuOwnerNote" placeholder="e.g. Juma will refund 2,000"></div>
+        <button class="primary-cta green" id="cuBtn" onclick="confirmCashup()">✅ CONFIRM CASH-UP</button>`}`;
+}
+
+async function confirmCashup() {
+    const { c, exp, dCash, dMob } = S.review;
+    const recordPo = $('cuRecordPo') ? $('cuRecordPo').checked : false;
+    const correct = $('cuCorrect') ? $('cuCorrect').checked : false;
+    const ownerNote = $('cuOwnerNote').value.trim();
+    const at = c.createdAt, first = c.staffName.split(' ')[0], entries = [];
+    if (recordPo) (c.paidOuts || []).forEach(p => entries.push({ type: 'expense', category: p.category, from: 'cash', to: null, amount: p.amount, note: `${p.note} (paid by ${first})`, day: c.day }));
+    if (correct) {
+        if (Math.abs(dCash) >= 1) entries.push({ type: 'adjust', category: 'Cash-up difference', from: dCash < 0 ? 'cash' : null, to: dCash > 0 ? 'cash' : null, amount: Math.abs(dCash), note: `Cash-up ${first}: ${dCash < 0 ? 'short' : 'over'} ${n0(Math.abs(dCash))}`, day: c.day });
+        if (dMob !== null && Math.abs(dMob) >= 1) entries.push({ type: 'adjust', category: 'Cash-up difference', from: dMob < 0 ? 'mobile' : null, to: dMob > 0 ? 'mobile' : null, amount: Math.abs(dMob), note: `Cash-up ${first}: Lipa kwa Simu ${dMob < 0 ? 'short' : 'over'} ${n0(Math.abs(dMob))}`, day: c.day });
+    }
+    entries.forEach(e => { e.cashupId = c.id; e.cashupAt = at; });
+    const b = db.batch();
+    if (entries.length) writeEntries(b, entries);
+    b.update(col('cashups').doc(c.id), {
+        status: 'confirmed', expectedCash: exp.cash, expectedMobile: exp.mobile ?? null, diffCash: dCash, diffMobile: dMob,
+        paidOutsRecorded: recordPo, corrected: correct, ownerNote, reviewedBy: S.me.name, reviewedAt: now()
+    });
+    $('cuBtn').disabled = true;
+    await commit(b, '✅ Cash-up confirmed');
+    const seller = (S.staffAll || []).find(x => x.uid === c.staffUid);
+    const phone = seller && /^\d+$/.test(seller.loginId || '') ? seller.loginId : '';
+    if (phone && Math.abs(dCash) >= 1 && await showConfirm(`Tell ${esc(first)} about the ${dCash < 0 ? 'shortage' : 'difference'} on WhatsApp?`, '📲 WhatsApp', 'var(--pos)')) {
+        const text = `Habari ${first}, I checked your cash-up of ${prettyDay(c.day)} ${timeOf(c.createdAt)}.\nCounted: ${n0(c.countedCash)}\nShould have been: ${n0(exp.cash - (c.paidOutTotal || 0))}\n${dCash < 0 ? 'Short' : 'Over'}: ${n0(Math.abs(dCash))}${ownerNote ? '\n\n' + ownerNote : ''}`;
+        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+    openCashups();
+}
+
+// ════════════════════════════════════════════════
 //  CLOSE DAY  → WhatsApp summary
 // ════════════════════════════════════════════════
 function openCloseDay() {
@@ -1989,7 +2269,18 @@ function openCloseDay() {
     $('cdDate').value = dayStr();
     ['cdCash', 'cdMobile', 'cdBank'].forEach(id => $(id).value = '');
     openSheet('sheetCloseDay');
-    setTimeout(() => $('cdCash').focus(), 250);
+    loadCdCashups();
+}
+async function loadCdCashups() {
+    const d = $('cdDate').value || dayStr(), box = $('cdCashups');
+    box.innerHTML = '<div style="font-size:.75rem;color:var(--gray);padding:6px 0;">Loading…</div>';
+    try {
+        const s = await col('cashups').where('day', '==', d).get();
+        S.cdCashups = s.docs.map(x => ({ id: x.id, ...x.data() })).sort((a, b) => (tms(a.createdAt) || 0) - (tms(b.createdAt) || 0));
+    } catch (e) { box.innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; S.cdCashups = []; return; }
+    const pend = S.cdCashups.filter(c => c.status !== 'confirmed').length;
+    box.innerHTML = (S.cdCashups.length ? S.cdCashups.map(cashupLine).join('') : '<div class="hint gray">No seller has ended a shift on this day yet. You can still close the day.</div>')
+        + (pend ? `<div class="hint amber">⚠️ ${pend} cash-up${pend > 1 ? 's' : ''} not checked yet. Tap ${pend > 1 ? 'each one' : 'it'} to review before closing.</div>` : '');
 }
 function confirmCloseDay() {
     const d = $('cdDate').value || dayStr();
@@ -2001,12 +2292,19 @@ function confirmCloseDay() {
     const lowItems = S.products.filter(p => p.stock > 0 && p.stock <= (Number(p.reorderLevel) || 5));
     const isToday = d === dayStr();
 
+    const cus = S.cdCashups || [];
+    const cuLines = cus.map(c => {
+        const st = c.status === 'confirmed' ? diffWord(c.diffCash || 0)[0] : 'not checked';
+        return `${c.staffName.split(' ')[0]} ${timeOf(c.createdAt)}: counted ${n0(c.countedCash)} — ${st}`;
+    });
+    const cuShort = cus.filter(c => c.status === 'confirmed').reduce((a, c) => a + Math.min(0, c.diffCash || 0), 0);
     const b = db.batch();
     b.set(col('days').doc(d), {
         day: d, month: d.slice(0, 7), updatedAt: now(),
         closing: {
             countedCash: counted.cash, countedMobile: counted.mobile, countedBank: counted.bank,
-            systemCash: bal.cash, systemMobile: bal.mobile, systemBank: bal.bank, by: S.me.name, at: now()
+            systemCash: bal.cash, systemMobile: bal.mobile, systemBank: bal.bank, by: S.me.name, at: now(),
+            sales: x.sales, cashups: cus.length, cashupShort: cuShort
         }
     }, { merge: true });
     commit(b);
@@ -2032,6 +2330,10 @@ function confirmCloseDay() {
             ${!isToday ? '<div class="hint amber" style="margin-bottom:6px;">Comparing with balances as they are right now, not at the end of that day.</div>' : ''}
             ${diffRow('💵 Cash', counted.cash, bal.cash)}${diffRow('📱 Lipa kwa Simu', counted.mobile, bal.mobile)}${diffRow('🏦 Bank', counted.bank, bal.bank)}
         </div>` : ''}
+        ${cus.length ? `<span class="section-label">🧾 Cash-ups</span><div class="sum-box">${cus.map((c, i) => {
+            const [w, colr] = c.status === 'confirmed' ? diffWord(c.diffCash || 0) : ['not checked', 'var(--amber)'];
+            return `<div class="sum-row"><span>${esc(c.staffName)} · ${timeOf(c.createdAt)}</span><strong style="color:${colr};">${n0(c.countedCash)} · ${w}</strong></div>`;
+        }).join('')}</div>` : ''}
         <div class="mini-cards">
             <div><b style="color:var(--pos);">${x.tx}</b><small>POS sales</small></div>
             <div style="background:${outItems.length ? '#fff5f5' : '#f0fdf4'};"><b style="color:${outItems.length ? 'var(--red)' : 'var(--green)'};">${outItems.length}</b><small>Out of stock</small></div>
@@ -2048,7 +2350,7 @@ function confirmCloseDay() {
 ━━━━━━━━━━
 📈 Day profit: ${n0(profit)}
 💵 Cash balance: ${n0(bal.cash)}
-📱 Mobile balance: ${n0(bal.mobile)}${recon.length ? '\n\n' + recon.join('\n') : ''}
+📱 Mobile balance: ${n0(bal.mobile)}${recon.length ? '\n\n' + recon.join('\n') : ''}${cuLines.length ? '\n\n🧾 Cash-ups\n' + cuLines.join('\n') + (cuShort ? `\nTotal short: ${n0(-cuShort)}` : '') : ''}
 
 🧾 ${x.tx} POS sales${outItems.length ? `\n🚨 Out of stock: ${outItems.length} items` : ''}${lowItems.length ? `\n⚠️ Low stock: ${lowItems.length} items` : ''}
 Closed by ${S.me.name}`;
@@ -2406,6 +2708,10 @@ function dismissNotice(id) { const d = dismissedNotices(); d.push(id); sSet('mat
 function renderNotices() {
     const box = $('noticeBar'); if (!box || !S.me) return;
     const out = [], t = S.tenantInfo, fee = fmt(t.monthlyFee || 0);
+    if (isAdmin() && (S.pendingCashups || []).length) {
+        const n = S.pendingCashups.length;
+        out.push(['warn', `🧾 ${n} cash-up${n > 1 ? 's' : ''} to review`, `From ${[...new Set(S.pendingCashups.map(c => (c.staffName || '').split(' ')[0]))].join(', ')}. Check the money, then close the day.`, 'cash']);
+    }
     if (isAdmin()) {
         const st = subState(t);
         if (st.overdue) out.push(['red', '⏰ Payment overdue', `The till locks on ${tsDay(t.lockAt)}. Pay ${fee} to keep selling.`, 'sub']);
@@ -2420,7 +2726,8 @@ function renderNotices() {
         out.push([a.level === 'warn' ? 'warn' : 'info', (a.level === 'warn' ? '⚠️ ' : '📣 ') + a.title, a.body, 'ann', a.id]);
     });
     box.innerHTML = out.map(([cls, title, body, kind, id]) => `<div class="notice ${cls}"><div><b>${esc(title)}</b>${esc(body)}</div>${kind === 'sub'
-        ? '<button class="act" onclick="openSub()">How to pay</button>' : `<button title="Hide" onclick="dismissNotice('${id}')">✕</button>`}</div>`).join('');
+        ? '<button class="act" onclick="openSub()">How to pay</button>' : kind === 'cash' ? '<button class="act" onclick="openCashups()">Review</button>'
+        : `<button title="Hide" onclick="dismissNotice('${id}')">✕</button>`}</div>`).join('');
 }
 
 function planUsageText() {
@@ -2484,7 +2791,24 @@ function tillReceipt(pid) {
 //  TEAM & SETTINGS
 // ════════════════════════════════════════════════
 S.staff = [];
+async function loadCashStats() {
+    S.cashStats = {};
+    try {
+        const s = await col('cashups').where('createdAt', '>=', TSms(nowMs() - 30 * 864e5)).get();
+        s.docs.forEach(d => {
+            const c = d.data(), k = c.staffUid, x = S.cashStats[k] = S.cashStats[k] || { n: 0, short: 0, over: 0 };
+            x.n++;
+            if (c.status === 'confirmed') { if ((c.diffCash || 0) < -1) x.short += -c.diffCash; else if ((c.diffCash || 0) > 1) x.over += c.diffCash; }
+        });
+    } catch (e) {}
+}
+function cashStatText(uid) {
+    const x = (S.cashStats || {})[uid];
+    if (!x || !x.n) return '';
+    return `<div style="font-size:0.66rem;margin-top:2px;color:${x.short ? 'var(--red)' : 'var(--gray)'};">🧾 ${x.n} cash-up${x.n > 1 ? 's' : ''} in 30 days${x.short ? ' · short ' + n0(x.short) : ''}${x.over ? ' · over ' + n0(x.over) : ''}${!x.short && !x.over ? ' · no differences' : ''}</div>`;
+}
 function openTeam() {
+    loadCashStats().then(() => { if ($('sheetTeam').classList.contains('active') && S.renderStaff) S.renderStaff(); });
     const st = S.tenantInfo.settings || {};
     $('setTarget').value = st.dailyTarget || ''; $('setWa').value = st.whatsapp || '';
     ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = ''); $('stRole').value = 'cashier';
@@ -2492,6 +2816,9 @@ function openTeam() {
     $('staffList').innerHTML = '<div style="font-size:0.75rem;color:var(--gray);padding:8px 0;">Loading…</div>';
     S.sheetListeners.push(col('staff').onSnapshot(s => {
         S.staff = s.docs.map(d => ({ uid: d.id, ...d.data() })).filter(p => !p.replacedBy).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        S.renderStaff();
+    }, e => { $('staffList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
+    S.renderStaff = () => {
         $('staffList').innerHTML = S.staff.map(p => {
             const me = p.uid === S.me.uid, off = p.active === false, byEmail = (p.loginId || '').includes('@');
             const login = byEmail ? esc(p.loginId) : '📱 ' + esc(prettyPhone(p.loginId || ''));
@@ -2500,6 +2827,7 @@ function openTeam() {
                 <div style="flex:1;min-width:150px;">
                     <div style="font-size:0.85rem;font-weight:800;">${esc(p.name)}${me ? ' <span style="font-size:0.65rem;color:var(--gray);">(you)</span>' : ''}</div>
                     <div style="font-size:0.68rem;color:var(--gray);">${login} · <span class="role-pill ${off ? 'off' : p.role}">${off ? 'switched off' : p.role}</span></div>
+                    ${cashStatText(p.uid)}
                 </div>
                 ${me ? `<button class="tiny-btn" onclick="openPin()">🔑 My PIN</button>` : `<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
                     <button class="tiny-btn" onclick="resetStaffPin('${p.uid}')">🔑 ${byEmail ? 'Email reset' : 'Reset PIN'}</button>
@@ -2508,7 +2836,7 @@ function openTeam() {
             </div>`;
         }).join('') + `<div style="font-size:0.68rem;color:var(--gray);margin-top:8px;">Sellers sign in with their phone number and PIN.</div>`;
         $('planUsage').textContent = planUsageText();
-    }, e => { $('staffList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
+    };
 }
 
 // Ask for a value in a small dialog (mobile-safe replacement for prompt())
