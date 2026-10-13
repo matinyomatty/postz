@@ -1,6 +1,6 @@
 // Matinyo POS — keeps the app opening when the internet is down.
 // Sales themselves are stored offline by Firebase; this file only caches the app's own files.
-const CACHE = 'matinyo-pos-v10';
+const CACHE = 'matinyo-pos-v12';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 
 self.addEventListener('install', e => {

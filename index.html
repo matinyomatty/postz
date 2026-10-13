@@ -1242,6 +1242,13 @@ const db = firebase.firestore();
 db.enablePersistence({ synchronizeTabs: true }).catch(e => console.warn('Offline storage unavailable:', e.code));
 const FV = firebase.firestore.FieldValue;
 const inc = n => FV.increment(n);
+// Plan usage list — the database checks it against the plan's limits.
+// Only written once Matinyo HQ has set it up for the shop.
+const usageRef = () => col('plan').doc('usage');
+function usageAdd(b, kind, id) { if (S.usage) b.update(usageRef(), { [`${kind}.${id}`]: true, updatedAt: now() }); }
+function usageDel(b, kind, id) { if (S.usage) b.update(usageRef(), { [`${kind}.${id}`]: FV.delete(), updatedAt: now() }); }
+const usedItems = () => S.usage ? Object.keys(S.usage.products || {}).length : S.products.length;
+const usedStaff = () => S.usage ? Object.keys(S.usage.staff || {}).length : (S.staff || []).filter(p => p.active !== false).length;
 const now = () => FV.serverTimestamp();
 
 // ════════════════════════════════════════════════
@@ -1302,13 +1309,23 @@ function friendlyErr(e) {
 
 // Save a batch. It is applied on this device straight away (works offline) and
 // synced to the cloud in the background. A badge shows anything still waiting.
-function commit(batch, okMsg) {
+function commit(batch, okMsg, what) {
     S.pending++; updatePending();
     const p = batch.commit()
-        .catch(err => { console.error(err); toast('⚠️ Not saved: ' + friendlyErr(err), 'err'); throw err; })
+        .catch(err => {
+            console.error(err); toast('⚠️ Not saved: ' + friendlyErr(err), 'err');
+            if (what) { const l = failedSaves(); l.push({ ...what, at: Date.now(), by: S.me ? S.me.name : '', why: friendlyErr(err) }); sSet('matinyo.failed', JSON.stringify(l.slice(-30))); renderNotices(); }
+            throw err;
+        })
         .finally(() => { S.pending--; updatePending(); });
     if (okMsg) toast(okMsg);
     return p.catch(() => {});
+}
+function failedSaves() { try { return JSON.parse(sGet('matinyo.failed') || '[]'); } catch (e) { return []; } }
+async function showFailedSaves() {
+    const l = failedSaves(); if (!l.length) return;
+    const ok = await showConfirm(`<b>These were NOT saved</b> — please enter them again:<br><br>` + l.map(x => `• ${new Date(x.at).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })} — ${esc(x.label)} <span style="color:#6b7280;">(${esc(x.by)})</span><br><span style="font-size:.72rem;color:#b91c1c;">${esc(x.why)}</span>`).join('<br>'), 'I have re-entered them');
+    if (ok) { sSet('matinyo.failed', '[]'); renderNotices(); }
 }
 function updatePending() {
     const b = $('pendingBadge');
@@ -1537,9 +1554,30 @@ function enterApp() {
     detectDevice();
     touch();
     prewarmScanner();
+    checkClock();
+}
+async function checkClock() {
+    try {
+        const r = await fetch(location.pathname + '?clock=' + Date.now(), { method: 'HEAD', cache: 'no-store' });
+        const d = Date.parse(r.headers.get('date') || '');
+        if (!d) return;
+        const off = Math.round((Date.now() - d) / 60000);
+        S.clockOff = Math.abs(off) >= 10 ? off : 0;
+        renderNotices();
+    } catch (e) {}
 }
 
-function logout(msg) {
+async function unsyncedCount() {
+    if (S.pending > 0) return S.pending;
+    if (typeof db.waitForPendingWrites !== 'function') return 0;
+    const done = await Promise.race([db.waitForPendingWrites().then(() => true), new Promise(r => setTimeout(() => r(false), 1500))]);
+    return done ? 0 : 1;
+}
+async function logout(msg, force) {
+    if (!force && S.me && await unsyncedCount()) {
+        const ok = await showConfirm(`⏳ <b>Some sales or changes have not reached the internet yet.</b><br><br>If you sign out now they stay on this phone and are only sent when <b>${esc(S.me.name.split(' ')[0])}</b> signs in here again — the owner won't see them.<br><br>Connect to the internet and wait for “waiting to sync” to clear.`, 'Sign out anyway');
+        if (!ok) return;
+    }
     if (Object.keys(S.cart).length && !msg) {
         showConfirm('There are items in the cart. Sign out anyway?', 'Sign out').then(ok => { if (ok) { S.cart = {}; auth.signOut(); } });
         return;
@@ -1598,7 +1636,7 @@ function startListeners() {
     L(col('products'), s => {
         S.products = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         Object.keys(S.cart).forEach(id => { if (!productById(id)) delete S.cart[id]; });
-        renderPOS(); renderInventory(); if (isAdmin()) renderDashboard();
+        renderPOS(); renderInventory(); renderNotices(); if (isAdmin()) renderDashboard();
     });
     L(col('sales').where('day', '==', S.today), s => {
         S.todaySales = s.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -1609,6 +1647,10 @@ function startListeners() {
         renderNotices();
     });
     L(db.collection('platform').doc('config'), s => { S.platform = s.data() || {}; });
+    S.listeners.push(usageRef().onSnapshot(s => { S.usage = s.exists ? s.data() : null; }, e => {
+        // Not on the plan's staff list (switched off, or over the plan limit)
+        if (e.code === 'permission-denied') setTimeout(() => { if (S.me && !subState(S.tenantInfo || {}).locked) rejectLogin('Your login is not active on this shop. Ask the shop owner to switch you on.'); }, 2500);
+    }));
     L(col('serials').where('status', '==', 'in'), s => {
         S.serialsIn = {}; s.docs.forEach(d => S.serialsIn[d.id] = { id: d.id, ...d.data() });
         renderInventory();
@@ -1995,7 +2037,20 @@ function checkPay() {
     return ok;
 }
 
-function confirmSale() {
+async function confirmSale() {
+    if (S.saving) return;
+    // Serials not on the shelf list: make sure they weren't already sold (e.g. on another till)
+    const unknown = [];
+    Object.keys(S.cart).forEach(id => { const p = productById(id); if (p && p.trackSerial) (meta(id).serials || []).forEach(sn => { sn = (sn || '').trim(); if (sn && !S.serialsIn[serialId(sn)]) unknown.push(sn); }); });
+    if (unknown.length) {
+        S.saving = true;
+        try {
+            for (const sn of unknown) {
+                const d = await Promise.race([col('serials').doc(serialId(sn)).get().then(x => x.exists ? x.data() : null).catch(() => null), new Promise(r => setTimeout(() => r(null), 2500))]);
+                if (d && d.status === 'sold') return toast(`⚠️ ${sn} was already sold${d.soldAt && tms(d.soldAt) ? ' on ' + new Date(tms(d.soldAt)).toLocaleDateString('en-GB') : ''}${d.soldBy ? ' by ' + d.soldBy : ''}. Check the number.`, 'err');
+            }
+        } finally { S.saving = false; }
+    }
     const lines = Object.entries(S.cart);
     if (!lines.length) return toast('Cart is empty');
     if (!checkPay()) return toast('⚠️ The payment must add up to the total.', 'err');
@@ -2056,7 +2111,7 @@ function confirmSale() {
     clearCart();
     renderLastSale();
     navigator.vibrate?.(80);
-    commit(b, `✅ Sale recorded · ${fmt(total)}`);
+    commit(b, `✅ Sale recorded · ${fmt(total)}`, { label: `Sale ${receiptNo} · ${fmt(total)} · ${items.map(i => qtyTxt(i.qty, { unit: i.unit }) + ' × ' + i.name).join(', ')}${credit ? ' · credit ' + n0(credit) + ' to ' + cust.name : ''}` });
 }
 function renderLastSale() {
     const s = S.lastSale, bar = $('lastSaleBar');
@@ -2167,7 +2222,7 @@ function saveItem() {
     const prev = id ? productById(id) : null;
     if (serial && stock !== (prev ? Number(prev.stock) || 0 : 0)) return toast(prev ? '⚠️ For serial items, add stock with 📥 Restock so each serial is scanned in.' : '⚠️ Save serial items with stock 0, then use 📥 Restock to scan each serial in.', 'err');
     const maxP = Number((S.tenantInfo.limits || {}).maxProducts) || 0;
-    if (!id && maxP && S.products.length >= maxP) return toast(`⚠️ Your plan allows ${maxP} items. Ask Matinyo to upgrade your plan.`, 'err');
+    if (!id && maxP && usedItems() >= maxP) return toast(`⚠️ Your plan allows ${maxP} items. Ask Matinyo to upgrade your plan.`, 'err');
     const ref = id ? col('products').doc(id) : col('products').doc();
     const before = id ? productById(id) : null;
     const b = db.batch();
@@ -2177,6 +2232,7 @@ function saveItem() {
         unit: $('itemUnit').value, partQty: part, packSize: Math.max(0, Math.round(num($('itemPack').value))) || 0,
         warrantyMonths: Math.max(0, Math.round(num($('itemWarranty').value))) || 0, trackSerial: serial, updatedAt: now() }, { merge: true });
     b.set(col('costs').doc(ref.id), { costPrice: cost, updatedAt: now() }, { merge: true });
+    if (!id) usageAdd(b, 'products', ref.id);
     if (!before || (Number(before.stock) || 0) !== stock) {
         b.set(col('movements').doc(), {
             productId: ref.id, name, type: before ? 'edit' : 'opening', qty: stock - (before ? Number(before.stock) || 0 : 0),
@@ -2193,6 +2249,7 @@ async function deleteItem() {
     const b = db.batch();
     b.delete(col('products').doc(id));
     b.delete(col('costs').doc(id));
+    usageDel(b, 'products', id);
     delete S.cart[id];
     closeModals();
     commit(b, '🗑️ Item deleted');
@@ -2247,7 +2304,7 @@ function confirmRestock() {
         saleId: null, soldAt: null, soldBy: null, customerName: null, updatedAt: now() }, { merge: true }));
     if (paid) writeEntries(b, [{ type: 'expense', category: 'Supplier', from: paid, to: null, amount: Math.round(qty * cost), note: `Restock ${qtyTxt(qty, p)} × ${p.name}`, day }]);
     closeModals();
-    commit(b, `✅ +${qtyTxt(qty, p)} ${p.name}`);
+    commit(b, `✅ +${qtyTxt(qty, p)} ${p.name}`, { label: `Restock +${qtyTxt(qty, p)} ${p.name}${serials.length ? ' (' + serials.join(', ') + ')' : ''}` });
 }
 
 function openStocktake() {
@@ -2279,7 +2336,7 @@ function confirmStocktake() {
         const b = db.batch();
         changes.slice(i, i + 200).forEach(c => {
             const p = productById(c.id);
-            b.update(col('products').doc(c.id), { stock: c.actual, updatedAt: now() });
+            b.update(col('products').doc(c.id), { stock: inc(q3(c.actual - c.sys)), updatedAt: now() });
             b.set(col('movements').doc(), {
                 productId: c.id, name: p ? p.name : '', type: 'stocktake', qty: c.actual - c.sys, before: c.sys, after: c.actual,
                 day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
@@ -2504,6 +2561,12 @@ async function voidSale(id) {
     if (s.kind === 'return') return toast('A return cannot be voided. If it was a mistake, sell the items again.', 'err');
     if (s.returnedTotal) return toast('Part of this sale was already returned. Use ↩️ Return for the rest instead of voiding.', 'err');
     const repay = s.kind === 'repay';
+    if (s.day !== dayStr()) {
+        let closed = null;
+        try { closed = ((await col('days').doc(s.day).get()).data() || {}).closing; } catch (e) {}
+        if (closed && s.kind === 'pos') return toast(`${prettyDay(s.day)} is already closed. Use ↩️ Return instead — the refund is then recorded today.`, 'err');
+        if (closed && !await showConfirm(`⚠️ ${prettyDay(s.day)} was already closed${closed.by ? ' by ' + esc(closed.by) : ''}. Voiding changes that day's figures after the cash was counted.<br><br>Continue?`, 'Continue')) return;
+    }
     const msg = repay ? `Void this debt payment of <b>${fmt(s.total)}</b> from ${esc(s.customer.name)}?<br><span style="font-size:0.78rem;color:#6b7280;">The amount goes back onto what they owe.</span>`
         : `Void this sale of <b>${fmt(s.total)}</b>?<br><span style="font-size:0.78rem;color:#6b7280;">The money is taken off the day's sales and the items go back into stock${s.credit ? `, and ${n0(s.credit)} is removed from ${esc(s.customer.name)}'s debt` : ''}. The sale stays visible, marked VOIDED.</span>`;
     if (!await showConfirm(msg, 'Void')) return;
@@ -2568,8 +2631,8 @@ function renderSerialList() {
             <div class="list-line" style="background:#f8fafc;border-left-color:var(--pos);">
                 <div class="ll-main"><div class="ll-title" style="font-family:monospace;font-size:.8rem;">${esc(x.serial)}</div>
                     <div class="ll-sub">In since ${tms(x.receivedAt) ? new Date(tms(x.receivedAt)).toLocaleDateString('en-GB') : '—'}${x.receivedBy ? ' · ' + esc(x.receivedBy) : ''}${x.returnedAt ? ' · came back on a return' : ''}</div></div>
-                <button class="tiny-btn" onclick="closeModals();serialLookup();$('serialQ').value='${esc(x.serial).replace(/'/g, '')}';runSerialLookup();">🔍</button>
-                ${isAdmin() ? `<button class="tiny-btn red" title="Remove a wrong entry" onclick="removeSerial('${x.id}')">✕</button>` : ''}
+                <button class="tiny-btn" data-sn="${esc(x.serial)}" onclick="const v=this.dataset.sn;closeModals();serialLookup();$('serialQ').value=v;runSerialLookup();">🔍</button>
+                ${isAdmin() ? `<button class="tiny-btn red" title="Remove a wrong entry" data-sid="${esc(x.id)}" onclick="removeSerial(this.dataset.sid)">✕</button>` : ''}
             </div>`).join('') : '<div class="empty-state" style="padding:12px;">No serials on the shelf.</div>'}`;
 }
 async function removeSerial(sid) {
@@ -2680,7 +2743,7 @@ async function confirmReturn() {
     if (cash || mobile) b.set(col('meta').doc('balances'), { cash: inc(-cash), mobile: inc(-mobile), updatedAt: now() }, { merge: true });
     if (s.customer && s.customer.id) b.update(col('customers').doc(s.customer.id), { balance: inc(-debt), totalBought: inc(-refund), updatedAt: now() });
     closeModals();
-    commit(b, `↩️ Return recorded · ${fmt(refund)} refunded`);
+    commit(b, `↩️ Return recorded · ${fmt(refund)} refunded`, { label: `Return ${receiptNo} of ${s.receiptNo || ''} · ${fmt(refund)}` });
     const doc = { id: ref.id, kind: 'return', refReceipt: s.receiptNo, items, total: refund, cash: -cash, mobile: -mobile, credit: -debt, customer: s.customer, receiptNo, day, staffName: S.me.name, createdAt: { toDate: () => new Date(), toMillis: () => Date.now() } };
     S.saleCache[ref.id] = doc;
     if (await showConfirm(`Give the customer a return receipt (${receiptNo})?`, '🧾 Receipt', 'var(--pos)')) receiptMenu(doc);
@@ -3021,7 +3084,7 @@ async function receivePayment(id) {
     b.update(col('customers').doc(id), { balance: inc(-amt), updatedAt: now() });
     b.set(col('days').doc(day), { day, month: day.slice(0, 7), debtPaid: inc(amt), [how]: inc(amt), updatedAt: now() }, { merge: true });
     b.set(col('meta').doc('balances'), { [how]: inc(amt), updatedAt: now() }, { merge: true });
-    commit(b, `✅ ${fmt(amt)} received from ${c.name}`);
+    commit(b, `✅ ${fmt(amt)} received from ${c.name}`, { label: `Debt payment ${fmt(amt)} from ${c.name} (${how})` });
     if (c.phone && await showConfirm('Send them a confirmation on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) {
         const left = Math.max(0, (c.balance || 0) - amt);
         const text = `${S.tenantInfo.name || ''}: Asante ${c.name.split(' ')[0]}! We received ${fmt(amt)} (${receiptNo}).\n${left ? `Balance remaining: ${fmt(left)}` : 'Your account is fully paid ✅'}`;
@@ -3240,7 +3303,7 @@ async function submitShift() {
         countedCash, countedMobile, paidOuts, paidOutTotal, note: $('shNote').value.trim(), salesCount,
         status: 'pending', createdAt: now()
     });
-    commit(b, '✅ Cash-up sent to the owner');
+    commit(b, '✅ Cash-up sent to the owner', { label: `Cash-up: counted ${n0(countedCash)}` });
     closeModals();
     const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, '');
     const text = `🧾 *Cash-up — ${(S.tenantInfo.name || S.tenant)}*\n👤 ${S.me.name} · ${prettyDay(day)} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Lipa kwa Simu: ${n0(countedMobile)}` : ''}\n🛒 My sales this shift: ${salesCount}${paidOuts.length ? '\n\n💸 Paid out of the drawer:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nPlease review it in Matinyo POS.`;
@@ -3841,6 +3904,11 @@ function renderNotices() {
         else if (st.trial && st.daysLeft !== null && st.daysLeft <= 7) out.push(['info', `🧪 Free trial: ${st.daysLeft} day${st.daysLeft === 1 ? '' : 's'} left`, `Ends ${tsDay(t.paidUntil)}. Then ${fee} per month.`, 'sub']);
         else if (!st.trial && st.daysLeft !== null && st.daysLeft <= 5) out.push(['warn', `📅 Subscription ends in ${st.daysLeft} day${st.daysLeft === 1 ? '' : 's'}`, `Renew ${fee} before ${tsDay(t.paidUntil)}.`, 'sub']);
     }
+    const neg = isAdmin() ? S.products.filter(p => (Number(p.stock) || 0) < -1e-9) : [];
+    if (neg.length) out.push(['red', `📦 ${neg.length} item${neg.length > 1 ? 's are' : ' is'} below zero`, `${neg.slice(0, 3).map(p => `${p.name} (${q3(p.stock)})`).join(', ')}${neg.length > 3 ? ' …' : ''}. More was sold than the system had — usually two tills sold the last one, or the count was wrong. Count ${neg.length > 1 ? 'them' : 'it'} and correct the stock.`, 'neg']);
+    const fs = failedSaves();
+    if (fs.length) out.push(['red', `⚠️ ${fs.length} thing${fs.length > 1 ? 's were' : ' was'} not saved`, 'The internet or a permission problem stopped it. Tap to see what to enter again.', 'failed']);
+    if (S.clockOff) out.push(['red', '⏰ This phone\'s clock is wrong', `It is about ${S.clockOff > 0 ? S.clockOff + ' min ahead' : -S.clockOff + ' min behind'}, so sales may be saved under the wrong date. Turn on automatic date & time in the phone settings.`, 'clock']);
     const gone = dismissedNotices();
     (S.announcements || []).forEach(a => {
         if (a.shops && a.shops.length && !a.shops.includes(S.tenant)) return;
@@ -3850,12 +3918,13 @@ function renderNotices() {
     });
     box.innerHTML = out.map(([cls, title, body, kind, id]) => `<div class="notice ${cls}"><div><b>${esc(title)}</b>${esc(body)}</div>${kind === 'sub'
         ? '<button class="act" onclick="openSub()">How to pay</button>' : kind === 'cash' ? '<button class="act" onclick="openCashups()">Review</button>'
+        : kind === 'failed' ? '<button class="act" onclick="showFailedSaves()">See</button>' : kind === 'neg' ? '<button class="act" onclick="openStocktake()">Count</button>' : kind === 'clock' ? ''
         : `<button title="Hide" onclick="dismissNotice('${id}')">✕</button>`}</div>`).join('');
 }
 
 function planUsageText() {
-    const t = S.tenantInfo, lim = t.limits || {}, active = (S.staff || []).filter(p => p.active !== false).length;
-    return `${t.plan || 'Plan'} · ${active}/${lim.maxStaff || '∞'} staff · ${S.products.length}/${lim.maxProducts || '∞'} items`;
+    const t = S.tenantInfo, lim = t.limits || {};
+    return `${t.plan || 'Plan'} · ${usedStaff()}/${lim.maxStaff || '∞'} staff · ${usedItems()}/${lim.maxProducts || '∞'} items`;
 }
 S.subPays = [];
 function openSub() {
@@ -4025,7 +4094,7 @@ async function addStaff() {
     if (!/^\d{6,12}$/.test(pin)) return toast('⚠️ PIN must be 6 to 12 digits.', 'err');
     if (!navigator.onLine) return toast('⚠️ Adding a seller needs internet.', 'err');
     const maxS = Number((S.tenantInfo.limits || {}).maxStaff) || 0;
-    if (maxS && S.staff.filter(p => p.active !== false).length >= maxS) return toast(`⚠️ Your plan allows ${maxS} staff logins. Switch someone off or ask Matinyo to upgrade.`, 'err');
+    if (maxS && usedStaff() >= maxS) return toast(`⚠️ Your plan allows ${maxS} staff logins. Switch someone off or ask Matinyo to upgrade.`, 'err');
     const btn = $('stBtn'); btn.disabled = true; btn.textContent = 'ADDING...';
     try {
         const taken = await db.collection('logins').doc(phone).get({ source: 'server' });
@@ -4035,6 +4104,7 @@ async function addStaff() {
         b.set(col('staff').doc(uid), { name, loginId: phone, role, active: true, createdAt: now(), createdBy: S.me.name });
         b.set(db.collection('users').doc(uid), { shop: S.tenant });
         b.set(db.collection('logins').doc(phone), { email, shop: S.tenant, uid });
+        usageAdd(b, 'staff', uid);
         await b.commit();
         ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = '');
         await sendLoginDetails(name, phone, pin, true);
@@ -4063,6 +4133,7 @@ async function resetStaffPin(uid) {
         b.set(db.collection('users').doc(newUid), { shop: S.tenant });
         b.delete(db.collection('users').doc(uid));
         b.set(db.collection('logins').doc(p.loginId), { email, shop: S.tenant, uid: newUid });
+        usageDel(b, 'staff', uid); if (p.active !== false) usageAdd(b, 'staff', newUid);
         await b.commit();
         loader(false);
         await sendLoginDetails(p.name, p.loginId, pin, false);
@@ -4073,7 +4144,14 @@ async function resetStaffPin(uid) {
 
 function toggleStaff(uid) {
     const p = S.staff.find(x => x.uid === uid); if (!p) return;
-    col('staff').doc(uid).update({ active: p.active === false }).then(() => toast(p.active === false ? `✅ ${p.name} switched on` : `⛔ ${p.name} switched off`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
+    const on = p.active === false;
+    if (uid === S.me.uid) return toast('You cannot switch yourself off.', 'err');
+    const maxS = Number((S.tenantInfo.limits || {}).maxStaff) || 0;
+    if (on && maxS && usedStaff() >= maxS) return toast(`⚠️ Your plan allows ${maxS} staff logins. Switch someone else off first, or ask Matinyo to upgrade.`, 'err');
+    const b = db.batch();
+    b.update(col('staff').doc(uid), { active: on });
+    if (on) usageAdd(b, 'staff', uid); else usageDel(b, 'staff', uid);
+    b.commit().then(() => toast(p.active === false ? `✅ ${p.name} switched on` : `⛔ ${p.name} switched off`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
 function toggleRole(uid) {
     const p = S.staff.find(x => x.uid === uid); if (!p) return;
@@ -4286,7 +4364,7 @@ async function runImport() {
     let plan = planImport().filter(x => x.action !== 'error');
     const maxP = Number((S.tenantInfo.limits || {}).maxProducts) || 0;
     if (maxP) {
-        let room = Math.max(0, maxP - S.products.length);
+        let room = Math.max(0, maxP - usedItems());
         plan = plan.filter(x => x.action === 'update' || room-- > 0);
     }
     if (!plan.length) return toast('Nothing to import.', 'err');
@@ -4296,7 +4374,7 @@ async function runImport() {
     let added = 0, updated = 0;
     try {
         for (let i = 0; i < plan.length; i += 150) {               // 3 writes per item, max 500 per batch
-            const b = db.batch();
+            const b = db.batch(), newIds = [];
             plan.slice(i, i + 150).forEach(x => {
                 const ref = x.match ? col('products').doc(x.match.id) : col('products').doc();
                 const d = { updatedAt: now() };
@@ -4305,7 +4383,7 @@ async function runImport() {
                         reorderLevel: x.reorderLevel !== null ? q3(x.reorderLevel) : 5, barcode: x.barcode || '', emoji: x.emoji || '📦',
                         unit: x.unit || 'pc', partQty: x.partQty ?? PART_UNITS.includes(x.unit || 'pc'), packSize: Math.round(x.packSize || 0),
                         warrantyMonths: Math.round(x.warrantyMonths || 0), trackSerial: !!x.trackSerial });
-                    added++;
+                    added++; newIds.push(ref.id);
                 } else {
                     if (x.category) d.category = x.category;
                     if (x.sellPrice !== null && !x.keepPrices) d.sellPrice = x.sellPrice;
@@ -4328,6 +4406,7 @@ async function runImport() {
                     before, after: x.newStock, source: 'excel', day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
                 });
             });
+            if (S.usage && newIds.length) b.update(usageRef(), Object.fromEntries([...newIds.map(k => ['products.' + k, true]), ['updatedAt', now()]]));
             await commit(b);
         }
         closeModals();
