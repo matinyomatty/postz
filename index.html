@@ -100,8 +100,10 @@
         .scan-view { position: relative; flex: 1; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #scanVideo, #scanReader { width: 100%; height: 100%; object-fit: cover; }
         #scanReader video { object-fit: cover; }
-        .scan-frame { position: absolute; width: min(320px, 80vw); height: min(180px, 44vw); border: 3px solid var(--yellow); border-radius: 16px; box-shadow: 0 0 0 9999px rgba(0,0,0,.35); pointer-events: none; }
-        #scanReader:not(.hidden) ~ .scan-frame { display: none; }
+        .scan-frame { position: absolute; width: min(94vw, 680px); height: min(56vw, 320px); border: 3px solid var(--yellow); border-radius: 18px; box-shadow: 0 0 0 9999px rgba(0,0,0,.3); pointer-events: none; overflow: hidden; }
+        .scan-frame::after { content: ''; position: absolute; left: 4%; right: 4%; top: 50%; height: 2px; background: #ef4444; box-shadow: 0 0 8px #ef4444; animation: scanline 1.6s ease-in-out infinite; }
+        @keyframes scanline { 0%,100% { top: 12%; } 50% { top: 88%; } }
+        #scanner.lib .scan-frame { display: none; }
         #scanMsg { position: absolute; left: 20px; right: 20px; text-align: center; font-size: .85rem; line-height: 1.5; }
         .scan-bottom { background: var(--ink); padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); }
         #scanHint { font-size: .78rem; color: rgba(255,255,255,.65); text-align: center; }
@@ -1534,6 +1536,7 @@ function enterApp() {
     switchTab(isAdmin() ? 'dashboard' : 'pos');
     detectDevice();
     touch();
+    prewarmScanner();
 }
 
 function logout(msg) {
@@ -2689,7 +2692,11 @@ async function confirmReturn() {
 //  scanning library that is only downloaded the first time it's needed.
 // ════════════════════════════════════════════════
 const SCAN_LIB = 'https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js';
-const SC = { on: false, stream: null, timer: null, lib: null, last: {}, opts: null, list: [] };
+// Fast reader for phones whose browser has no built-in barcode reader (iPhone, some tablets).
+// Downloaded once, then kept by the app for offline use.
+const FAST_SCAN_LIB = 'https://cdn.jsdelivr.net/npm/barcode-detector@2.3.1/dist/iife/pure.js';
+const SCAN_FORMATS = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'code_93', 'itf', 'codabar', 'qr_code', 'data_matrix'];
+const SC = { on: false, stream: null, timer: null, lib: null, last: {}, opts: null, list: [], det: null, busy: false, warmTimer: null };
 function beep() {
     try {
         const a = SC.audio || (SC.audio = new (window.AudioContext || window.webkitAudioContext)());
@@ -2698,43 +2705,103 @@ function beep() {
     } catch (e) {}
     navigator.vibrate?.(60);
 }
+// Get a barcode reader: the phone's own (fastest), else the fast downloaded one.
+function getDetector() {
+    return SC.detP || (SC.detP = makeDetector().catch(e => { SC.detP = null; throw e; }));
+}
+async function makeDetector() {
+    let Det = null, fmts = [];
+    if ('BarcodeDetector' in window) {
+        try { fmts = await BarcodeDetector.getSupportedFormats(); if (fmts.length) Det = BarcodeDetector; } catch (e) {}
+    }
+    if (!Det) {
+        if (!window.BarcodeDetectionAPI) await loadScript(FAST_SCAN_LIB, 'the scanner');
+        Det = window.BarcodeDetectionAPI.BarcodeDetector;
+        fmts = await Det.getSupportedFormats();
+    }
+    const want = SCAN_FORMATS.filter(f => fmts.includes(f));
+    const det = new Det(want.length ? { formats: want } : undefined);
+    // first call loads the reader engine — do it now so the first real scan is instant
+    const c = document.createElement('canvas'); c.width = c.height = 8;
+    await det.detect(c).catch(() => {});
+    return (SC.det = det);
+}
+// Get things ready in the background on phones/tablets, so the first scan doesn't wait for a download.
+function prewarmScanner() {
+    if (SC.detP || !navigator.mediaDevices) return;
+    setTimeout(() => getDetector().catch(() => {}), 2500);
+}
+async function getCameraStream() {
+    // Camera kept "warm" from the last scan opens instantly
+    if (SC.stream && SC.stream.getVideoTracks().some(t => t.readyState === 'live')) {
+        clearTimeout(SC.warmTimer); SC.stream.getVideoTracks().forEach(t => t.enabled = true); return SC.stream;
+    }
+    const s = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+    const tr = s.getVideoTracks()[0];
+    try { await tr.applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
+    return (SC.stream = s);
+}
+// Which part of the camera picture sits under the yellow box (plus some room around it).
+function scanCrop(v) {
+    const vw = v.videoWidth, vh = v.videoHeight, view = v.getBoundingClientRect(), fr = document.querySelector('.scan-frame').getBoundingClientRect();
+    const k = Math.max(view.width / vw, view.height / vh);          // the video is drawn "cover"
+    const ox = (vw * k - view.width) / 2, oy = (vh * k - view.height) / 2;
+    const padY = fr.height * 0.35;
+    let y = (fr.top - view.top - padY + oy) / k, h = (fr.height + padY * 2) / k;
+    y = Math.max(0, y); h = Math.min(vh - y, h);
+    return { x: 0, y, w: vw, h };                                    // full width: long serial barcodes may poke out of the box
+}
 async function openScanner(opts) {
     if (SC.on) await closeScanner();
-    SC.opts = opts; SC.list = []; SC.last = {}; SC.on = true;
+    SC.opts = opts; SC.list = []; SC.last = {}; SC.on = true; SC.t0 = performance.now(); SC.readMs = 0;
     $('scanTitle').textContent = opts.title || 'Scan';
-    $('scanHint').textContent = opts.hint || 'Point the camera at the barcode';
+    $('scanHint').textContent = opts.hint || 'Hold the barcode inside the yellow box';
     $('scanList').innerHTML = ''; $('scanDone').textContent = opts.multi ? 'DONE' : 'CANCEL';
     $('scanMsg').textContent = 'Starting camera…';
-    $('scanner').classList.add('show');
+    $('scanner').classList.add('show'); $('scanner').classList.remove('lib');
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
         $('scanMsg').textContent = 'This browser cannot use the camera. Open the app over https in Chrome or Safari, or type the code.';
         return;
     }
     try {
-        if ('BarcodeDetector' in window && (await BarcodeDetector.getSupportedFormats()).length) {
-            const det = new BarcodeDetector();
-            SC.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
-            try { await SC.stream.getVideoTracks()[0].applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
-            const v = $('scanVideo'); v.srcObject = SC.stream; v.classList.remove('hidden'); $('scanReader').classList.add('hidden');
+        // camera and reader start at the same time
+        const [stream, det] = await Promise.all([getCameraStream(), getDetector().catch(e => { console.warn('fast scanner', e); return null; })]);
+        if (!SC.on) return;
+        if (det) {
+            const v = $('scanVideo'); if (v.srcObject !== stream) v.srcObject = stream;
+            v.classList.remove('hidden'); $('scanReader').classList.add('hidden');
             await v.play();
-            $('scanMsg').textContent = '';
-            const tick = async () => {
+            $('scanMsg').textContent = ''; SC.camMs = Math.round(performance.now() - SC.t0);
+            const cv = SC.canvas || (SC.canvas = document.createElement('canvas')), cx = cv.getContext('2d', { willReadFrequently: true });
+            const frame = async () => {
                 if (!SC.on) return;
-                try { (await det.detect(v)).forEach(c => gotCode(c.rawValue)); } catch (e) {}
-                SC.timer = setTimeout(tick, 180);
+                if (!SC.busy && v.videoWidth) {
+                    SC.busy = true;
+                    try {
+                        const r = scanCrop(v), sc = Math.min(1, 1280 / r.w);   // keep it light: at most 1280 px wide
+                        cv.width = Math.round(r.w * sc); cv.height = Math.round(r.h * sc);
+                        cx.drawImage(v, r.x, r.y, r.w, r.h, 0, 0, cv.width, cv.height);
+                        const t1 = performance.now(); const found = await det.detect(cv); SC.decMs = Math.round(performance.now() - t1);
+                        for (const c of found) if (c.rawValue) { gotCode(c.rawValue); break; }
+                    } catch (e) {}
+                    SC.busy = false;
+                }
+                if (SC.on) v.requestVideoFrameCallback ? v.requestVideoFrameCallback(frame) : requestAnimationFrame(frame);
             };
-            tick();
+            frame();
         } else {
+            // last resort: the older, slower scanning library
+            stopStream();
             if (!window.Html5Qrcode) await loadScript(SCAN_LIB, 'the scanner');
+            $('scanner').classList.add('lib');
             $('scanVideo').classList.add('hidden'); $('scanReader').classList.remove('hidden');
             const F = window.Html5QrcodeSupportedFormats || {};
-            const formats = ['QR_CODE', 'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'CODE_128', 'CODE_39', 'CODE_93', 'ITF', 'CODABAR', 'DATA_MATRIX'].map(k => F[k]).filter(x => x !== undefined);
+            const formats = ['QR_CODE', 'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'CODE_128', 'CODE_39', 'ITF'].map(k => F[k]).filter(x => x !== undefined);
             SC.lib = new Html5Qrcode('scanReader', { formatsToSupport: formats, verbose: false, experimentalFeatures: { useBarCodeDetectorIfSupported: true } });
             await SC.lib.start({ facingMode: 'environment' }, {
-                fps: 15,
-                // scan most of the picture — long IMEI / serial barcodes need the width
-                qrbox: (vw, vh) => ({ width: Math.floor(vw * 0.9), height: Math.floor(Math.min(vh * 0.6, vw * 0.55)) }),
-                videoConstraints: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] }
+                fps: 20,
+                qrbox: (vw, vh) => ({ width: Math.floor(vw * 0.94), height: Math.floor(Math.min(vh * 0.6, vw * 0.6)) }),
+                videoConstraints: { facingMode: 'environment', width: { ideal: 1280 }, height: { ideal: 720 }, advanced: [{ focusMode: 'continuous' }] }
             }, gotCode, () => {});
             $('scanMsg').textContent = '';
         }
@@ -2745,18 +2812,27 @@ async function openScanner(opts) {
             : /NotFound|Devices/i.test(m) ? 'No camera found on this device.' : 'Could not start the camera: ' + m;
     }
 }
+function stopStream() {
+    clearTimeout(SC.warmTimer);
+    try { if (SC.stream) SC.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
+    SC.stream = null; $('scanVideo').srcObject = null;
+}
 async function closeScanner() {
     SC.on = false; clearTimeout(SC.timer);
-    try { if (SC.stream) SC.stream.getTracks().forEach(t => t.stop()); } catch (e) {}
     try { if (SC.lib) { await SC.lib.stop(); SC.lib.clear(); } } catch (e) {}
-    SC.stream = null; SC.lib = null;
-    $('scanVideo').srcObject = null;
+    SC.lib = null;
+    // keep the camera ready for a few seconds — the next scan then opens at once
+    if (SC.stream) {
+        SC.stream.getVideoTracks().forEach(t => t.enabled = false);
+        clearTimeout(SC.warmTimer); SC.warmTimer = setTimeout(stopStream, 20000);
+    }
     $('scanner').classList.remove('show');
 }
+document.addEventListener('visibilitychange', () => { if (document.hidden && !SC.on) stopStream(); });
 function gotCode(raw) {
     const code = String(raw || '').trim(); if (!code || !SC.on) return;
     const t = Date.now(); if (SC.last[code] && t - SC.last[code] < 2500) return;   // same code held in view
-    SC.last[code] = t;
+    SC.last[code] = t; if (!SC.readMs) SC.readMs = Math.round(performance.now() - SC.t0);
     beep();
     $('scanMsg').innerHTML = `<span style="background:rgba(22,163,74,.9);padding:6px 12px;border-radius:10px;font-weight:800;">✓ Read: ${esc(code)}</span>`;
     setTimeout(() => { if (SC.on && /Read:/.test($('scanMsg').textContent)) $('scanMsg').textContent = ''; }, 1500);
