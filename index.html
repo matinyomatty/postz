@@ -76,6 +76,17 @@
         .link-btn { background: none; border: none; color: var(--blue); font-weight: 700; font-size: 0.75rem; cursor: pointer; margin-top: 10px; }
         .login-hello { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; }
 
+        /* ── LOCK & NOTICES ── */
+        #lockPage { position: fixed; inset: 0; z-index: 90; overflow-y: auto; display: none; align-items: center; justify-content: center;
+            padding: calc(24px + env(safe-area-inset-top)) 20px 24px; background: radial-gradient(circle at 85% 0%, #3b1a1a 0, var(--ink) 55%); }
+        .pay-box { background: #fffbeb; border: 1px solid #fde68a; border-radius: 14px; padding: 12px 14px; text-align: left; font-size: .82rem; line-height: 1.5; margin: 12px 0; white-space: pre-line; }
+        #noticeBar:empty { display: none; }
+        .notice { display: flex; gap: 10px; align-items: flex-start; padding: 10px 14px; font-size: .76rem; line-height: 1.4; border-bottom: 1px solid rgba(0,0,0,.06); }
+        .notice b { display: block; font-size: .8rem; }
+        .notice.info { background: #eff6ff; color: #1e3a8a; } .notice.warn { background: #fef3c7; color: #78350f; } .notice.red { background: #fee2e2; color: #7f1d1d; }
+        .notice button { margin-left: auto; background: none; border: none; font-size: .9rem; color: inherit; opacity: .6; cursor: pointer; flex-shrink: 0; }
+        .notice .act { opacity: 1; font-weight: 800; text-decoration: underline; font-size: .72rem; }
+
         /* ── APP SHELL ── */
         #mainApp { display: none; }
         .tab-nav {
@@ -432,6 +443,21 @@
     </div>
 </div>
 
+<!-- ══════════════ SUBSCRIPTION LOCK ══════════════ -->
+<div id="lockPage">
+    <div class="login-card">
+        <div style="font-size:2.4rem;">🔒</div>
+        <div class="login-logo" style="font-size:1.25rem;letter-spacing:2px;margin-top:6px;" id="lockShop">SHOP</div>
+        <div class="login-bar"></div>
+        <div style="font-size:.9rem;font-weight:700;margin:10px 0 4px;" id="lockTitle">Till locked</div>
+        <div style="font-size:.8rem;color:var(--gray);" id="lockWhy"></div>
+        <div class="pay-box" id="lockPay"></div>
+        <div style="font-size:.72rem;color:var(--gray);margin-bottom:14px;">✨ The till unlocks by itself as soon as Matinyo records your payment — no need to sign in again.</div>
+        <button class="primary-cta green" id="lockWa" onclick="lockWhatsApp()">📲 I've paid — tell Matinyo</button>
+        <button class="link-btn" onclick="logout('Signed out')">Sign out</button>
+    </div>
+</div>
+
 <!-- ══════════════ APP ══════════════ -->
 <div id="mainApp">
     <div class="tab-nav">
@@ -439,6 +465,8 @@
         <button class="tab-btn" id="tab-pos" onclick="switchTab('pos')"><span class="tab-icon">🛒</span>Point of Sale</button>
         <button class="tab-btn" id="tab-inventory" onclick="switchTab('inventory')"><span class="tab-icon">📦</span>Stock</button>
     </div>
+
+    <div id="noticeBar"></div>
 
     <!-- ── DASHBOARD (owner/admin) ── -->
     <div class="tab-page role-admin" id="page-dashboard">
@@ -812,6 +840,8 @@
     <div class="modal">
         <div class="modal-handle"></div>
         <div class="modal-title">👥 Team & Settings</div>
+        <button class="btn-sec wide" style="border-color:var(--yellow);" onclick="openSub()">💳 Subscription, plan & receipts</button>
+        <div id="planUsage" style="font-size:.7rem;color:var(--gray);text-align:center;margin:-2px 0 12px;"></div>
         <span class="section-label">Staff</span>
         <div id="staffList"></div>
         <span class="section-label" style="margin-top:16px;">Add a seller</span>
@@ -832,6 +862,16 @@
             <div class="field-group"><span class="field-label">WhatsApp for summaries</span><input type="tel" id="setWa" placeholder="2557XXXXXXXX"></div>
         </div>
         <button class="btn-sec wide" onclick="saveSettings()">💾 SAVE SETTINGS</button>
+        <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Subscription -->
+<div class="modal-overlay" id="sheetSub" onclick="overlayClose(event)">
+    <div class="modal yellow">
+        <div class="modal-handle"></div>
+        <div class="modal-title">💳 Subscription</div>
+        <div id="subBody"></div>
         <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
     </div>
 </div>
@@ -1144,7 +1184,6 @@ auth.onAuthStateChanged(async user => {
         S.tenant = link.data().shop;
         const [tSnap, stSnap] = await Promise.all([tRef().get(), col('staff').doc(user.uid).get()]);
         if (!tSnap.exists) return rejectLogin('Shop not found. Contact Matinyo support.');
-        if (tSnap.data().status !== 'active') return rejectLogin('This shop subscription is suspended. Contact Matinyo to reactivate.');
         if (!stSnap.exists) return rejectLogin('Your staff account is not set up. Ask the shop owner.');
         const st = stSnap.data();
         if (st.replacedBy) return rejectLogin('Your PIN was reset. Sign in with your new PIN.');
@@ -1153,13 +1192,15 @@ auth.onAuthStateChanged(async user => {
         S.me = { uid: user.uid, email: user.email, loginId: st.loginId || '', name: st.name || 'Staff', role: st.role === 'admin' ? 'admin' : 'cashier' };
         rememberUser(S.pendingLoginId || st.loginId || user.email, S.me.name, S.tenantInfo.name || S.tenant);
         S.pendingLoginId = null;
-        enterApp();
+        S.platform = await db.collection('platform').doc('config').get().then(d => d.data() || {}).catch(() => ({}));
+        if (subState(S.tenantInfo).locked) showLocked(); else enterApp();
     } catch (e) {
         rejectLogin('Could not open the shop: ' + friendlyErr(e));
     } finally { loader(false); }
 });
 
 function showLogin() {
+    stopLockWatch(); $('lockPage').style.display = 'none';
     S.me = null; S.cart = {}; S.loginPick = null; S.manualLogin = false;
     document.body.classList.remove('unlocked', 'is-admin', 'is-cashier');
     $('mainApp').style.display = 'none';
@@ -1170,6 +1211,8 @@ function showLogin() {
 
 function enterApp() {
     loginError('');
+    stopLockWatch();
+    $('lockPage').style.display = 'none';
     $('loginPage').style.display = 'none';
     $('mainApp').style.display = 'block';
     document.body.classList.add('unlocked');
@@ -1219,6 +1262,7 @@ setInterval(() => {
     // Only when online: signing back in needs internet, and the till must keep working offline.
     if (S.me && navigator.onLine && Date.now() - lastTouch > IDLE_LIMIT) logout('🔒 Signed out after 10 minutes idle');
     if (S.me && dayStr() !== S.today) { S.today = dayStr(); stopListeners(); startListeners(); renderAll(); }
+    if (S.me && $('mainApp').style.display === 'block' && subState(S.tenantInfo).locked) showLocked();
 }, 15000);
 
 // ════════════════════════════════════════════════
@@ -1230,11 +1274,8 @@ function startListeners() {
 
     L(tRef(), s => {
         S.tenantInfo = s.data() || {};
-        if (S.tenantInfo.status && S.tenantInfo.status !== 'active') {
-            rejectLogin('This shop subscription has been suspended. Contact Matinyo to reactivate.');
-            return;
-        }
-        renderShopName(); if (isAdmin()) renderDashboard();
+        if (subState(S.tenantInfo).locked) { showLocked(); return; }
+        renderShopName(); renderNotices(); if (isAdmin()) renderDashboard();
     });
     L(col('staff').doc(S.me.uid), s => {
         const d = s.data();
@@ -1250,6 +1291,11 @@ function startListeners() {
         S.todaySales = s.docs.map(d => ({ id: d.id, ...d.data() }));
         renderPosStrip(); if (isAdmin()) renderDashboard();
     });
+    L(db.collection('announcements').where('active', '==', true), s => {
+        S.announcements = s.docs.map(d => ({ id: d.id, ...d.data() }));
+        renderNotices();
+    });
+    L(db.collection('platform').doc('config'), s => { S.platform = s.data() || {}; });
     if (isAdmin()) {
         L(col('costs'), s => { S.costs = {}; s.docs.forEach(d => S.costs[d.id] = Number(d.data().costPrice) || 0); renderInventory(); });
         L(col('meta').doc('balances'), s => { S.balances = { cash: 0, mobile: 0, bank: 0, savings: 0, ...(s.data() || {}) }; renderDashboard(); });
@@ -1260,6 +1306,7 @@ function startListeners() {
 }
 function stopListeners() {
     S.listeners.forEach(u => u()); S.listeners = [];
+    stopLockWatch();
     S.sheetListeners.forEach(u => u()); S.sheetListeners = [];
 }
 
@@ -1622,6 +1669,8 @@ function saveItem() {
     const sellPrice = num($('itemSell').value), cost = num($('itemCost').value);
     if (sellPrice <= 0) return toast('⚠️ Enter a selling price.', 'err');
     const stock = Math.round(num($('itemStock').value)), reorderLevel = Math.round(num($('itemReorder').value)) || 5;
+    const maxP = Number((S.tenantInfo.limits || {}).maxProducts) || 0;
+    if (!id && maxP && S.products.length >= maxP) return toast(`⚠️ Your plan allows ${maxP} items. Ask Matinyo to upgrade your plan.`, 'err');
     const ref = id ? col('products').doc(id) : col('products').doc();
     const before = id ? productById(id) : null;
     const b = db.batch();
@@ -2302,6 +2351,136 @@ function openAI() {
 }
 
 // ════════════════════════════════════════════════
+//  SUBSCRIPTION — lock screen, reminders, receipts
+//  The lock is enforced by the database rules; this is what staff see.
+// ════════════════════════════════════════════════
+const tms = x => x && x.toMillis ? x.toMillis() : null;
+const tsDay = x => tms(x) ? new Date(tms(x)).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : '—';
+function subState(t) {
+    t = t || {};
+    if (t.status === 'archived') return { locked: true, reason: 'closed' };
+    if (t.status && t.status !== 'active') return { locked: true, reason: 'suspended' };
+    const until = tms(t.paidUntil), lock = tms(t.lockAt), now = Date.now();
+    if (lock && now >= lock) return { locked: true, reason: 'expired', until };
+    return { locked: false, until, lock, trial: !!t.trial, overdue: !!(until && now > until), daysLeft: until ? Math.ceil((until - now) / 864e5) : null };
+}
+function payInstructions() {
+    const P = S.platform || {}, t = S.tenantInfo;
+    return `Amount: ${fmt(t.monthlyFee || 0)} per month\n${P.payHow || 'Contact Matinyo for payment details.'}\nReference: ${S.tenant}`;
+}
+function stopLockWatch() { if (S.lockWatch) { S.lockWatch(); S.lockWatch = null; } }
+function showLocked() {
+    stopListeners(); closeModals();
+    $('mainApp').style.display = 'none'; $('loginPage').style.display = 'none';
+    document.body.classList.remove('unlocked');
+    renderLock();
+    $('lockPage').style.display = 'flex';
+    // Watch the shop record: the moment Matinyo records a payment, the till opens again.
+    S.lockWatch = tRef().onSnapshot(s => {
+        S.tenantInfo = s.data() || {};
+        if (!subState(S.tenantInfo).locked) { toast('✅ Subscription active — welcome back!'); enterApp(); }
+        else renderLock();
+    }, () => {});
+}
+function renderLock() {
+    const t = S.tenantInfo, st = subState(t), P = S.platform || {};
+    $('lockShop').textContent = (t.name || S.tenant || '').toUpperCase();
+    $('lockTitle').textContent = st.reason === 'expired' ? 'Subscription ended' : st.reason === 'suspended' ? 'Shop paused by Matinyo' : 'Shop closed';
+    $('lockWhy').textContent = st.reason === 'expired'
+        ? `The Matinyo POS subscription ended on ${tsDay(t.paidUntil)}. Your sales and stock are safe.${isAdmin() ? '' : ' Please tell the shop owner.'}`
+        : `Please contact Matinyo to reopen this shop.${isAdmin() ? '' : ' Tell the shop owner.'}`;
+    $('lockPay').textContent = st.reason === 'expired' ? payInstructions() : (P.supportPhone ? 'Matinyo support: ' + prettyPhone(P.supportPhone) : 'Contact Matinyo support.');
+    $('lockWa').classList.toggle('hidden', !P.supportPhone);
+    $('lockWa').textContent = st.reason === 'expired' ? "📲 I've paid — tell Matinyo" : '📲 Contact Matinyo';
+}
+function lockWhatsApp() {
+    const P = S.platform || {}, t = S.tenantInfo;
+    const text = subState(t).reason === 'expired'
+        ? `Hello Matinyo, I have paid the subscription for *${t.name}* (shop code ${S.tenant}).\nAmount: \nTransaction ID: `
+        : `Hello Matinyo, I need help with shop *${t.name}* (shop code ${S.tenant}).`;
+    window.open(`https://wa.me/${P.supportPhone}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function dismissedNotices() { try { return JSON.parse(sGet('matinyo.dismissed') || '[]'); } catch (e) { return []; } }
+function dismissNotice(id) { const d = dismissedNotices(); d.push(id); sSet('matinyo.dismissed', JSON.stringify(d.slice(-50))); renderNotices(); }
+function renderNotices() {
+    const box = $('noticeBar'); if (!box || !S.me) return;
+    const out = [], t = S.tenantInfo, fee = fmt(t.monthlyFee || 0);
+    if (isAdmin()) {
+        const st = subState(t);
+        if (st.overdue) out.push(['red', '⏰ Payment overdue', `The till locks on ${tsDay(t.lockAt)}. Pay ${fee} to keep selling.`, 'sub']);
+        else if (st.trial && st.daysLeft !== null && st.daysLeft <= 7) out.push(['info', `🧪 Free trial: ${st.daysLeft} day${st.daysLeft === 1 ? '' : 's'} left`, `Ends ${tsDay(t.paidUntil)}. Then ${fee} per month.`, 'sub']);
+        else if (!st.trial && st.daysLeft !== null && st.daysLeft <= 5) out.push(['warn', `📅 Subscription ends in ${st.daysLeft} day${st.daysLeft === 1 ? '' : 's'}`, `Renew ${fee} before ${tsDay(t.paidUntil)}.`, 'sub']);
+    }
+    const gone = dismissedNotices();
+    (S.announcements || []).forEach(a => {
+        if (a.shops && a.shops.length && !a.shops.includes(S.tenant)) return;
+        if (tms(a.endsAt) && tms(a.endsAt) < Date.now()) return;
+        if (gone.includes(a.id)) return;
+        out.push([a.level === 'warn' ? 'warn' : 'info', (a.level === 'warn' ? '⚠️ ' : '📣 ') + a.title, a.body, 'ann', a.id]);
+    });
+    box.innerHTML = out.map(([cls, title, body, kind, id]) => `<div class="notice ${cls}"><div><b>${esc(title)}</b>${esc(body)}</div>${kind === 'sub'
+        ? '<button class="act" onclick="openSub()">How to pay</button>' : `<button title="Hide" onclick="dismissNotice('${id}')">✕</button>`}</div>`).join('');
+}
+
+function planUsageText() {
+    const t = S.tenantInfo, lim = t.limits || {}, active = (S.staff || []).filter(p => p.active !== false).length;
+    return `${t.plan || 'Plan'} · ${active}/${lim.maxStaff || '∞'} staff · ${S.products.length}/${lim.maxProducts || '∞'} items`;
+}
+S.subPays = [];
+function openSub() {
+    const t = S.tenantInfo, st = subState(t), lim = t.limits || {};
+    openSheet('sheetSub');
+    const status = st.trial ? `🧪 Free trial — ${st.daysLeft} day${st.daysLeft === 1 ? '' : 's'} left` : st.overdue ? '⏰ Overdue — locks ' + tsDay(t.lockAt) : st.daysLeft !== null ? `✅ Active — ${st.daysLeft} day${st.daysLeft === 1 ? '' : 's'} left` : '—';
+    $('subBody').innerHTML = `
+        <div class="sum-box">
+            <div class="sum-row"><span>Plan</span><strong>${esc(t.plan || '—')} · ${fmt(t.monthlyFee || 0)}/month</strong></div>
+            <div class="sum-row"><span>Status</span><strong>${status}</strong></div>
+            <div class="sum-row"><span>Paid until</span><strong>${tsDay(t.paidUntil)}</strong></div>
+            <div class="sum-row"><span>Plan limits</span><strong>${lim.maxStaff || '∞'} staff · ${lim.maxProducts || '∞'} items</strong></div>
+        </div>
+        <span class="section-label">How to pay</span>
+        <div class="pay-box" style="margin-top:0;">${esc(payInstructions())}</div>
+        ${(S.platform || {}).supportPhone ? `<button class="btn-sec wide" onclick="lockWhatsApp()">📲 Tell Matinyo you've paid</button>` : ''}
+        <span class="section-label" style="margin-top:10px;">Payments & receipts</span>
+        <div id="subPays"><div style="font-size:.75rem;color:var(--gray);padding:8px 0;">Loading…</div></div>`;
+    S.sheetListeners.push(col('payments').onSnapshot(s => {
+        S.subPays = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (tms(b.paidAt) || 0) - (tms(a.paidAt) || 0));
+        $('subPays').innerHTML = S.subPays.length ? S.subPays.map(p => `
+            <div class="list-line" style="background:${p.voided ? '#f3f4f6' : '#f0fdf4'};border-left-color:${p.voided ? '#9ca3af' : 'var(--pos)'};">
+                <div class="ll-main ${p.voided ? 'voided' : ''}"><div class="ll-title">${fmt(p.amount)} · ${p.months} month${p.months > 1 ? 's' : ''}</div>
+                <div class="ll-sub">${tsDay(p.paidAt)} · ${esc(p.method)} · ${esc(p.receiptNo || '')}</div></div>
+                <button class="tiny-btn" onclick="tillReceipt('${p.id}')">🧾 Receipt</button>
+            </div>`).join('') : '<div style="font-size:.75rem;color:var(--gray);padding:8px 0;">No payments yet.</div>';
+    }, e => { $('subPays').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
+}
+function tillReceipt(pid) {
+    const p = S.subPays.find(x => x.id === pid); if (!p) return;
+    if (!window.jspdf) return toast('PDF tool did not load — check your connection.', 'err');
+    const P = S.platform || {}, { jsPDF } = window.jspdf, doc = new jsPDF({ unit: 'mm', format: 'a5' }), W = 148;
+    doc.setFillColor(11, 13, 18); doc.rect(0, 0, W, 30, 'F');
+    doc.setTextColor(255, 199, 44); doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text('MATINYO', 12, 15);
+    doc.setTextColor(96, 165, 250); doc.setFontSize(9); doc.text('POS SUBSCRIPTION', 12, 22);
+    doc.setTextColor(255, 255, 255); doc.setFontSize(11); doc.text('RECEIPT', W - 12, 15, { align: 'right' });
+    doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.text(p.receiptNo || '', W - 12, 22, { align: 'right' });
+    doc.setFillColor(26, 86, 219); doc.rect(0, 30, W, 1.5, 'F');
+    let y = 44;
+    const row = (l, v, bold) => { doc.setTextColor(110, 116, 128); doc.setFont('helvetica', 'normal'); doc.setFontSize(9); doc.text(l, 12, y); doc.setTextColor(11, 13, 18); doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(bold ? 11 : 9.5); doc.text(String(v), W - 12, y, { align: 'right' }); y += 8; };
+    row('Date paid', tsDay(p.paidAt)); row('Received from', p.shopName || S.tenant);
+    if (p.ownerName) row('Owner', p.ownerName);
+    row('Shop code', p.shop || S.tenant); row('Plan', `${p.plan} · ${p.months} month${p.months > 1 ? 's' : ''}`);
+    row('Period', `${tsDay(p.periodFrom)} – ${tsDay(p.periodTo)}`); row('Paid via', p.method + (p.reference ? ' · ' + p.reference : ''));
+    y += 2; doc.setDrawColor(227, 232, 239); doc.line(12, y - 5, W - 12, y - 5);
+    row('Amount', fmt(p.amount), true);
+    if (p.voided) { doc.setTextColor(220, 38, 38); doc.setFontSize(26); doc.setFont('helvetica', 'bold'); doc.text('VOID', W / 2, 110, { align: 'center', angle: 20 }); }
+    doc.setTextColor(110, 116, 128); doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
+    doc.text('Thank you for your business.', W / 2, 180, { align: 'center' });
+    doc.text(P.bizLine || 'Matinyo', W / 2, 186, { align: 'center' });
+    if (P.supportPhone) doc.text('Support: ' + prettyPhone(P.supportPhone), W / 2, 192, { align: 'center' });
+    doc.save(`${p.receiptNo || 'receipt'}.pdf`);
+}
+
+// ════════════════════════════════════════════════
 //  TEAM & SETTINGS
 // ════════════════════════════════════════════════
 S.staff = [];
@@ -2328,6 +2507,7 @@ function openTeam() {
                     <button class="tiny-btn ${off ? '' : 'red'}" onclick="toggleStaff('${p.uid}')">${off ? 'Switch on' : 'Switch off'}</button></div>`}
             </div>`;
         }).join('') + `<div style="font-size:0.68rem;color:var(--gray);margin-top:8px;">Sellers sign in with their phone number and PIN.</div>`;
+        $('planUsage').textContent = planUsageText();
     }, e => { $('staffList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
 }
 
@@ -2376,6 +2556,8 @@ async function addStaff() {
     if (!/^255[67]\d{8}$/.test(phone) && !/^\d{10,15}$/.test(phone)) return toast('⚠️ Enter a valid phone number, e.g. 0712 345 678.', 'err');
     if (!/^\d{6,12}$/.test(pin)) return toast('⚠️ PIN must be 6 to 12 digits.', 'err');
     if (!navigator.onLine) return toast('⚠️ Adding a seller needs internet.', 'err');
+    const maxS = Number((S.tenantInfo.limits || {}).maxStaff) || 0;
+    if (maxS && S.staff.filter(p => p.active !== false).length >= maxS) return toast(`⚠️ Your plan allows ${maxS} staff logins. Switch someone off or ask Matinyo to upgrade.`, 'err');
     const btn = $('stBtn'); btn.disabled = true; btn.textContent = 'ADDING...';
     try {
         const taken = await db.collection('logins').doc(phone).get({ source: 'server' });
