@@ -76,6 +76,36 @@
         .link-btn { background: none; border: none; color: var(--blue); font-weight: 700; font-size: 0.75rem; cursor: pointer; margin-top: 10px; }
         .login-hello { font-size: 0.9rem; font-weight: 700; margin-bottom: 12px; }
 
+        /* ── CART EXTRAS ── */
+        .cart-tools { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 4px; }
+        .chip-btn { border: 1.5px dashed var(--line); background: #fff; border-radius: 20px; padding: 7px 12px; font-size: .72rem; font-weight: 800; cursor: pointer; color: var(--ink); }
+        .chip-btn.set { border-style: solid; border-color: var(--pos); background: var(--pos-l); }
+        .pay-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(110px, 1fr)); gap: 8px; }
+        .cl-edit { background: none; border: none; color: var(--blue); font-size: .7rem; font-weight: 800; cursor: pointer; padding: 0 0 0 4px; }
+        .cart-line input.qty-in { width: 62px; flex: none; text-align: center; padding: 6px 4px; font-weight: 800; font-size: .9rem; }
+        .serial-in { padding: 8px 10px; font-size: .8rem; margin-top: 5px; }
+        .sum-line { display: flex; justify-content: space-between; font-size: .78rem; color: var(--gray); padding: 3px 0; }
+        .strip-btn.ghost { background: rgba(255,255,255,.12); color: #fff; }
+        .last-sale { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: #e6f6f0; color: #065f46; padding: 9px 16px; font-size: .78rem; font-weight: 700; }
+        .last-sale button { background: var(--pos); color: #fff; border: none; border-radius: 10px; padding: 7px 12px; font-weight: 800; font-size: .72rem; cursor: pointer; white-space: nowrap; }
+        .warranty-ok { color: var(--green); font-weight: 800; } .warranty-no { color: var(--red); font-weight: 800; }
+
+        /* ── EXCEL IMPORT ── */
+        .imp-steps { display: grid; gap: 10px; margin-bottom: 12px; }
+        .imp-step { display: flex; gap: 12px; background: #f8fafc; border-radius: 14px; padding: 12px; }
+        .imp-step > b { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--yellow); display: flex; align-items: center; justify-content: center; flex-shrink: 0; font-size: .85rem; }
+        .imp-step > div { flex: 1; min-width: 0; }
+        .imp-step strong { display: block; font-size: .88rem; }
+        .imp-step span { display: block; font-size: .72rem; color: var(--gray); margin-top: 2px; }
+        .imp-table-wrap { max-height: 46vh; overflow: auto; border: 1px solid var(--line); border-radius: 12px; margin-bottom: 8px; }
+        .imp-table { width: 100%; border-collapse: collapse; font-size: .74rem; }
+        .imp-table th { position: sticky; top: 0; background: var(--ink); color: var(--yellow); text-align: left; padding: 7px 8px; font-size: .62rem; text-transform: uppercase; letter-spacing: .5px; }
+        .imp-table td { padding: 7px 8px; border-bottom: 1px solid #f0f2f5; vertical-align: top; }
+        .imp-table td.n { text-align: right; white-space: nowrap; }
+        .imp-table tr.err td { background: #fff5f5; }
+        .imp-table small { display: block; color: var(--gray); font-size: .64rem; }
+        .imp-table .was { color: var(--gray); text-decoration: line-through; font-size: .64rem; display: block; }
+
         /* ── SHIFTS ── */
         .pos-strip { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
         .strip-btn { background: var(--yellow); color: var(--ink); border: none; border-radius: 10px; padding: 6px 11px; font-size: .68rem; font-weight: 800; letter-spacing: .5px; cursor: pointer; white-space: nowrap; }
@@ -407,11 +437,54 @@
         .role-pill.cashier { background: #dcfce7; color: #166534; }
         .role-pill.off { background: #fee2e2; color: #991b1b; }
 
-        /* Wider screens: more product columns */
-        @media (min-width: 820px) {
-            .pos-items { max-width: 1100px; }
-            .pos-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-            .inv-list { max-width: 760px; }
+        /* ── DEVICE LAYOUTS ── */
+        .kb-hint { display: none; font-size: .62rem; color: rgba(255,255,255,.45); margin-top: 8px; }
+        .kb-hint b { color: var(--yellow); font-weight: 800; }
+        .has-keyboard.dev-desktop .pos-header .kb-hint, .has-keyboard.dev-tablet.cart-docked .pos-header .kb-hint { display: block; }
+
+        /* Tablet and bigger */
+        @media (min-width: 640px) {
+            .container { max-width: 760px; }
+            .summary-grid { grid-template-columns: repeat(4, 1fr); }
+            .header, .pos-header, .inv-header, .inv-strip, .cat-filter { padding-left: max(24px, calc((100% - 1100px) / 2)); padding-right: max(24px, calc((100% - 1100px) / 2)); }
+            .pos-items { max-width: none; padding: 16px 24px 0; }
+            .pos-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+            .inv-list { max-width: 1100px; padding: 14px 24px; }
+            #invList { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
+            .modal-overlay { align-items: center; padding: 20px; }
+            .modal { border-radius: 24px; max-height: 90vh; padding-bottom: 22px; max-width: 520px; }
+            .modal.wide { max-width: 780px; }
+            .modal-handle { display: none; }
+            .save-bar { bottom: -22px; }
+            .cart-bar-inner { max-width: 520px; }
+            .tab-btn { flex-direction: row; justify-content: center; gap: 8px; font-size: .7rem; padding: 13px 8px; }
+        }
+        /* Computer */
+        @media (min-width: 1024px) {
+            .container { max-width: 900px; }
+            #invList { grid-template-columns: 1fr 1fr 1fr; }
+            .pos-grid { grid-template-columns: repeat(auto-fill, minmax(165px, 1fr)); }
+            .item-card { padding: 16px 14px 14px; }
+            .item-card:hover:not(.out) { border-color: var(--blue); }
+            .entry-item:hover, .inv-row:hover { box-shadow: 0 4px 14px rgba(0,0,0,.08); }
+        }
+        /* Cart stays open on the right (computer, or tablet held sideways) */
+        .modal-overlay.docked {
+            display: flex; inset: auto; top: var(--navH, 54px); right: 0; bottom: 0; width: 380px; padding: 0;
+            background: transparent; backdrop-filter: none; align-items: stretch; z-index: 550;
+        }
+        .modal-overlay.docked .modal {
+            max-width: none; max-height: none; height: 100%; border-radius: 0; border-top: none; border-left: 1px solid var(--line);
+            animation: none; box-shadow: -8px 0 24px rgba(0,0,0,.06); padding: 18px 18px 18px; display: flex; flex-direction: column;
+        }
+        .modal-overlay.docked #cartLines { flex: 1; overflow-y: auto; min-height: 80px; }
+        .modal-overlay.docked .save-bar { position: static; }
+        .modal-overlay.docked .modal-title { text-align: left; margin-bottom: 8px; }
+        body.cart-docked #page-pos, body.cart-docked #noticeBar { margin-right: 380px; }
+        body.cart-docked .cart-bar { display: none !important; }
+        @media (max-width: 1100px) {
+            .modal-overlay.docked { width: 330px; }
+            body.cart-docked #page-pos, body.cart-docked #noticeBar { margin-right: 330px; }
         }
     </style>
 </head>
@@ -533,6 +606,7 @@
                 <button class="btn-sec" style="border-color:var(--yellow);" onclick="openCashups()">🧾 CASH-UPS<span class="badge hidden" id="cuBadge">0</span></button>
                 <button class="btn-sec" style="border-color:var(--red);color:var(--red);" onclick="openCloseDay()">🔒 CLOSE DAY</button>
             </div>
+            <button class="btn-sec wide" style="border-color:var(--amber);" onclick="openCustomers('manage')">📒 CUSTOMERS & CREDIT <span id="dashOwed" style="color:var(--red);"></span></button>
             <button class="btn-sec wide" style="border-color:var(--blue);color:var(--blue);margin-bottom:18px;" onclick="openMonth()">📅 MONTHLY PROFIT & CLOSE MONTH</button>
 
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
@@ -558,13 +632,16 @@
                     <button class="icon-btn" onclick="logout()" title="Sign out">⏻</button>
                 </div>
             </div>
-            <div class="pos-strip"><span id="posStrip">Today: <b>0</b> sales</span><button class="strip-btn" onclick="openShiftEnd()">🔒 END SHIFT</button></div>
+            <div class="pos-strip"><span id="posStrip">Today: <b>0</b> sales</span>
+                <span style="display:flex;gap:6px;"><button class="strip-btn ghost" onclick="openCustomers('manage')">👥 Customers</button><button class="strip-btn" onclick="openShiftEnd()">🔒 END SHIFT</button></span></div>
             <div class="search-wrap">
                 <span class="search-icon">🔍</span>
-                <input type="text" class="dark-search" id="posSearch" placeholder="Search items..." oninput="renderPOS()">
+                <input type="text" class="dark-search" id="posSearch" placeholder="Search or scan barcode..." oninput="renderPOS()" autocomplete="off">
             </div>
+            <div class="kb-hint">⌨️ <b>/</b> search · <b>Enter</b> add item · <b>F2</b> confirm sale · <b>Esc</b> close · barcode scanners work anywhere on this screen</div>
         </div>
         <div class="cat-filter" id="catFilter"></div>
+        <div id="lastSaleBar" class="last-sale hidden"></div>
         <div class="pos-items">
             <div class="pos-grid" id="posGrid"></div>
             <div id="posEmpty" class="empty-state hidden"></div>
@@ -586,7 +663,9 @@
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
                 <div class="inv-logo">STOCK</div>
                 <div style="display:flex;gap:6px;">
+                    <button class="hdr-chip" onclick="serialLookup()">🔍 SERIAL</button>
                     <button class="hdr-chip" onclick="openStocktake()">📋 STOCKTAKE</button>
+                    <button class="hdr-chip role-admin" onclick="openImport()">📥 EXCEL</button>
                     <button class="hdr-chip yellow role-admin" onclick="openItem()">+ ADD ITEM</button>
                 </div>
             </div>
@@ -611,18 +690,25 @@
         <div class="modal-handle"></div>
         <div class="modal-title">🛒 Current Cart</div>
         <div id="cartLines"></div>
+        <div class="cart-tools">
+            <button type="button" class="chip-btn" id="custBtn" onclick="openCustomers('pick')">👤 Add customer</button>
+            <button type="button" class="chip-btn" id="discBtn" onclick="askDiscount()">🏷️ Discount</button>
+        </div>
+        <div id="cartSums"></div>
         <div class="cart-total-row"><span>Total</span><b id="cartModalTotal">0 TZS</b></div>
-        <div class="field-group" style="margin-top:14px;">
+        <div class="field-group" style="margin-top:12px;">
             <span class="field-label">💳 Payment</span>
             <div class="row-btns">
                 <button type="button" class="btn-sec" onclick="setPay('cash')">💵 All Cash</button>
-                <button type="button" class="btn-sec" onclick="setPay('mobile')">📱 All Lipa kwa Simu</button>
+                <button type="button" class="btn-sec" onclick="setPay('mobile')">📱 All Simu</button>
+                <button type="button" class="btn-sec hidden" id="payAllCredit" onclick="setPay('credit')">📒 All Credit</button>
             </div>
-            <div class="form-row" style="margin-bottom:0;">
-                <div><span class="field-label" style="font-size:0.6rem;">💵 Cash (TZS)</span><input type="number" id="payCash" inputmode="decimal" oninput="S.payTouched=true;checkPay()"></div>
-                <div><span class="field-label" style="font-size:0.6rem;">📱 Lipa kwa Simu (TZS)</span><input type="number" id="payMobile" inputmode="decimal" oninput="S.payTouched=true;checkPay()"></div>
+            <div class="pay-grid">
+                <div><span class="field-label" style="font-size:0.6rem;">💵 Cash</span><input type="number" id="payCash" inputmode="decimal" oninput="S.payTouched=true;checkPay()"></div>
+                <div><span class="field-label" style="font-size:0.6rem;">📱 Lipa kwa Simu</span><input type="number" id="payMobile" inputmode="decimal" oninput="S.payTouched=true;checkPay()"></div>
+                <div id="payCreditWrap" class="hidden"><span class="field-label" style="font-size:0.6rem;color:var(--amber);">📒 On credit</span><input type="number" id="payCredit" inputmode="decimal" oninput="S.payTouched=true;checkPay()"></div>
             </div>
-            <div id="payWarn" style="font-size:0.72rem;color:var(--red);margin-top:6px;display:none;">⚠️ Cash + Lipa kwa Simu must add up to the total.</div>
+            <div id="payWarn" style="font-size:0.72rem;color:var(--red);margin-top:6px;display:none;">⚠️ The payment must add up to the total.</div>
         </div>
         <div class="save-bar">
             <button class="primary-cta green" onclick="confirmSale()">✅ CONFIRM SALE</button>
@@ -638,16 +724,26 @@
         <div class="modal-title" id="itemTitle">Add New Item</div>
         <input type="hidden" id="itemId">
         <div class="field-group"><span class="field-label">Icon</span><div class="emoji-row" id="emojiPicker"></div></div>
-        <div class="field-group"><span class="field-label">Item name</span><input type="text" id="itemName" placeholder="e.g. Bottled Water 500ml"></div>
-        <div class="field-group"><span class="field-label">Category</span><input type="text" id="itemCat" placeholder="e.g. Drinks, Snacks, Bread..." list="catList"><datalist id="catList"></datalist></div>
+        <div class="field-group"><span class="field-label">Item name</span><input type="text" id="itemName" placeholder="e.g. Samsung 25W charger, Bosch drill, Cement 50kg"></div>
+        <div class="field-group"><span class="field-label">Category</span><input type="text" id="itemCat" placeholder="e.g. Phones, Accessories, Power tools, Paint..." list="catList"><datalist id="catList"></datalist></div>
         <div class="form-row">
-            <div class="field-group"><span class="field-label">Sell price / unit (TZS)</span><input type="number" id="itemSell" inputmode="decimal" placeholder="0"></div>
-            <div class="field-group"><span class="field-label">Cost / unit (TZS)</span><input type="number" id="itemCost" inputmode="decimal" placeholder="0"></div>
+            <div class="field-group"><span class="field-label">Sold by</span><select id="itemUnit" onchange="unitChanged()"></select></div>
+            <div class="field-group"><span class="field-label">Pack size (optional)</span><input type="number" id="itemPack" inputmode="numeric" placeholder="e.g. 12 per box"></div>
+        </div>
+        <label class="check" style="padding-top:0;"><input type="checkbox" id="itemPart"><span>Can sell part units (e.g. 2.5 m, 0.5 kg)</span></label>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label" id="lblSell">Sell price / piece (TZS)</span><input type="number" id="itemSell" inputmode="decimal" placeholder="0"></div>
+            <div class="field-group"><span class="field-label" id="lblCost">Cost / piece (TZS)</span><input type="number" id="itemCost" inputmode="decimal" placeholder="0"></div>
         </div>
         <div class="form-row">
-            <div class="field-group"><span class="field-label">Units in stock</span><input type="number" id="itemStock" inputmode="numeric" placeholder="0"></div>
-            <div class="field-group"><span class="field-label">Warn when below</span><input type="number" id="itemReorder" inputmode="numeric" placeholder="5"></div>
+            <div class="field-group"><span class="field-label" id="lblStock">In stock</span><input type="number" id="itemStock" inputmode="decimal" placeholder="0"></div>
+            <div class="field-group"><span class="field-label">Warn when below</span><input type="number" id="itemReorder" inputmode="decimal" placeholder="5"></div>
         </div>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">Warranty (months)</span><input type="number" id="itemWarranty" inputmode="numeric" placeholder="0 = none"></div>
+            <div class="field-group" style="display:flex;align-items:flex-end;"><label class="check" style="padding:0 0 10px;"><input type="checkbox" id="itemSerial"><span>Ask for serial / IMEI when selling</span></label></div>
+        </div>
+        <div class="field-group"><span class="field-label">Barcode (optional)</span><input type="text" id="itemBarcode" inputmode="numeric" placeholder="Scan or type the code on the pack"></div>
         <div class="save-bar">
             <button class="primary-cta" onclick="saveItem()">SAVE ITEM</button>
             <button class="btn-sec wide ghost" style="color:var(--red);" id="itemDeleteBtn" onclick="deleteItem()">DELETE ITEM</button>
@@ -663,9 +759,12 @@
         <div class="modal-title">📥 Restock Item</div>
         <input type="hidden" id="restockId">
         <div class="hint green" id="restockInfo"></div>
-        <div class="field-group"><span class="field-label">Units received</span><input type="number" id="restockQty" inputmode="numeric" placeholder="0" oninput="restockTotal()"></div>
+        <div class="form-row" style="margin-bottom:14px;">
+            <div class="field-group"><span class="field-label">Quantity received</span><input type="number" id="restockQty" inputmode="decimal" placeholder="0" oninput="restockTotal()"></div>
+            <div class="field-group"><span class="field-label">Counted in</span><select id="restockIn" onchange="restockTotal()"></select></div>
+        </div>
         <div class="role-admin">
-            <div class="field-group"><span class="field-label">Cost per unit (TZS)</span><input type="number" id="restockCost" inputmode="decimal" placeholder="0" oninput="restockTotal()"></div>
+            <div class="field-group"><span class="field-label" id="lblRestockCost">Cost per piece (TZS)</span><input type="number" id="restockCost" inputmode="decimal" placeholder="0" oninput="restockTotal()"></div>
             <div class="field-group">
                 <span class="field-label">Payment for this stock</span>
                 <select id="restockPaid">
@@ -696,6 +795,46 @@
             <button class="primary-cta" onclick="confirmStocktake()">✅ SAVE STOCKTAKE</button>
             <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
         </div>
+    </div>
+</div>
+
+<!-- Excel import -->
+<div class="modal-overlay" id="sheetImport" onclick="overlayClose(event)">
+    <div class="modal wide">
+        <div class="modal-handle"></div>
+        <div class="modal-title">📥 Stock from Excel</div>
+        <div id="impStep1">
+            <div class="imp-steps">
+                <div class="imp-step"><b>1</b><div><strong>Get the template</strong><span>Fill one row per item. Works in Excel, Google Sheets or WPS on your phone.</span>
+                    <div class="row-btns" style="margin:8px 0 0;"><button class="btn-sec" onclick="downloadTemplate(false)">⬇️ Blank template</button><button class="btn-sec" onclick="downloadTemplate(true)">⬇️ My current stock</button></div></div></div>
+                <div class="imp-step"><b>2</b><div><strong>Upload it back</strong><span>.xlsx, .xls or .csv. You will see a preview before anything is saved.</span>
+                    <label class="primary-cta" style="margin:8px 0 0;cursor:pointer;">📂 CHOOSE FILE<input type="file" id="impFile" accept=".xlsx,.xls,.csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel,text/csv" style="display:none;" onchange="readImportFile(this)"></label></div></div>
+            </div>
+            <div class="hint gray">💡 Items are matched by <b>name</b> (or barcode). Matching items are updated; new names are added.</div>
+        </div>
+        <div id="impStep2" class="hidden">
+            <div class="mini-cards" id="impCounts"></div>
+            <div id="impWarn"></div>
+            <div class="form-row" style="margin-bottom:8px;">
+                <div class="field-group"><span class="field-label">Stock column for existing items</span>
+                    <select id="impMode" onchange="renderImportPreview()">
+                        <option value="add">➕ Add to current stock (a delivery)</option>
+                        <option value="set">🟰 Replace with this count (stocktake)</option>
+                        <option value="keep">✋ Don't change stock</option>
+                    </select></div>
+                <div class="field-group"><span class="field-label">Prices for existing items</span>
+                    <select id="impPrices" onchange="renderImportPreview()">
+                        <option value="update">Update from the file</option>
+                        <option value="keep">Keep current prices</option>
+                    </select></div>
+            </div>
+            <div class="imp-table-wrap"><table class="imp-table"><thead><tr><th></th><th>Item</th><th>Sell</th><th>Cost</th><th>Stock</th></tr></thead><tbody id="impRows"></tbody></table></div>
+            <div class="save-bar">
+                <button class="primary-cta green" id="impBtn" onclick="runImport()">✅ IMPORT</button>
+                <button class="btn-sec wide ghost" onclick="openImport()">← CHOOSE ANOTHER FILE</button>
+            </div>
+        </div>
+        <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
     </div>
 </div>
 
@@ -922,6 +1061,13 @@
             <div class="field-group"><span class="field-label">Daily sales target (TZS)</span><input type="number" id="setTarget" inputmode="decimal" placeholder="e.g. 50000"></div>
             <div class="field-group"><span class="field-label">WhatsApp for summaries</span><input type="tel" id="setWa" placeholder="2557XXXXXXXX"></div>
         </div>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">Shop phone (on receipts)</span><input type="tel" id="setPhone" placeholder="07XX XXX XXX"></div>
+            <div class="field-group"><span class="field-label">Sellers' max discount %</span><input type="number" id="setMaxDisc" inputmode="numeric" placeholder="e.g. 10"></div>
+        </div>
+        <div class="field-group"><span class="field-label">Address / TIN (on receipts)</span><input type="text" id="setAddr" placeholder="e.g. Mwanakwerekwe, Zanzibar · TIN 123-456-789"></div>
+        <div class="field-group"><span class="field-label">Receipt footer</span><input type="text" id="setFooter" placeholder="e.g. Goods once sold cannot be returned without receipt"></div>
+        <label class="check"><input type="checkbox" id="setCredit"><span>Sellers can sell on credit (owners always can)</span></label>
         <button class="btn-sec wide" onclick="saveSettings()">💾 SAVE SETTINGS</button>
         <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
     </div>
@@ -933,6 +1079,44 @@
         <div class="modal-handle"></div>
         <div class="modal-title">💳 Subscription</div>
         <div id="subBody"></div>
+        <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Customers -->
+<div class="modal-overlay" id="sheetCustomers" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title" id="custTitle">👥 Customers</div>
+        <div id="custOwed"></div>
+        <input type="text" id="custSearch" placeholder="🔍 Search name or phone..." oninput="renderCustomers()" style="margin-bottom:10px;">
+        <div id="custList"></div>
+        <span class="section-label" style="margin-top:12px;">New customer</span>
+        <div class="form-row">
+            <div class="field-group"><span class="field-label">Name</span><input type="text" id="ncName" placeholder="e.g. Fundi Hamisi"></div>
+            <div class="field-group"><span class="field-label">Phone</span><input type="tel" id="ncPhone" placeholder="07XX XXX XXX"></div>
+        </div>
+        <button class="primary-cta" onclick="addCustomer()">➕ ADD CUSTOMER</button>
+        <button class="btn-sec wide ghost" id="custBack" onclick="closeCustomers()">CLOSE</button>
+    </div>
+</div>
+
+<!-- Customer detail -->
+<div class="modal-overlay" id="sheetCustomer" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div id="custBody"></div>
+        <button class="btn-sec wide ghost" onclick="openCustomers('manage')">← ALL CUSTOMERS</button>
+    </div>
+</div>
+
+<!-- Serial / warranty lookup -->
+<div class="modal-overlay" id="sheetSerial" onclick="overlayClose(event)">
+    <div class="modal">
+        <div class="modal-handle"></div>
+        <div class="modal-title">🔍 Serial / IMEI</div>
+        <div class="row-btns"><input type="text" id="serialQ" placeholder="Type or scan serial / IMEI" style="flex:2;" onkeydown="if(event.key==='Enter') runSerialLookup()"><button class="btn-sec" onclick="runSerialLookup()">Find</button></div>
+        <div id="serialOut"></div>
         <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
     </div>
 </div>
@@ -976,7 +1160,8 @@ const firebaseConfig = {
 // Sellers' hidden logins live on this domain. Nobody types it — they use their phone number.
 const SHOP_DOMAIN = 'tenants.matinyopos.app';
 const IDLE_LIMIT = 10 * 60 * 1000; // sign out after 10 minutes without a tap
-const EMOJIS = ['📦','🍞','🥛','🍫','🍬','🥤','💧','🧃','🍺','🧂','🫙','🍗','🥚','🍌','🍎','🍚','🌽','🧅','🍅','🥫','🧈','☕','🍵','🧴','🧻','🪥','🧼','🧹','🔋','💊','🛍️','🍜','🌶️','🥜','🫘','🍪','🚬','📱','✏️','🕯️'];
+// Icons for any kind of shop: gadgets, tools & hardware, electrical, household, general goods
+const EMOJIS = ['📦','📱','💻','🖥️','⌨️','🖱️','🎧','🔌','🔋','💡','📷','⌚','🖨️','📺','🎮','💾','📡','🔧','🔨','🪛','🪚','⚙️','🔩','🧰','🪜','🧱','🪣','🎨','🚿','🚰','🔦','🧯','⛓️','📏','🪝','🧴','🧼','🧹','🛋️','🛏️','👕','👟','✏️','📚','💊','🍞','🥤','🍚','🛍️','🎁'];
 const EXPENSE_CATS = [
     ['Supplier', '📦 Supplier / Restock'], ['Electricity', '⚡ Electricity (LUKU)'], ['Transport', '🚗 Transport'],
     ['Rent', '🏠 Rent'], ['Salaries', '👷 Salaries / Labour'], ['Repairs', '🔧 Repairs & Maintenance'],
@@ -1001,6 +1186,7 @@ const now = () => FV.serverTimestamp();
 //  STATE
 // ════════════════════════════════════════════════
 const S = {
+    saleCache: {},
     tenant: null, tenantInfo: {}, me: null,
     products: [], costs: {}, balances: { cash: 0, mobile: 0, bank: 0, savings: 0 },
     days: {}, months: {}, todaySales: [], today: null,
@@ -1098,11 +1284,11 @@ function openSheet(id) {
     document.body.classList.add('modal-open'); document.documentElement.classList.add('modal-open');
 }
 function closeModals() {
-    document.querySelectorAll('.modal-overlay').forEach(o => o.classList.remove('active'));
+    document.querySelectorAll('.modal-overlay:not(.docked)').forEach(o => o.classList.remove('active'));
     document.body.classList.remove('modal-open'); document.documentElement.classList.remove('modal-open');
     S.sheetListeners.forEach(u => u()); S.sheetListeners = [];
 }
-function overlayClose(e) { if (e.target.classList.contains('modal-overlay')) closeModals(); }
+function overlayClose(e) { if (e.target.classList.contains('modal-overlay') && !e.target.classList.contains('docked')) closeModals(); }
 (function swipeToClose() {
     let y0 = 0, x0 = 0;
     document.addEventListener('touchstart', e => { y0 = e.touches[0].clientY; x0 = e.touches[0].clientX; }, { passive: true });
@@ -1267,6 +1453,7 @@ function showLogin() {
     $('mainApp').style.display = 'none';
     $('loginPage').style.display = 'flex';
     $('loginPin').value = '';
+    syncCartDock();
     renderLogin();
 }
 
@@ -1284,6 +1471,7 @@ function enterApp() {
     S.today = dayStr();
     startListeners();
     switchTab(isAdmin() ? 'dashboard' : 'pos');
+    detectDevice();
     touch();
 }
 
@@ -1364,6 +1552,10 @@ function startListeners() {
         L(col('days').where('day', '>=', from), s => { S.days = {}; s.docs.forEach(d => S.days[d.id] = d.data()); renderDashboard(); });
         L(col('months'), s => { S.months = {}; s.docs.forEach(d => S.months[d.id] = d.data()); renderDashboard(); });
         L(col('staff'), s => { S.staffAll = s.docs.map(d => ({ uid: d.id, ...d.data() })); });
+        L(col('customers').where('balance', '>', 0), s => {
+            const owed = s.docs.reduce((a, d) => a + (d.data().balance || 0), 0);
+            $('dashOwed').textContent = owed ? '· owed ' + n0(owed) : '';
+        });
         L(col('cashups').where('status', '==', 'pending'), s => {
             S.pendingCashups = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (tms(a.createdAt) || 9e15) - (tms(b.createdAt) || 9e15));
             const n = S.pendingCashups.length, bd = $('cuBadge');
@@ -1397,6 +1589,7 @@ function switchTab(tab) {
     $('tab-' + tab).classList.add('active');
     $('cartBar').style.visibility = tab === 'pos' ? 'visible' : 'hidden';
     window.scrollTo(0, 0);
+    syncCartDock();
     if (tab === 'pos') renderPOS();
     if (tab === 'inventory') renderInventory();
     if (tab === 'dashboard') renderDashboard();
@@ -1410,7 +1603,8 @@ function dayFig(d) {
     return {
         sales: +x.sales || 0, cash: +x.cash || 0, mobile: +x.mobile || 0, tx: +x.txCount || 0,
         supplier: +x.supplier || 0, expense: +x.expense || 0, bankIn: +x.bankIn || 0, bankOut: +x.bankOut || 0,
-        toSavings: +x.toSavings || 0, closing: x.closing || null, exists: !!S.days[d]
+        toSavings: +x.toSavings || 0, credit: +x.credit || 0, discount: +x.discount || 0, debtPaid: +x.debtPaid || 0,
+        closing: x.closing || null, exists: !!S.days[d]
     };
 }
 // Sales recorded on a day after the owner closed it (e.g. a seller kept selling)
@@ -1419,11 +1613,11 @@ function afterClose(x) {
     return Math.max(0, x.sales - x.closing.sales);
 }
 function monthFig(m) {
-    const f = { sales: 0, cash: 0, mobile: 0, tx: 0, supplier: 0, expense: 0, bankIn: 0, bankOut: 0, toSavings: 0, days: 0 };
+    const f = { sales: 0, cash: 0, mobile: 0, tx: 0, supplier: 0, expense: 0, bankIn: 0, bankOut: 0, toSavings: 0, credit: 0, discount: 0, debtPaid: 0, days: 0 };
     Object.keys(S.days).forEach(d => {
         if (d.slice(0, 7) !== m) return;
         const x = dayFig(d);
-        ['sales', 'cash', 'mobile', 'tx', 'supplier', 'expense', 'bankIn', 'bankOut', 'toSavings'].forEach(k => f[k] += x[k]);
+        ['sales', 'cash', 'mobile', 'tx', 'supplier', 'expense', 'bankIn', 'bankOut', 'toSavings', 'credit', 'discount', 'debtPaid'].forEach(k => f[k] += x[k]);
         if (x.sales) f.days++;
     });
     f.profit = f.sales - f.supplier - f.expense;
@@ -1526,7 +1720,7 @@ function renderHistory() {
 //  POINT OF SALE
 // ════════════════════════════════════════════════
 function renderPosStrip() {
-    const live = S.todaySales.filter(s => !s.voided);
+    const live = S.todaySales.filter(s => !s.voided && s.kind !== 'repay');
     const pos = live.filter(s => s.kind !== 'manual');
     const mine = pos.filter(s => S.me && s.staffUid === S.me.uid);
     $('posStrip').innerHTML = `Today: <b>${pos.length}</b> sale${pos.length === 1 ? '' : 's'}` +
@@ -1543,7 +1737,7 @@ function renderPOS() {
     const words = q ? q.split(/\s+/) : [];
     const list = S.products.filter(p => {
         if (S.activeCat !== 'All' && (p.category || 'General') !== S.activeCat) return false;
-        const hay = [p.name, p.category, p.sellPrice].join(' ').toLowerCase();
+        const hay = [p.name, p.category, p.sellPrice, p.barcode].join(' ').toLowerCase();
         return words.every(w => hay.includes(w));
     });
     const empty = $('posEmpty');
@@ -1560,11 +1754,11 @@ function renderPOS() {
             const out = stock <= 0, low = !out && stock <= (Number(p.reorderLevel) || 5);
             return `<button class="item-card ${qty ? 'in-cart' : ''} ${out ? 'out' : ''}" ${out ? 'disabled' : ''} onclick="addToCart('${p.id}')">
                 ${low ? '<span class="ic-low">LOW</span>' : ''}
-                <span class="ic-badge">${qty}</span>
+                <span class="ic-badge">${q3(qty)}</span>
                 <span class="ic-emoji">${esc(p.emoji || '📦')}</span>
                 <div class="ic-name">${esc(p.name)}</div>
-                <div class="ic-price">${n0(p.sellPrice)} TZS</div>
-                <div class="ic-stock">${out ? '❌ Out of stock' : stock + ' left'}</div>
+                <div class="ic-price">${n0(p.sellPrice)} TZS${perUnit(p)}</div>
+                <div class="ic-stock">${out ? '❌ Out of stock' : stockTxt(p)}${p.trackSerial ? ' · 🔢' : ''}${p.warrantyMonths ? ' · 🛡️' : ''}</div>
             </button>`;
         }).join('');
     }
@@ -1572,95 +1766,224 @@ function renderPOS() {
 }
 function setCat(c) { S.activeCat = c; renderPOS(); }
 
+// ── Units ─────────────────────────────────────────────
+const UNITS = [['pc', 'Piece', 'pc'], ['m', 'Metre', 'm'], ['ft', 'Foot', 'ft'], ['kg', 'Kilogram', 'kg'], ['l', 'Litre', 'L'],
+    ['box', 'Box', 'box'], ['pack', 'Pack', 'pack'], ['carton', 'Carton', 'ctn'], ['set', 'Set', 'set'], ['pair', 'Pair', 'pair'],
+    ['roll', 'Roll', 'roll'], ['bag', 'Bag', 'bag'], ['sheet', 'Sheet', 'sheet'], ['length', 'Length', 'length']];
+const PART_UNITS = ['m', 'ft', 'kg', 'l'];
+const unitOf = p => (p && p.unit) || 'pc';
+const unitShort = p => (UNITS.find(u => u[0] === unitOf(p)) || UNITS[0])[2];
+const unitName = p => (UNITS.find(u => u[0] === unitOf(p)) || UNITS[0])[1].toLowerCase();
+const partOk = p => !!(p && (p.partQty === true || (p.partQty === undefined && PART_UNITS.includes(unitOf(p)))));
+const q3 = v => Math.round((Number(v) || 0) * 1000) / 1000;
+const qtyTxt = (q, p) => `${q3(q).toLocaleString('en-US', { maximumFractionDigits: 3 })}${unitOf(p) === 'pc' ? '' : ' ' + unitShort(p)}`;
+const stockTxt = p => `${qtyTxt(p.stock || 0, p)}${unitOf(p) === 'pc' ? '' : ''} left`;
+const perUnit = p => unitOf(p) === 'pc' ? '' : '/' + unitShort(p);
+
+// ── Cart state ────────────────────────────────────────
+// S.cart[id] = quantity · S.lineMeta[id] = { price, serials[] }
+S.lineMeta = {}; S.saleDisc = null; S.saleCustomer = null;
+const meta = id => (S.lineMeta[id] = S.lineMeta[id] || { serials: [] });
+const linePrice = id => { const m = S.lineMeta[id], p = productById(id); return m && m.price != null ? m.price : Number((p || {}).sellPrice) || 0; };
+const lineSub = id => Math.round(linePrice(id) * (S.cart[id] || 0));
+const cartList = () => Object.entries(S.cart).reduce((s, [id, q]) => s + (Number((productById(id) || {}).sellPrice) || 0) * q, 0);
+const cartGross = () => Object.keys(S.cart).reduce((s, id) => s + lineSub(id), 0);
+function cartDiscount() {
+    const d = S.saleDisc, g = cartGross();
+    if (!d) return 0;
+    return Math.min(g, Math.round(d.type === 'pct' ? g * d.value / 100 : d.value));
+}
+const cartTotal = () => Math.max(0, cartGross() - cartDiscount());
+const cartCount = () => Object.keys(S.cart).length;
+const maxDiscPct = () => { const v = (S.tenantInfo.settings || {}).maxDiscount; return v === undefined || v === null || v === '' ? 10 : Number(v) || 0; };
+const creditAllowed = () => isAdmin() || !!(S.tenantInfo.settings || {}).cashierCredit;
+
 function addToCart(id) {
     const p = productById(id); if (!p) return;
-    const q = S.cart[id] || 0;
-    if (q + 1 > (Number(p.stock) || 0)) { toast(`⚠️ Only ${p.stock || 0} ${p.name} in stock`, 'err'); return; }
-    S.cart[id] = q + 1;
+    const q = S.cart[id] || 0, stock = Number(p.stock) || 0;
+    const step = partOk(p) ? Math.min(1, q3(stock - q)) : 1;
+    if (step <= 0 || q + step > stock + 1e-9) { toast(`⚠️ Only ${qtyTxt(stock, p)} ${p.name} in stock`, 'err'); return; }
+    S.cart[id] = q3(q + step);
     navigator.vibrate?.(25);
     renderPOS();
     if ($('sheetCart').classList.contains('active')) renderCart();
 }
 function removeFromCart(id) {
     if (!S.cart[id]) return;
-    if (--S.cart[id] <= 0) delete S.cart[id];
+    const p = productById(id), q = S.cart[id];
+    const next = partOk(p) && q % 1 ? Math.floor(q) : q - 1;
+    if (next <= 0) { delete S.cart[id]; delete S.lineMeta[id]; } else S.cart[id] = q3(next);
     renderPOS(); renderCart();
 }
-function clearCart() { S.cart = {}; S.payTouched = false; renderPOS(); }
-const cartTotal = () => Object.entries(S.cart).reduce((s, [id, q]) => s + (Number((productById(id) || {}).sellPrice) || 0) * q, 0);
-const cartCount = () => Object.values(S.cart).reduce((s, q) => s + q, 0);
+function setQty(id, v) {
+    const p = productById(id); if (!p) return;
+    let q = num(v);
+    if (!partOk(p)) q = Math.round(q);
+    q = q3(q);
+    if (q <= 0) { delete S.cart[id]; delete S.lineMeta[id]; }
+    else if (q > (Number(p.stock) || 0) + 1e-9) { toast(`⚠️ Only ${qtyTxt(p.stock, p)} in stock`, 'err'); }
+    else S.cart[id] = q;
+    setTimeout(() => { renderPOS(); renderCart(); }, 0);
+}
+async function editLinePrice(id) {
+    const p = productById(id); if (!p) return;
+    const lim = isAdmin() ? '' : `<br><span style="font-size:.72rem;color:#6b7280;">You can go down to ${n0(p.sellPrice * (1 - maxDiscPct() / 100))} (${maxDiscPct()}% off).</span>`;
+    const v = await askValue(`Price for <b>${esc(p.name)}</b>${perUnit(p)}<br><span style="font-size:.75rem;color:#6b7280;">Normal price ${n0(p.sellPrice)}</span>${lim}`, 'New price', 'Set price', { value: String(linePrice(id)) });
+    if (v === null || v === '') return;
+    const n = num(v);
+    if (!(n >= 0)) return toast('⚠️ Enter a price.', 'err');
+    if (!isAdmin() && n < p.sellPrice * (1 - maxDiscPct() / 100) - 0.5) return toast(`⚠️ The lowest you can sell at is ${n0(p.sellPrice * (1 - maxDiscPct() / 100))}. Ask the owner.`, 'err');
+    meta(id).price = Math.abs(n - p.sellPrice) < 0.5 ? null : n;
+    S.payTouched = false; renderPOS(); renderCart();
+}
+async function askDiscount() {
+    if (!Object.keys(S.cart).length) return toast('Add items first.');
+    const v = await askValue(`Discount on the whole sale<br><span style="font-size:.75rem;color:#6b7280;">Type an amount (e.g. 5000) or a percent (e.g. 10%). Empty = no discount.${isAdmin() ? '' : `<br>Your limit: ${maxDiscPct()}%`}</span>`, 'e.g. 5000 or 10%', 'Apply', { type: 'text', value: S.saleDisc ? (S.saleDisc.type === 'pct' ? S.saleDisc.value + '%' : String(S.saleDisc.value)) : '' });
+    if (v === null) return;
+    const t = v.replace(/\s/g, '');
+    if (!t) S.saleDisc = null;
+    else if (t.endsWith('%')) S.saleDisc = { type: 'pct', value: Math.min(100, num(t)) };
+    else S.saleDisc = { type: 'amt', value: num(t) };
+    if (S.saleDisc && !(S.saleDisc.value > 0)) S.saleDisc = null;
+    S.payTouched = false; renderCart();
+    if (!isAdmin() && discPctNow() > maxDiscPct() + 0.01) toast(`⚠️ That is ${discPctNow().toFixed(1)}% off — above your ${maxDiscPct()}% limit. The owner can give bigger discounts.`, 'err');
+}
+const discPctNow = () => { const l = cartList(); return l ? (l - cartTotal()) / l * 100 : 0; };
+function clearCart() { S.cart = {}; S.lineMeta = {}; S.saleDisc = null; S.saleCustomer = null; S.payTouched = false; renderPOS(); renderCart(); }
 
 function updateCartBar() {
-    const c = cartCount();
-    $('cartCount').textContent = c;
+    const n = Object.keys(S.cart).length;
+    $('cartCount').textContent = n;
     $('cartBarTotal').textContent = fmt(cartTotal());
     const ids = Object.keys(S.cart);
-    const names = ids.slice(0, 2).map(id => (productById(id) || {}).name || '').map(n => n.split(' ')[0]);
-    $('cartSummary').textContent = c ? names.join(', ') + (ids.length > 2 ? ` +${ids.length - 2} more` : '') : 'No items';
-    $('cartBar').classList.toggle('show', c > 0);
+    const names = ids.slice(0, 2).map(id => (productById(id) || {}).name || '').map(x => x.split(' ')[0]);
+    $('cartSummary').textContent = n ? names.join(', ') + (ids.length > 2 ? ` +${ids.length - 2} more` : '') : 'No items';
+    $('cartBar').classList.toggle('show', n > 0);
+    if ($('sheetCart').classList.contains('docked')) renderCart();
 }
 
 function openCart() { S.payTouched = false; renderCart(); openSheet('sheetCart'); }
 function renderCart() {
+    if (S._renderingCart) return;
+    S._renderingCart = true;
+    try { renderCartInner(); } finally { S._renderingCart = false; }
+}
+function renderCartInner() {
     const lines = Object.entries(S.cart);
+    // keep typed serials while re-rendering
+    document.querySelectorAll('#cartLines .serial-in').forEach(i => { const m = meta(i.dataset.id); m.serials[+i.dataset.n] = i.value.trim(); });
     $('cartLines').innerHTML = lines.length ? lines.map(([id, q]) => {
         const p = productById(id); if (!p) return '';
-        return `<div class="cart-line">
+        const price = linePrice(id), changed = Math.abs(price - p.sellPrice) >= 0.5;
+        const serials = p.trackSerial && q === Math.round(q) ? Array.from({ length: Math.min(q, 20) }, (_, n) =>
+            `<input class="serial-in" data-id="${id}" data-n="${n}" placeholder="Serial / IMEI #${n + 1}" value="${esc((meta(id).serials || [])[n] || '')}">`).join('') : '';
+        return `<div class="cart-line" style="align-items:flex-start;">
             <span class="cl-emoji">${esc(p.emoji || '📦')}</span>
-            <div style="flex:1;min-width:0;"><div class="cl-name">${esc(p.name)}</div><div class="cl-price">${n0(p.sellPrice)} × ${q} = ${n0(p.sellPrice * q)}</div></div>
+            <div style="flex:1;min-width:0;"><div class="cl-name">${esc(p.name)}</div>
+                <div class="cl-price">${changed ? `<s>${n0(p.sellPrice)}</s> ` : ''}<b style="color:${changed ? 'var(--amber)' : 'inherit'};">${n0(price)}</b>${perUnit(p)} × ${qtyTxt(q, p)} = <b>${n0(lineSub(id))}</b>
+                    <button class="cl-edit" onclick="editLinePrice('${id}')">✏️ price</button></div>
+                ${p.warrantyMonths ? `<div class="cl-price">🛡️ ${p.warrantyMonths}-month warranty</div>` : ''}
+                ${serials}
+            </div>
             <div class="qty-ctrl">
                 <button class="qty-btn qty-minus" onclick="removeFromCart('${id}')">−</button>
-                <span class="qty-num">${q}</span>
+                <input class="qty-in" type="number" inputmode="decimal" step="${partOk(p) ? '0.1' : '1'}" value="${q3(q)}" onchange="setQty('${id}', this.value)">
                 <button class="qty-btn qty-plus" onclick="addToCart('${id}')">+</button>
             </div></div>`;
-    }).join('') : '<div class="empty-state"><div class="icon">🛒</div>Cart is empty.</div>';
-    const total = cartTotal();
+    }).join('') : '<div class="empty-state"><div class="icon">🛒</div>Cart is empty.' + (S.dockCart ? '<br><span style="font-size:.72rem;">Tap items or scan a barcode.</span>' : '') + '</div>';
+    const list = cartList(), gross = cartGross(), disc = cartDiscount(), total = cartTotal();
+    const saved = list - total;
+    $('cartSums').innerHTML = saved >= 1 ? `
+        <div class="sum-line"><span>Normal price</span><span>${fmt(list)}</span></div>
+        ${list - gross >= 1 ? `<div class="sum-line"><span>Price changes</span><span>−${n0(list - gross)}</span></div>` : ''}
+        ${disc ? `<div class="sum-line"><span>Discount${S.saleDisc.type === 'pct' ? ' ' + S.saleDisc.value + '%' : ''}</span><span>−${n0(disc)}</span></div>` : ''}
+        <div class="sum-line" style="color:${!isAdmin() && discPctNow() > maxDiscPct() + 0.01 ? 'var(--red)' : 'var(--amber)'};font-weight:800;"><span>Customer saves</span><span>${n0(saved)} (${discPctNow().toFixed(1)}%)</span></div>` : '';
     $('cartModalTotal').textContent = fmt(total);
-    if (!S.payTouched) { $('payCash').value = total; $('payMobile').value = 0; }
+    // customer + discount buttons
+    const c = S.saleCustomer;
+    $('custBtn').innerHTML = c ? `👤 ${esc(c.name)}${c.balance ? ` · owes ${n0(c.balance)}` : ''} <span onclick="event.stopPropagation();S.saleCustomer=null;S.payTouched=false;renderCart();" style="margin-left:4px;color:var(--red);">✕</span>` : '👤 Add customer';
+    $('custBtn').classList.toggle('set', !!c);
+    $('discBtn').innerHTML = S.saleDisc ? `🏷️ −${S.saleDisc.type === 'pct' ? S.saleDisc.value + '%' : n0(S.saleDisc.value)} <span onclick="event.stopPropagation();S.saleDisc=null;S.payTouched=false;renderCart();" style="margin-left:4px;color:var(--red);">✕</span>` : '🏷️ Discount';
+    $('discBtn').classList.toggle('set', !!S.saleDisc);
+    const credit = !!c && creditAllowed();
+    $('payCreditWrap').classList.toggle('hidden', !credit);
+    $('payAllCredit').classList.toggle('hidden', !credit);
+    if (!credit) $('payCredit').value = 0;
+    if (!S.payTouched) { $('payCash').value = total; $('payMobile').value = 0; $('payCredit').value = 0; }
     checkPay();
 }
 function setPay(mode) {
     const t = cartTotal();
     $('payCash').value = mode === 'cash' ? t : 0;
-    $('payMobile').value = mode === 'cash' ? 0 : t;
+    $('payMobile').value = mode === 'mobile' ? t : 0;
+    $('payCredit').value = mode === 'credit' ? t : 0;
     S.payTouched = true; checkPay();
 }
 function checkPay() {
-    const ok = Math.abs(num($('payCash').value) + num($('payMobile').value) - cartTotal()) < 1;
-    $('payWarn').style.display = ok ? 'none' : 'block';
+    const ok = Math.abs(num($('payCash').value) + num($('payMobile').value) + num($('payCredit').value) - cartTotal()) < 1;
+    $('payWarn').style.display = ok || !Object.keys(S.cart).length ? 'none' : 'block';
     return ok;
 }
 
 function confirmSale() {
     const lines = Object.entries(S.cart);
     if (!lines.length) return toast('Cart is empty');
-    if (!checkPay()) return toast('⚠️ Cash + Lipa kwa Simu must add up to the total.', 'err');
-    const items = [];
+    document.querySelectorAll('#cartLines .serial-in').forEach(i => { meta(i.dataset.id).serials[+i.dataset.n] = i.value.trim(); });
+    if (!checkPay()) return toast('⚠️ The payment must add up to the total.', 'err');
+    if (!isAdmin() && discPctNow() > maxDiscPct() + 0.01) return toast(`⚠️ Discount is ${discPctNow().toFixed(1)}% — your limit is ${maxDiscPct()}%. Ask the owner.`, 'err');
+    const credit = num($('payCredit').value);
+    if (credit > 0 && !S.saleCustomer) return toast('⚠️ Add the customer before selling on credit.', 'err');
+    if (credit > 0 && !creditAllowed()) return toast('⚠️ Only the owner can sell on credit.', 'err');
+    const items = [], allSerials = [];
+    const gross = cartGross(), disc = cartDiscount();
     for (const [id, qty] of lines) {
         const p = productById(id);
         if (!p) return toast('An item was removed from stock. Check the cart.', 'err');
-        if ((Number(p.stock) || 0) < qty) return toast(`⚠️ Only ${p.stock} ${p.name} left`, 'err');
-        items.push({ productId: id, name: p.name, emoji: p.emoji || '📦', qty, unitPrice: Number(p.sellPrice) || 0, subtotal: (Number(p.sellPrice) || 0) * qty });
+        if ((Number(p.stock) || 0) < qty - 1e-9) return toast(`⚠️ Only ${qtyTxt(p.stock, p)} ${p.name} left`, 'err');
+        let serials = [];
+        if (p.trackSerial) {
+            serials = (meta(id).serials || []).slice(0, qty).map(x => (x || '').trim());
+            if (serials.length < qty || serials.some(x => !x)) return toast(`⚠️ Enter the serial / IMEI for each ${p.name}.`, 'err');
+            if (new Set(serials).size !== serials.length) return toast(`⚠️ The same serial is entered twice for ${p.name}.`, 'err');
+            allSerials.push(...serials);
+        }
+        const unitPrice = linePrice(id);
+        items.push({ productId: id, name: p.name, emoji: p.emoji || '📦', unit: unitOf(p), qty: q3(qty), listPrice: Number(p.sellPrice) || 0, unitPrice,
+            subtotal: lineSub(id), serials, warrantyMonths: Number(p.warrantyMonths) || 0 });
     }
-    const total = items.reduce((s, i) => s + i.subtotal, 0);
+    const total = cartTotal(), list = Math.round(cartList());
     const cash = num($('payCash').value), mobile = num($('payMobile').value);
     const day = dayStr(), month = day.slice(0, 7);
-
+    const ref = col('sales').doc();
+    const receiptNo = 'R' + day.slice(2).replace(/-/g, '') + '-' + ref.id.slice(0, 4).toUpperCase();
+    const cust = S.saleCustomer ? { id: S.saleCustomer.id, name: S.saleCustomer.name, phone: S.saleCustomer.phone || '' } : null;
+    const sale = {
+        kind: 'pos', items, subtotal: list, discount: Math.max(0, list - total), saleDiscount: disc, total, cash, mobile, credit,
+        customer: cust, serials: allSerials, receiptNo, day, month, voided: false, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
+    };
     const b = db.batch();
-    b.set(col('sales').doc(), {
-        kind: 'pos', items, total, cash, mobile, day, month, voided: false,
-        staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
-    });
+    b.set(ref, sale);
     items.forEach(i => b.update(col('products').doc(i.productId), { stock: inc(-i.qty), updatedAt: now() }));
-    b.set(col('days').doc(day), { day, month, sales: inc(total), cash: inc(cash), mobile: inc(mobile), txCount: inc(1), updatedAt: now() }, { merge: true });
+    const dayUp = { day, month, sales: inc(total), cash: inc(cash), mobile: inc(mobile), txCount: inc(1), updatedAt: now() };
+    if (credit) dayUp.credit = inc(credit);
+    if (sale.discount) dayUp.discount = inc(sale.discount);
+    b.set(col('days').doc(day), dayUp, { merge: true });
     b.set(col('meta').doc('balances'), { cash: inc(cash), mobile: inc(mobile), updatedAt: now() }, { merge: true });
+    if (cust) b.update(col('customers').doc(cust.id), { balance: inc(credit), totalBought: inc(total), lastSaleAt: now(), updatedAt: now() });
     b.update(tRef(), { txnCount: inc(1), lastSaleAt: now() });
 
     closeModals();
-    S.cart = {}; S.payTouched = false;
-    renderPOS();
+    S.lastSale = { ...sale, id: ref.id, createdAt: { toDate: () => new Date(), toMillis: () => Date.now() } };
+    clearCart();
+    renderLastSale();
     navigator.vibrate?.(80);
     commit(b, `✅ Sale recorded · ${fmt(total)}`);
+}
+function renderLastSale() {
+    const s = S.lastSale, bar = $('lastSaleBar');
+    if (!s) { bar.classList.add('hidden'); return; }
+    bar.classList.remove('hidden');
+    bar.innerHTML = `<span>✅ ${esc(s.receiptNo)} · ${fmt(s.total)}${s.customer ? ' · ' + esc(s.customer.name) : ''}${s.credit ? ` · 📒 ${n0(s.credit)} on credit` : ''}</span><button onclick="receiptMenu(S.lastSale)">🧾 Receipt</button>`;
 }
 
 // ════════════════════════════════════════════════
@@ -1681,7 +2004,7 @@ function renderInventory() {
     const raw = ($('invSearch').value || '').trim(), q = raw.toLowerCase();
     const words = q ? q.split(/\s+/) : [];
     let list = P.filter(p => {
-        const hay = [p.name, p.category, p.emoji, p.sellPrice, p.stock].join(' ').toLowerCase();
+        const hay = [p.name, p.category, p.emoji, p.sellPrice, p.stock, p.barcode].join(' ').toLowerCase();
         return words.every(w => hay.includes(w));
     });
     if (!q) list = [...list].sort((a, b) => (a.stock || 0) - (b.stock || 0));
@@ -1697,9 +2020,9 @@ function renderInventory() {
             <span class="inv-emoji">${esc(p.emoji || '📦')}</span>
             <div class="inv-info">
                 <div class="inv-name">${esc(p.name)}</div>
-                <div class="inv-detail">${esc(p.category || 'General')} · Sell ${n0(p.sellPrice)}${isAdmin() ? ' · Cost ' + n0(S.costs[p.id] || 0) : ''}</div>
+                <div class="inv-detail">${esc(p.category || 'General')} · Sell ${n0(p.sellPrice)}${perUnit(p)}${isAdmin() ? ' · Cost ' + n0(S.costs[p.id] || 0) : ''}${p.trackSerial ? ' · 🔢 serial' : ''}${p.warrantyMonths ? ' · 🛡️ ' + p.warrantyMonths + 'm' : ''}${p.packSize > 1 ? ' · ' + p.packSize + '/pack' : ''}</div>
             </div>
-            <div class="inv-stock"><b class="${isOut ? 'out' : isLow ? 'low' : ''}">${st}</b><small>units</small></div>
+            <div class="inv-stock"><b class="${isOut ? 'out' : isLow ? 'low' : ''}">${q3(st).toLocaleString('en-US')}</b><small>${unitOf(p) === 'pc' ? 'pcs' : unitShort(p)}</small></div>
             <div class="inv-actions">
                 <button class="btn-circle" title="Restock" onclick="openRestock('${p.id}')">📥</button>
                 ${isAdmin() ? `<button class="btn-circle" title="Edit" onclick="openItem('${p.id}')">✏️</button>` : ''}
@@ -1727,6 +2050,14 @@ function openItem(id) {
     $('itemCost').value = p ? (S.costs[p.id] ?? '') : '';
     $('itemStock').value = p ? (p.stock ?? '') : '';
     $('itemReorder').value = p ? (p.reorderLevel ?? 5) : '';
+    $('itemBarcode').value = p ? (p.barcode || '') : '';
+    $('itemUnit').innerHTML = UNITS.map(([k, l]) => `<option value="${k}">${l}</option>`).join('');
+    $('itemUnit').value = p ? unitOf(p) : 'pc';
+    $('itemPart').checked = p ? partOk(p) : false;
+    $('itemPack').value = p && p.packSize > 1 ? p.packSize : '';
+    $('itemWarranty').value = p && p.warrantyMonths ? p.warrantyMonths : '';
+    $('itemSerial').checked = !!(p && p.trackSerial);
+    unitChanged(true);
     $('itemDeleteBtn').classList.toggle('hidden', !p);
     $('catList').innerHTML = [...new Set(S.products.map(x => x.category).filter(Boolean))].map(c => `<option value="${esc(c)}">`).join('');
     S.emoji = p ? (p.emoji || '📦') : '📦';
@@ -1735,6 +2066,13 @@ function openItem(id) {
     if (!p) setTimeout(() => $('itemName').focus(), 250);
 }
 
+function unitChanged(keepPart) {
+    const u = $('itemUnit').value, name = (UNITS.find(x => x[0] === u) || UNITS[0])[1].toLowerCase();
+    if (!keepPart) $('itemPart').checked = PART_UNITS.includes(u);
+    $('lblSell').textContent = `Sell price / ${name} (TZS)`;
+    $('lblCost').textContent = `Cost / ${name} (TZS)`;
+    $('lblStock').textContent = `In stock (${u === 'pc' ? 'pieces' : name + 's'})`;
+}
 function saveItem() {
     const id = $('itemId').value;
     const name = $('itemName').value.trim();
@@ -1742,13 +2080,20 @@ function saveItem() {
     if (S.products.some(p => p.id !== id && (p.name || '').toLowerCase() === name.toLowerCase())) return toast('⚠️ An item with that name already exists.', 'err');
     const sellPrice = num($('itemSell').value), cost = num($('itemCost').value);
     if (sellPrice <= 0) return toast('⚠️ Enter a selling price.', 'err');
-    const stock = Math.round(num($('itemStock').value)), reorderLevel = Math.round(num($('itemReorder').value)) || 5;
+    const part = $('itemPart').checked, serial = $('itemSerial').checked;
+    const roundQ = v => part ? q3(v) : Math.round(v);
+    const stock = roundQ(num($('itemStock').value)), reorderLevel = roundQ(num($('itemReorder').value)) || 5;
+    if (serial && part) return toast('⚠️ Items with serial numbers are sold in whole units — untick "part units".', 'err');
     const maxP = Number((S.tenantInfo.limits || {}).maxProducts) || 0;
     if (!id && maxP && S.products.length >= maxP) return toast(`⚠️ Your plan allows ${maxP} items. Ask Matinyo to upgrade your plan.`, 'err');
     const ref = id ? col('products').doc(id) : col('products').doc();
     const before = id ? productById(id) : null;
     const b = db.batch();
-    b.set(ref, { name, emoji: S.emoji, category: $('itemCat').value.trim() || 'General', sellPrice, stock, reorderLevel, updatedAt: now() }, { merge: true });
+    const barcode = $('itemBarcode').value.trim();
+    if (barcode && S.products.some(p => p.id !== id && p.barcode === barcode)) return toast('⚠️ Another item already uses that barcode.', 'err');
+    b.set(ref, { name, emoji: S.emoji, category: $('itemCat').value.trim() || 'General', sellPrice, stock, reorderLevel, barcode,
+        unit: $('itemUnit').value, partQty: part, packSize: Math.max(0, Math.round(num($('itemPack').value))) || 0,
+        warrantyMonths: Math.max(0, Math.round(num($('itemWarranty').value))) || 0, trackSerial: serial, updatedAt: now() }, { merge: true });
     b.set(col('costs').doc(ref.id), { costPrice: cost, updatedAt: now() }, { merge: true });
     if (!before || (Number(before.stock) || 0) !== stock) {
         b.set(col('movements').doc(), {
@@ -1774,20 +2119,27 @@ async function deleteItem() {
 function openRestock(id) {
     const p = productById(id); if (!p) return;
     $('restockId').value = id;
-    $('restockInfo').innerHTML = `<strong>${esc(p.emoji || '📦')} ${esc(p.name)}</strong><br>In stock now: <strong>${p.stock || 0}</strong> · warn below ${p.reorderLevel || 5}`;
+    $('restockInfo').innerHTML = `<strong>${esc(p.emoji || '📦')} ${esc(p.name)}</strong><br>In stock now: <strong>${qtyTxt(p.stock || 0, p)}</strong> · warn below ${qtyTxt(p.reorderLevel || 5, p)}`;
     $('restockQty').value = '';
+    const un = unitOf(p) === 'pc' ? 'pieces' : unitName(p) + 's';
+    $('restockIn').innerHTML = `<option value="1">${un}</option>` + (p.packSize > 1 ? `<option value="${p.packSize}">packs of ${p.packSize}</option>` : '');
+    $('lblRestockCost').textContent = `Cost per ${unitOf(p) === 'pc' ? 'piece' : unitName(p)} (TZS)`;
     $('restockCost').value = S.costs[id] || '';
     $('restockPaid').value = '';
     restockTotal();
     openSheet('sheetRestock');
     setTimeout(() => $('restockQty').focus(), 250);
 }
-function restockTotal() { $('restockTotalLbl').textContent = fmt(num($('restockQty').value) * num($('restockCost').value)); }
+function restockUnits() { return q3(num($('restockQty').value) * (Number($('restockIn').value) || 1)); }
+function restockTotal() {
+    const p = productById($('restockId').value), u = restockUnits();
+    $('restockTotalLbl').textContent = fmt(u * num($('restockCost').value)) + (Number($('restockIn').value) > 1 && p ? ` · ${qtyTxt(u, p)} added` : '');
+}
 
 function confirmRestock() {
     const id = $('restockId').value, p = productById(id); if (!p) return;
-    const qty = Math.round(num($('restockQty').value));
-    if (qty <= 0) return toast('⚠️ Enter how many units came in.', 'err');
+    const qty = partOk(p) ? restockUnits() : Math.round(restockUnits());
+    if (qty <= 0) return toast('⚠️ Enter how much came in.', 'err');
     const cost = isAdmin() ? num($('restockCost').value) : 0;
     const paid = isAdmin() ? $('restockPaid').value : '';
     if (paid && cost <= 0) return toast('⚠️ Enter the cost per unit to record the payment.', 'err');
@@ -1799,9 +2151,9 @@ function confirmRestock() {
         day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
     });
     if (isAdmin() && cost > 0) b.set(col('costs').doc(id), { costPrice: cost, updatedAt: now() }, { merge: true });
-    if (paid) writeEntries(b, [{ type: 'expense', category: 'Supplier', from: paid, to: null, amount: qty * cost, note: `Restock ${qty} × ${p.name}`, day }]);
+    if (paid) writeEntries(b, [{ type: 'expense', category: 'Supplier', from: paid, to: null, amount: Math.round(qty * cost), note: `Restock ${qtyTxt(qty, p)} × ${p.name}`, day }]);
     closeModals();
-    commit(b, `✅ +${qty} ${p.name}`);
+    commit(b, `✅ +${qtyTxt(qty, p)} ${p.name}`);
 }
 
 function openStocktake() {
@@ -1810,9 +2162,9 @@ function openStocktake() {
         <div class="stk-line" data-name="${esc((p.name || '').toLowerCase())}">
             <div style="flex:1;min-width:0;">
                 <div style="font-size:0.82rem;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(p.emoji || '📦')} ${esc(p.name)}</div>
-                <div style="font-size:0.68rem;color:var(--gray);">System: <strong>${p.stock || 0}</strong></div>
+                <div style="font-size:0.68rem;color:var(--gray);">System: <strong>${qtyTxt(p.stock || 0, p)}</strong></div>
             </div>
-            <input type="number" inputmode="numeric" placeholder="${p.stock || 0}" data-id="${p.id}" data-sys="${p.stock || 0}">
+            <input type="number" inputmode="decimal" step="${partOk(p) ? '0.01' : '1'}" placeholder="${q3(p.stock || 0)}" data-id="${p.id}" data-sys="${p.stock || 0}">
         </div>`).join('') || '<div class="empty-state">No items yet.</div>';
     openSheet('sheetStocktake');
 }
@@ -1824,8 +2176,8 @@ function confirmStocktake() {
     const changes = [];
     document.querySelectorAll('#stkList input[data-id]').forEach(i => {
         if (i.value.trim() === '') return;
-        const actual = Math.round(num(i.value)), sys = Number(i.dataset.sys) || 0;
-        if (actual !== sys) changes.push({ id: i.dataset.id, actual, sys });
+        const p = productById(i.dataset.id), actual = partOk(p) ? q3(num(i.value)) : Math.round(num(i.value)), sys = Number(i.dataset.sys) || 0;
+        if (Math.abs(actual - sys) > 1e-9) changes.push({ id: i.dataset.id, actual, sys });
     });
     if (!changes.length) { closeModals(); return toast('No differences found 👍'); }
     const day = dayStr();
@@ -2016,7 +2368,10 @@ function renderDayBody(d, sales, entries) {
     let html = `<div style="font-size:0.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">${prettyDay(d)}</div>
         <div class="sum-box">
             <div class="sum-row"><span>🛒 Sales</span><strong style="color:var(--green);">${fmt(x.sales)}</strong></div>
-            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu</span><span>${n0(x.cash)} / ${n0(x.mobile)}</span></div>
+            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu received</span><span>${n0(x.cash)} / ${n0(x.mobile)}</span></div>
+            ${x.credit ? `<div class="sum-row"><span>&nbsp;&nbsp;📒 On credit</span><span style="color:var(--amber);">${n0(x.credit)}</span></div>` : ''}
+            ${x.discount ? `<div class="sum-row"><span>&nbsp;&nbsp;🏷️ Discounts given</span><span>${n0(x.discount)}</span></div>` : ''}
+            ${x.debtPaid ? `<div class="sum-row"><span>💰 Debts paid by customers</span><strong style="color:var(--pos);">${fmt(x.debtPaid)}</strong></div>` : ''}
             <div class="sum-row"><span>📦 Stock bought</span><strong style="color:var(--red);">${fmt(x.supplier)}</strong></div>
             <div class="sum-row"><span>💸 Expenses</span><strong style="color:var(--red);">${fmt(x.expense)}</strong></div>
             <div class="sum-row"><span>🏦 Banked (net)</span><strong style="color:var(--blue);">${fmt(x.bankIn - x.bankOut)}</strong></div>
@@ -2028,16 +2383,20 @@ function renderDayBody(d, sales, entries) {
     if (sales.length) {
         html += `<span class="section-label" style="margin-top:12px;">🛒 Sales (${sales.filter(s => !s.voided).length})</span>`;
         html += sales.map(s => {
-            const pay = s.cash && s.mobile ? `💵${n0(s.cash)} / 📱${n0(s.mobile)}` : s.mobile ? '📱 Lipa kwa Simu' : '💵 Cash';
-            const manual = s.kind === 'manual';
-            return `<div class="list-line ${s.voided ? 'voided' : ''}" style="background:${manual ? '#fefce8' : '#f0fdf4'};border-left-color:${manual ? 'var(--yellow)' : 'var(--pos)'};display:block;">
+            const pays = [s.cash ? '💵 ' + n0(s.cash) : '', s.mobile ? '📱 ' + n0(s.mobile) : '', s.credit ? '📒 credit ' + n0(s.credit) : ''].filter(Boolean).join(' · ');
+            const manual = s.kind === 'manual', repay = s.kind === 'repay';
+            const label = repay ? '💰 Debt payment' : manual ? '✍️ Manual' : '🛒 Sale';
+            return `<div class="list-line ${s.voided ? 'voided' : ''}" style="background:${repay ? '#e6f6f0' : manual ? '#fefce8' : '#f0fdf4'};border-left-color:${repay ? 'var(--blue)' : manual ? 'var(--yellow)' : 'var(--pos)'};display:block;">
                 <div style="display:flex;justify-content:space-between;gap:8px;align-items:center;">
-                    <div class="ll-title">${manual ? '✍️ Manual' : '🛒 Sale'} · ${timeOf(s.createdAt)} · ${esc(s.staffName || '')}${s.voided ? ' · VOIDED' : ''}</div>
+                    <div class="ll-title">${label} · ${timeOf(s.createdAt)} · ${esc(s.staffName || '')}${s.voided ? ' · VOIDED' : ''}</div>
                     <div class="ll-amt">${n0(s.total)}</div>
                 </div>
-                <div class="ll-sub">${pay}${s.note ? ' · ' + esc(s.note) : ''}</div>
-                ${(s.items || []).map(i => `<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#444;padding:1px 0;"><span>${esc(i.emoji || '')} ${esc(i.name)}${i.qty > 1 ? ' × ' + i.qty : ''}</span><span>${n0(i.subtotal)}</span></div>`).join('')}
-                ${s.voided ? '' : `<div style="text-align:right;margin-top:6px;"><button class="tiny-btn red" onclick="voidSale('${s.id}')">↩️ Void sale</button></div>`}
+                <div class="ll-sub">${pays}${s.customer ? ' · 👤 ' + esc(s.customer.name) : ''}${s.discount ? ' · 🏷️ −' + n0(s.discount) : ''}${s.receiptNo ? ' · ' + esc(s.receiptNo) : ''}${s.note ? ' · ' + esc(s.note) : ''}</div>
+                ${(s.items || []).map(i => `<div style="display:flex;justify-content:space-between;font-size:0.72rem;color:#444;padding:1px 0;"><span>${esc(i.emoji || '')} ${esc(i.name)} × ${qtyTxt(i.qty, { unit: i.unit })}${i.listPrice && Math.abs(i.listPrice - i.unitPrice) >= 0.5 ? ` <span style="color:var(--amber);">@${n0(i.unitPrice)} (was ${n0(i.listPrice)})</span>` : ''}${(i.serials || []).length ? `<br><span style="color:var(--gray);">S/N ${esc(i.serials.join(', '))}</span>` : ''}</span><span>${n0(i.subtotal)}</span></div>`).join('')}
+                <div style="text-align:right;margin-top:6px;display:flex;gap:6px;justify-content:flex-end;">
+                    ${s.kind === 'pos' ? `<button class="tiny-btn" onclick="receiptMenu(S.saleCache['${s.id}'])">🧾 Receipt</button>` : ''}
+                    ${s.voided ? '' : `<button class="tiny-btn red" onclick="voidSale('${s.id}')">↩️ Void</button>`}
+                </div>
             </div>`;
         }).join('');
     }
@@ -2046,13 +2405,249 @@ function renderDayBody(d, sales, entries) {
 }
 async function voidSale(id) {
     const s = S.saleCache[id]; if (!s || s.voided) return;
-    if (!await showConfirm(`Void this sale of <b>${fmt(s.total)}</b>?<br><span style="font-size:0.78rem;color:#6b7280;">The money is taken off the day's sales and the items go back into stock. The sale stays visible, marked VOIDED.</span>`, 'Void sale')) return;
+    const repay = s.kind === 'repay';
+    const msg = repay ? `Void this debt payment of <b>${fmt(s.total)}</b> from ${esc(s.customer.name)}?<br><span style="font-size:0.78rem;color:#6b7280;">The amount goes back onto what they owe.</span>`
+        : `Void this sale of <b>${fmt(s.total)}</b>?<br><span style="font-size:0.78rem;color:#6b7280;">The money is taken off the day's sales and the items go back into stock${s.credit ? `, and ${n0(s.credit)} is removed from ${esc(s.customer.name)}'s debt` : ''}. The sale stays visible, marked VOIDED.</span>`;
+    if (!await showConfirm(msg, 'Void')) return;
     const b = db.batch();
     b.update(col('sales').doc(id), { voided: true, voidedAt: now(), voidedBy: S.me.name });
     (s.items || []).forEach(i => { if (productById(i.productId)) b.update(col('products').doc(i.productId), { stock: inc(i.qty), updatedAt: now() }); });
-    b.set(col('days').doc(s.day), { day: s.day, month: s.day.slice(0, 7), sales: inc(-s.total), cash: inc(-(s.cash || 0)), mobile: inc(-(s.mobile || 0)), txCount: inc(s.kind === 'manual' ? 0 : -1), updatedAt: now() }, { merge: true });
+    const dayUp = { day: s.day, month: s.day.slice(0, 7), cash: inc(-(s.cash || 0)), mobile: inc(-(s.mobile || 0)), updatedAt: now() };
+    if (repay) dayUp.debtPaid = inc(-s.total);
+    else {
+        dayUp.sales = inc(-s.total); dayUp.txCount = inc(s.kind === 'manual' ? 0 : -1);
+        if (s.credit) dayUp.credit = inc(-s.credit);
+        if (s.discount) dayUp.discount = inc(-s.discount);
+    }
+    b.set(col('days').doc(s.day), dayUp, { merge: true });
     b.set(col('meta').doc('balances'), { cash: inc(-(s.cash || 0)), mobile: inc(-(s.mobile || 0)), updatedAt: now() }, { merge: true });
-    commit(b, '↩️ Sale voided');
+    if (s.customer && s.customer.id) {
+        if (repay) b.update(col('customers').doc(s.customer.id), { balance: inc(s.total), updatedAt: now() });
+        else b.update(col('customers').doc(s.customer.id), { balance: inc(-(s.credit || 0)), totalBought: inc(-s.total), updatedAt: now() });
+    }
+    commit(b, '↩️ Voided');
+}
+
+// ════════════════════════════════════════════════
+//  CUSTOMERS & CREDIT
+// ════════════════════════════════════════════════
+S.customers = []; S.custMode = 'manage';
+function openCustomers(mode) {
+    S.custMode = mode || 'manage';
+    const pick = S.custMode === 'pick';
+    if (!pick || !S.dockCart) openSheet('sheetCustomers'); else { $('sheetCustomers').classList.add('active'); }
+    $('custTitle').textContent = pick ? '👤 Choose customer' : '👥 Customers';
+    $('custBack').textContent = pick ? '← BACK TO CART' : 'CLOSE';
+    $('custSearch').value = ''; ['ncName', 'ncPhone'].forEach(i => $(i).value = '');
+    $('custList').innerHTML = '<div class="empty-state" style="padding:12px;">Loading…</div>';
+    S.sheetListeners.push(col('customers').onSnapshot(s => {
+        S.customers = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (b.balance || 0) - (a.balance || 0) || (a.name || '').localeCompare(b.name || ''));
+        renderCustomers();
+        if (S.custOpen && $('sheetCustomer').classList.contains('active')) renderCustomerDetail(S.custOpen);
+    }, e => { $('custList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
+    setTimeout(() => $('custSearch').focus(), 250);
+}
+function closeCustomers() {
+    if (S.custMode === 'pick') { if (S.dockCart) $('sheetCustomers').classList.remove('active'); else openCart(); }
+    else closeModals();
+}
+function renderCustomers() {
+    const q = ($('custSearch').value || '').toLowerCase().trim();
+    const owed = S.customers.reduce((a, c) => a + Math.max(0, c.balance || 0), 0), debtors = S.customers.filter(c => (c.balance || 0) > 0).length;
+    $('custOwed').innerHTML = S.custMode === 'manage' && owed ? `<div class="diff-big" style="background:#fef3c7;color:#92400e;"><small>Customers owe you</small><span>${fmt(owed)}</span><small style="margin-top:2px;">${debtors} customer${debtors > 1 ? 's' : ''}</small></div>` : '';
+    const list = S.customers.filter(c => !q || [c.name, c.phone, prettyPhone(c.phone || '')].join(' ').toLowerCase().includes(q));
+    $('custList').innerHTML = list.length ? list.slice(0, 80).map(c => `
+        <div class="list-line" style="cursor:pointer;background:#f8fafc;border-left-color:${(c.balance || 0) > 0 ? 'var(--amber)' : 'var(--line)'};" onclick="${S.custMode === 'pick' ? `pickCustomer('${c.id}')` : `openCustomer('${c.id}')`}">
+            <div class="ll-main"><div class="ll-title">${esc(c.name)}</div><div class="ll-sub">${c.phone ? '📱 ' + esc(prettyPhone(c.phone)) : 'no phone'}${c.totalBought ? ' · bought ' + n0(c.totalBought) : ''}</div></div>
+            <div class="ll-amt" style="color:${(c.balance || 0) > 0 ? 'var(--red)' : (c.balance || 0) < 0 ? 'var(--blue)' : 'var(--gray)'};">${(c.balance || 0) > 0 ? 'owes ' + n0(c.balance) : (c.balance || 0) < 0 ? 'we owe ' + n0(-c.balance) : '✓'}</div>
+        </div>`).join('') : `<div class="empty-state" style="padding:12px;">${S.customers.length ? 'No match — add them below.' : 'No customers yet.'}</div>`;
+}
+async function addCustomer() {
+    const name = $('ncName').value.trim(), phone = normPhone($('ncPhone').value);
+    if (!name) return toast('⚠️ Enter the customer name.', 'err');
+    if (phone && !/^\d{10,15}$/.test(phone)) return toast('⚠️ Phone number looks wrong.', 'err');
+    if (phone && S.customers.some(c => c.phone === phone)) return toast('⚠️ A customer with that phone already exists.', 'err');
+    const ref = col('customers').doc(), b = db.batch();
+    const c = { name, phone, balance: 0, totalBought: 0, createdAt: now(), createdBy: S.me.name };
+    b.set(ref, c);
+    commit(b, '✅ Customer added');
+    if (S.custMode === 'pick') { S.saleCustomer = { id: ref.id, name, phone, balance: 0 }; closeCustomers(); S.payTouched = false; renderCart(); }
+    else { $('ncName').value = ''; $('ncPhone').value = ''; }
+}
+function pickCustomer(id) {
+    const c = S.customers.find(x => x.id === id); if (!c) return;
+    S.saleCustomer = { id: c.id, name: c.name, phone: c.phone || '', balance: c.balance || 0 };
+    S.payTouched = false;
+    closeCustomers(); renderCart();
+}
+function openCustomer(id) {
+    S.custOpen = id;
+    $('sheetCustomers').classList.remove('active');
+    $('sheetCustomer').classList.add('active');
+    renderCustomerDetail(id);
+}
+async function renderCustomerDetail(id) {
+    const c = S.customers.find(x => x.id === id); if (!c) return;
+    const box = $('custBody');
+    box.innerHTML = `
+        <div class="modal-title" style="margin-bottom:4px;">${esc(c.name)}</div>
+        <div style="text-align:center;font-size:.78rem;color:var(--gray);margin-bottom:12px;">${c.phone ? '📱 ' + esc(prettyPhone(c.phone)) : 'No phone'} · bought ${fmt(c.totalBought || 0)} in total</div>
+        <div class="diff-big" style="background:${(c.balance || 0) > 0 ? '#fee2e2' : (c.balance || 0) < 0 ? '#eff6ff' : '#e6f6f0'};color:${(c.balance || 0) > 0 ? 'var(--red)' : (c.balance || 0) < 0 ? 'var(--blue)' : 'var(--green)'};"><small>${(c.balance || 0) > 0 ? 'Owes the shop' : (c.balance || 0) < 0 ? 'Shop owes them (refund or use on next purchase)' : 'Nothing owed'}</small><span>${fmt(Math.abs(c.balance || 0))}</span></div>
+        ${(c.balance || 0) > 0 ? `<div class="row-btns">
+            <button class="primary-cta green" style="margin:0;padding:12px;font-size:.75rem;" onclick="receivePayment('${id}')">💰 RECEIVE PAYMENT</button>
+            ${c.phone ? `<button class="btn-sec" onclick="remindCustomer('${id}')">📲 Remind</button>` : ''}</div>` : ''}
+        <span class="section-label" style="margin-top:8px;">History</span>
+        <div id="custHist"><div class="empty-state" style="padding:10px;">Loading…</div></div>`;
+    try {
+        const s = await col('sales').where('customer.id', '==', id).get();
+        const L = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (tms(b.createdAt) || 9e15) - (tms(a.createdAt) || 9e15)).slice(0, 40);
+        L.forEach(x => S.saleCache[x.id] = x);
+        $('custHist').innerHTML = L.length ? L.map(x => `
+            <div class="list-line ${x.voided ? 'voided' : ''}" style="background:${x.kind === 'repay' ? '#e6f6f0' : '#f8fafc'};border-left-color:${x.kind === 'repay' ? 'var(--pos)' : x.credit ? 'var(--amber)' : 'var(--line)'};">
+                <div class="ll-main"><div class="ll-title">${x.kind === 'repay' ? '💰 Paid' : '🛒 ' + esc((x.items || []).map(i => i.name).join(', ')).slice(0, 60)}</div>
+                    <div class="ll-sub">${shortDay(x.day)} ${timeOf(x.createdAt)}${x.credit ? ' · 📒 ' + n0(x.credit) + ' on credit' : ''}${x.receiptNo ? ' · ' + esc(x.receiptNo) : ''}</div></div>
+                <div class="ll-amt">${n0(x.total)}</div>
+                ${x.kind === 'pos' ? `<button class="tiny-btn" onclick="receiptMenu(S.saleCache['${x.id}'])">🧾</button>` : ''}
+            </div>`).join('') : '<div class="empty-state" style="padding:10px;">No sales yet.</div>';
+    } catch (e) { $('custHist').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }
+}
+async function receivePayment(id) {
+    const c = S.customers.find(x => x.id === id); if (!c) return;
+    const v = await askValue(`<b>${esc(c.name)}</b> owes ${fmt(c.balance)}.<br>How much did they pay?`, 'Amount', 'Next', { value: String(c.balance) });
+    if (v === null || v === '') return;
+    const amt = num(v);
+    if (!(amt > 0)) return toast('⚠️ Enter the amount paid.', 'err');
+    const how = await choose(`Received <b>${fmt(amt)}</b> from ${esc(c.name)}.<br>How was it paid?`, [['cash', '💵 Cash', 'var(--pos)'], ['mobile', '📱 Lipa kwa Simu', 'var(--blue)']]);
+    if (!how) return;
+    const day = dayStr(), ref = col('sales').doc(), b = db.batch();
+    const receiptNo = 'P' + day.slice(2).replace(/-/g, '') + '-' + ref.id.slice(0, 4).toUpperCase();
+    const doc = { kind: 'repay', items: [], total: amt, cash: how === 'cash' ? amt : 0, mobile: how === 'mobile' ? amt : 0, credit: 0,
+        customer: { id: c.id, name: c.name, phone: c.phone || '' }, receiptNo, day, month: day.slice(0, 7), voided: false, staffUid: S.me.uid, staffName: S.me.name, createdAt: now() };
+    b.set(ref, doc);
+    b.update(col('customers').doc(id), { balance: inc(-amt), updatedAt: now() });
+    b.set(col('days').doc(day), { day, month: day.slice(0, 7), debtPaid: inc(amt), [how]: inc(amt), updatedAt: now() }, { merge: true });
+    b.set(col('meta').doc('balances'), { [how]: inc(amt), updatedAt: now() }, { merge: true });
+    commit(b, `✅ ${fmt(amt)} received from ${c.name}`);
+    if (c.phone && await showConfirm('Send them a confirmation on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) {
+        const left = Math.max(0, (c.balance || 0) - amt);
+        const text = `${S.tenantInfo.name || ''}: Asante ${c.name.split(' ')[0]}! We received ${fmt(amt)} (${receiptNo}).\n${left ? `Balance remaining: ${fmt(left)}` : 'Your account is fully paid ✅'}`;
+        window.open(`https://wa.me/${c.phone}?text=${encodeURIComponent(text)}`, '_blank');
+    }
+}
+function remindCustomer(id) {
+    const c = S.customers.find(x => x.id === id); if (!c || !c.phone) return;
+    const pay = (S.tenantInfo.settings || {}).phone ? `\nCall us: ${prettyPhone(S.tenantInfo.settings.phone)}` : '';
+    const text = `Habari ${c.name.split(' ')[0]}, this is ${S.tenantInfo.name || 'the shop'}. A friendly reminder that your balance is ${fmt(c.balance)}. Asante!${pay}`;
+    window.open(`https://wa.me/${c.phone}?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+// ════════════════════════════════════════════════
+//  RECEIPTS
+// ════════════════════════════════════════════════
+const warrantyEnd = (sale, i) => {
+    const m = tms(sale.createdAt) || Date.now(), d = new Date(m);
+    d.setMonth(d.getMonth() + (i.warrantyMonths || 0));
+    return d;
+};
+function receiptText(s) {
+    const st = S.tenantInfo.settings || {}, L = [];
+    L.push(`*${(S.tenantInfo.name || '').toUpperCase()}*`);
+    if (st.address) L.push(st.address);
+    if (st.phone) L.push('📞 ' + prettyPhone(st.phone));
+    L.push('', `🧾 ${s.receiptNo || ''} · ${shortDay(s.day)} ${timeOf(s.createdAt)}`);
+    if (s.customer) L.push('👤 ' + s.customer.name);
+    L.push('');
+    (s.items || []).forEach(i => {
+        L.push(`${i.name}`);
+        L.push(`  ${qtyTxt(i.qty, { unit: i.unit })} × ${n0(i.unitPrice)} = ${n0(i.subtotal)}`);
+        (i.serials || []).forEach(x => L.push(`  S/N: ${x}`));
+        if (i.warrantyMonths) L.push(`  🛡️ Warranty to ${warrantyEnd(s, i).toLocaleDateString('en-GB')}`);
+    });
+    L.push('━━━━━━━━━━');
+    if (s.discount) L.push(`You saved: ${n0(s.discount)}`);
+    L.push(`*TOTAL: ${fmt(s.total)}*`);
+    if (s.cash) L.push(`Cash: ${n0(s.cash)}`);
+    if (s.mobile) L.push(`Lipa kwa Simu: ${n0(s.mobile)}`);
+    if (s.credit) L.push(`On credit: ${n0(s.credit)}`);
+    L.push('', `Served by ${s.staffName || ''}`);
+    if (st.footer) L.push(st.footer);
+    L.push('Asante kwa kununua!');
+    return L.join('\n');
+}
+function receiptPdf(s) {
+    if (!window.jspdf) return toast('PDF tool did not load — check your connection.', 'err');
+    const st = S.tenantInfo.settings || {}, { jsPDF } = window.jspdf;
+    const lines = (s.items || []).reduce((a, i) => a + 2 + (i.serials || []).length + (i.warrantyMonths ? 1 : 0), 0);
+    const H = 70 + lines * 4.6 + (s.customer ? 5 : 0) + (st.footer ? 8 : 0);
+    const doc = new jsPDF({ unit: 'mm', format: [80, Math.max(110, H)] }), W = 80;
+    let y = 9;
+    const c = (t, size = 8, bold = false) => { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size); doc.text(String(t), W / 2, y, { align: 'center' }); y += size * 0.5; };
+    const lr = (l, r, bold = false) => { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(bold ? 9 : 7.5); doc.text(String(l), 5, y); doc.text(String(r), W - 5, y, { align: 'right' }); y += bold ? 5 : 4; };
+    const rule = () => { doc.setDrawColor(180); doc.setLineDashPattern([1, 1], 0); doc.line(5, y - 2, W - 5, y - 2); y += 2; };
+    c((S.tenantInfo.name || '').toUpperCase(), 12, true); y += 1;
+    if (st.address) c(st.address, 7);
+    if (st.phone) c('Tel: ' + prettyPhone(st.phone), 7);
+    y += 2; rule();
+    lr('Receipt', s.receiptNo || ''); lr('Date', `${new Date(tms(s.createdAt) || Date.now()).toLocaleDateString('en-GB')} ${timeOf(s.createdAt)}`);
+    if (s.customer) lr('Customer', s.customer.name);
+    lr('Served by', s.staffName || ''); rule();
+    (s.items || []).forEach(i => {
+        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.text(doc.splitTextToSize(i.name, 70)[0], 5, y); y += 4;
+        lr(`  ${qtyTxt(i.qty, { unit: i.unit })} x ${n0(i.unitPrice)}`, n0(i.subtotal));
+        (i.serials || []).forEach(x => { doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.text('  S/N: ' + x, 5, y); y += 3.6; });
+        if (i.warrantyMonths) { doc.setFontSize(6.5); doc.text(`  Warranty ${i.warrantyMonths} months, to ${warrantyEnd(s, i).toLocaleDateString('en-GB')}`, 5, y); y += 3.6; }
+        y += 0.6;
+    });
+    rule();
+    if (s.discount) lr('Discount', '-' + n0(s.discount));
+    lr('TOTAL TZS', n0(s.total), true);
+    if (s.cash) lr('Cash', n0(s.cash));
+    if (s.mobile) lr('Lipa kwa Simu', n0(s.mobile));
+    if (s.credit) lr('On credit (owed)', n0(s.credit));
+    if (s.voided) { doc.setTextColor(220, 38, 38); doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.text('VOID', W / 2, y + 4, { align: 'center' }); doc.setTextColor(0); y += 10; }
+    y += 3;
+    if (st.footer) { doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.splitTextToSize(st.footer, 70).forEach(t => { doc.text(t, W / 2, y, { align: 'center' }); y += 3.4; }); }
+    c('Asante kwa kununua!', 7.5, true);
+    doc.save(`${s.receiptNo || 'receipt'}.pdf`);
+}
+async function receiptMenu(s) {
+    if (!s) return;
+    const phone = s.customer && s.customer.phone;
+    const how = await choose(`🧾 Receipt <b>${esc(s.receiptNo || '')}</b> · ${fmt(s.total)}${s.customer ? '<br>' + esc(s.customer.name) : ''}`,
+        [['wa', `📲 WhatsApp${phone ? ' to ' + esc(s.customer.name.split(' ')[0]) : ''}`, 'var(--pos)'], ['pdf', '⬇️ PDF / print', 'var(--blue)']]);
+    if (how === 'wa') {
+        let to = phone;
+        if (!to) { const v = await askValue('Customer WhatsApp number', '07XX XXX XXX', 'Send'); if (v === null || !v) return; to = normPhone(v); }
+        window.open(`https://wa.me/${to}?text=${encodeURIComponent(receiptText(s))}`, '_blank');
+    } else if (how === 'pdf') receiptPdf(s);
+}
+
+// ════════════════════════════════════════════════
+//  SERIAL / IMEI & WARRANTY LOOKUP
+// ════════════════════════════════════════════════
+function serialLookup() { $('serialQ').value = ''; $('serialOut').innerHTML = '<div class="hint gray">Find who bought a phone, laptop or tool, when, and whether the warranty is still valid.</div>'; openSheet('sheetSerial'); setTimeout(() => $('serialQ').focus(), 250); }
+async function runSerialLookup() {
+    const q = $('serialQ').value.trim(); if (!q) return;
+    $('serialOut').innerHTML = '<div class="empty-state">Searching…</div>';
+    try {
+        const s = await col('sales').where('serials', 'array-contains', q).get();
+        const L = s.docs.map(d => ({ id: d.id, ...d.data() })).sort((a, b) => (tms(b.createdAt) || 0) - (tms(a.createdAt) || 0));
+        L.forEach(x => S.saleCache[x.id] = x);
+        $('serialOut').innerHTML = L.length ? L.map(x => {
+            const it = (x.items || []).find(i => (i.serials || []).includes(q)) || {};
+            const end = it.warrantyMonths ? warrantyEnd(x, it) : null, valid = end && end > new Date() && !x.voided;
+            return `<div class="sum-box" style="${x.voided ? 'opacity:.6;' : ''}">
+                <div class="sum-row"><span>Item</span><strong>${esc(it.emoji || '')} ${esc(it.name || '')}</strong></div>
+                <div class="sum-row"><span>Serial / IMEI</span><strong>${esc(q)}</strong></div>
+                <div class="sum-row"><span>Sold</span><strong>${prettyDay(x.day)} ${timeOf(x.createdAt)}</strong></div>
+                <div class="sum-row"><span>Price</span><strong>${fmt(it.unitPrice)}</strong></div>
+                <div class="sum-row"><span>Customer</span><strong>${x.customer ? esc(x.customer.name) + (x.customer.phone ? ' · ' + esc(prettyPhone(x.customer.phone)) : '') : '—'}</strong></div>
+                <div class="sum-row"><span>Sold by</span><strong>${esc(x.staffName || '')} · ${esc(x.receiptNo || '')}</strong></div>
+                <div class="sum-row"><span>Warranty</span><strong class="${valid ? 'warranty-ok' : 'warranty-no'}">${x.voided ? 'Sale was voided' : !end ? 'No warranty' : (valid ? '✅ Valid until ' : '❌ Ended ') + end.toLocaleDateString('en-GB')}</strong></div>
+                <button class="btn-sec wide" style="margin:8px 0 0;" onclick="receiptMenu(S.saleCache['${x.id}'])">🧾 Receipt</button>
+            </div>`;
+        }).join('') : `<div class="hint amber">No sale found with serial <b>${esc(q)}</b>. Check the number, or it may not have been sold from this shop.</div>`;
+    } catch (e) { $('serialOut').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }
 }
 
 // ════════════════════════════════════════════════
@@ -2100,7 +2695,7 @@ function openShiftEnd() {
 }
 function renderShiftInfo() {
     const since = myShiftStart();
-    const mine = S.todaySales.filter(x => !x.voided && x.kind !== 'manual' && x.staffUid === S.me.uid && (!since || (tms(x.createdAt) || 9e15) > since));
+    const mine = S.todaySales.filter(x => !x.voided && x.kind !== 'manual' && x.kind !== 'repay' && x.staffUid === S.me.uid && (!since || (tms(x.createdAt) || 9e15) > since));
     $('shiftInfo').innerHTML = `👤 <b>${esc(S.me.name)}</b> · ${since ? 'since your last cash-up at ' + new Date(since).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }) : 'today'}<br>
         You made <b>${mine.length}</b> sale${mine.length === 1 ? '' : 's'}. Count <b>all</b> the cash in the drawer, including change.`;
 }
@@ -2119,7 +2714,7 @@ async function submitShift() {
     }
     const paidOutTotal = paidOuts.reduce((a, p) => a + p.amount, 0);
     const since = myShiftStart();
-    const salesCount = S.todaySales.filter(x => !x.voided && x.kind !== 'manual' && x.staffUid === S.me.uid && (!since || (tms(x.createdAt) || 9e15) > since)).length;
+    const salesCount = S.todaySales.filter(x => !x.voided && x.kind !== 'manual' && x.kind !== 'repay' && x.staffUid === S.me.uid && (!since || (tms(x.createdAt) || 9e15) > since)).length;
     const msg = `Submit your cash-up?<br><br>💵 Cash counted: <b>${fmt(countedCash)}</b>${countedMobile !== null ? `<br>📱 Lipa kwa Simu: <b>${fmt(countedMobile)}</b>` : ''}${paidOuts.length ? `<br>💸 Paid out: <b>${fmt(paidOutTotal)}</b>` : ''}`;
     if (!await showConfirm(msg, 'Submit', 'var(--pos)')) return;
     const day = dayStr(), b = db.batch();
@@ -2320,7 +2915,10 @@ function confirmCloseDay() {
         <div style="font-size:0.7rem;font-weight:800;color:var(--gray);text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;">${prettyDay(d)}</div>
         <div class="sum-box">
             <div class="sum-row"><span>🛒 Sales</span><strong style="color:var(--green);">+${fmt(x.sales)}</strong></div>
-            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu</span><span>${n0(x.cash)} / ${n0(x.mobile)}</span></div>
+            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu received</span><span>${n0(x.cash)} / ${n0(x.mobile)}</span></div>
+            ${x.credit ? `<div class="sum-row"><span>&nbsp;&nbsp;📒 Sold on credit</span><span style="color:var(--amber);">${n0(x.credit)}</span></div>` : ''}
+            ${x.discount ? `<div class="sum-row"><span>&nbsp;&nbsp;🏷️ Discounts given</span><span>${n0(x.discount)}</span></div>` : ''}
+            ${x.debtPaid ? `<div class="sum-row"><span>💰 Debts paid by customers</span><span style="color:var(--pos);">${n0(x.debtPaid)}</span></div>` : ''}
             <div class="sum-row"><span>📦 Stock bought</span><strong style="color:var(--red);">-${fmt(x.supplier)}</strong></div>
             <div class="sum-row"><span>💸 Expenses</span><strong style="color:var(--red);">-${fmt(x.expense)}</strong></div>
             <div class="sum-row"><span>🏦 Banked</span><strong style="color:var(--blue);">${fmt(x.bankIn)}${x.bankOut ? ' / out ' + n0(x.bankOut) : ''}</strong></div>
@@ -2343,7 +2941,8 @@ function confirmCloseDay() {
 
     S.closeDayMsg = `🏪 *${(S.tenantInfo.name || S.tenant).toUpperCase()}* — ${prettyDay(d)}
 
-🛒 Sales: ${n0(x.sales)} (💵 ${n0(x.cash)} / 📱 ${n0(x.mobile)})
+🛒 Sales: ${n0(x.sales)}
+💵 Cash in: ${n0(x.cash)} · 📱 Simu in: ${n0(x.mobile)}${x.credit ? `\n📒 On credit: ${n0(x.credit)}` : ''}${x.discount ? `\n🏷️ Discounts: ${n0(x.discount)}` : ''}${x.debtPaid ? `\n💰 Debts collected: ${n0(x.debtPaid)}` : ''}
 📦 Stock bought: ${n0(x.supplier)}
 💸 Expenses: ${n0(x.expense)}
 🏦 Banked: ${n0(x.bankIn)}${x.bankOut ? ` | 💳 Out: ${n0(x.bankOut)}` : ''}
@@ -2483,7 +3082,7 @@ function itemTotals(sales) {
     const t = {};
     sales.forEach(s => (s.items || []).forEach(i => {
         const k = i.productId || i.name;
-        t[k] = t[k] || { name: i.name, qty: 0, revenue: 0, cogs: 0 };
+        t[k] = t[k] || { name: i.name, unit: i.unit, qty: 0, revenue: 0, cogs: 0 };
         t[k].qty += i.qty; t[k].revenue += i.subtotal; t[k].cogs += (S.costs[i.productId] || 0) * i.qty;
     }));
     return Object.values(t).sort((a, b) => b.revenue - a.revenue);
@@ -2496,7 +3095,10 @@ async function previewReport() {
     box.innerHTML = `<div style="font-size:0.75rem;color:var(--gray);text-align:center;margin-bottom:10px;">${monthName(m)} · ${f.days} trading days</div>
         <div class="sum-box">
             <div class="sum-row"><span>🛒 Sales</span><strong style="color:var(--green);">${fmt(f.sales)}</strong></div>
-            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu</span><span>${n0(f.cash)} / ${n0(f.mobile)}</span></div>
+            <div class="sum-row"><span>&nbsp;&nbsp;💵 Cash / 📱 Simu received</span><span>${n0(f.cash)} / ${n0(f.mobile)}</span></div>
+            ${f.credit ? `<div class="sum-row"><span>&nbsp;&nbsp;📒 Sold on credit</span><span>${n0(f.credit)}</span></div>` : ''}
+            ${f.discount ? `<div class="sum-row"><span>&nbsp;&nbsp;🏷️ Discounts given</span><span>${n0(f.discount)}</span></div>` : ''}
+            ${f.debtPaid ? `<div class="sum-row"><span>💰 Debts collected</span><span>${n0(f.debtPaid)}</span></div>` : ''}
             <div class="sum-row"><span>📦 Stock bought</span><strong style="color:var(--red);">${fmt(f.supplier)}</strong></div>
             <div class="sum-row"><span>💸 Expenses</span><strong style="color:var(--red);">${fmt(f.expense)}</strong></div>
             <div class="sum-row"><span>🏦 Banked (net)</span><strong style="color:var(--blue);">${fmt(f.bankIn - f.bankOut)}</strong></div>
@@ -2536,7 +3138,8 @@ async function generatePDF() {
             ['POS Transactions', String(f.tx), ink], ['Stock Bought', fmt(f.supplier), [220, 38, 38]], ['Other Expenses', fmt(f.expense), [220, 38, 38]],
             ['Profit', fmt(f.profit), f.profit >= 0 ? [22, 163, 74] : [220, 38, 38]], ['Profit Margin', margin + '%', ink],
             ['Banked (net)', fmt(f.bankIn - f.bankOut), blue], ['To Savings', fmt(f.toSavings), [161, 98, 7]],
-            ['Margin on items sold', cogs ? fmt(itemRevenue - cogs) : '—', ink], ['Trading Days', String(f.days), ink]
+            ['Margin on items sold', cogs ? fmt(itemRevenue - cogs) : '—', ink], ['Trading Days', String(f.days), ink],
+            ['Sold on Credit', fmt(f.credit), [245, 158, 11]], ['Discounts Given', fmt(f.discount), ink], ['Debts Collected', fmt(f.debtPaid), [0, 135, 90]]
         ];
         let y = 36;
         doc.setTextColor(...ink); doc.setFontSize(10); doc.setFont('helvetica', 'bold'); doc.text('SUMMARY', 14, y); y += 4;
@@ -2575,7 +3178,7 @@ async function generatePDF() {
             doc.autoTable({
                 startY: 34, margin: { left: 14, right: 14 },
                 head: [['Item', 'Units', 'Revenue', 'Cost (est.)', 'Margin']],
-                body: items.map(i => [i.name, String(i.qty), n0(i.revenue), i.cogs ? n0(i.cogs) : '—', i.cogs ? n0(i.revenue - i.cogs) : '—']),
+                body: items.map(i => [i.name, qtyTxt(i.qty, { unit: i.unit }), n0(i.revenue), i.cogs ? n0(i.cogs) : '—', i.cogs ? n0(i.revenue - i.cogs) : '—']),
                 styles: { fontSize: 7, cellPadding: 2.2 }, headStyles: { fillColor: blue, textColor: 255, fontStyle: 'bold' },
                 alternateRowStyles: { fillColor: [245, 248, 252] }
             });
@@ -2675,6 +3278,7 @@ function showLocked() {
     stopListeners(); closeModals();
     $('mainApp').style.display = 'none'; $('loginPage').style.display = 'none';
     document.body.classList.remove('unlocked');
+    syncCartDock();
     renderLock();
     $('lockPage').style.display = 'flex';
     // Watch the shop record: the moment Matinyo records a payment, the till opens again.
@@ -2811,6 +3415,8 @@ function openTeam() {
     loadCashStats().then(() => { if ($('sheetTeam').classList.contains('active') && S.renderStaff) S.renderStaff(); });
     const st = S.tenantInfo.settings || {};
     $('setTarget').value = st.dailyTarget || ''; $('setWa').value = st.whatsapp || '';
+    $('setPhone').value = st.phone ? prettyPhone(st.phone) : ''; $('setAddr').value = st.address || ''; $('setFooter').value = st.footer || '';
+    $('setMaxDisc').value = st.maxDiscount ?? 10; $('setCredit').checked = !!st.cashierCredit;
     ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = ''); $('stRole').value = 'cashier';
     openSheet('sheetTeam');
     $('staffList').innerHTML = '<div style="font-size:0.75rem;color:var(--gray);padding:8px 0;">Loading…</div>';
@@ -2840,22 +3446,37 @@ function openTeam() {
 }
 
 // Ask for a value in a small dialog (mobile-safe replacement for prompt())
-function askValue(message, placeholder, okLabel = 'Save') {
+// Pick one of several options; resolves to the option key, or null on cancel
+function choose(message, options) {
+    return new Promise(resolve => {
+        const o = document.createElement('div');
+        o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+        o.innerHTML = `<div style="background:#fff;border-radius:20px;padding:22px;max-width:340px;width:100%;text-align:center;">
+            <div style="font-size:0.88rem;font-weight:600;margin-bottom:16px;line-height:1.45;">${message}</div>
+            ${options.map(([k, l, c]) => `<button data-k="${k}" style="width:100%;padding:13px;border-radius:12px;border:none;background:${c};color:#fff;font-weight:800;margin-bottom:8px;cursor:pointer;">${l}</button>`).join('')}
+            <button data-k="" style="width:100%;padding:11px;border-radius:12px;border:2px solid #e3e8ef;background:#fff;font-weight:800;cursor:pointer;">Cancel</button></div>`;
+        document.body.appendChild(o);
+        o.addEventListener('click', e => { const k = e.target.dataset && e.target.dataset.k; if (k === undefined) return; o.remove(); resolve(k || null); });
+    });
+}
+function askValue(message, placeholder, okLabel = 'Save', opt = {}) {
     return new Promise(resolve => {
         const o = document.createElement('div');
         o.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
         o.innerHTML = `<div style="background:#fff;border-radius:20px;padding:22px;max-width:330px;width:100%;text-align:center;">
             <div style="font-size:0.88rem;font-weight:600;margin-bottom:12px;line-height:1.45;">${message}</div>
-            <input type="tel" inputmode="numeric" placeholder="${placeholder}" style="margin-bottom:14px;text-align:center;letter-spacing:4px;">
+            <input type="${opt.type || 'tel'}" inputmode="${opt.type === 'text' ? 'text' : 'decimal'}" placeholder="${placeholder}" value="${esc(opt.value || '')}" style="margin-bottom:14px;text-align:center;letter-spacing:${opt.type === 'text' ? '1px' : '3px'};">
             <div style="display:flex;gap:10px;">
                 <button data-a="no" style="flex:1;padding:12px;border-radius:12px;border:2px solid #e3e8ef;background:#fff;font-weight:800;">Cancel</button>
                 <button data-a="yes" style="flex:1;padding:12px;border-radius:12px;border:none;background:var(--blue);color:#fff;font-weight:800;">${okLabel}</button>
             </div></div>`;
         document.body.appendChild(o);
-        const inp = o.querySelector('input'); setTimeout(() => inp.focus(), 50);
+        const inp = o.querySelector('input'); setTimeout(() => { inp.focus(); inp.select(); }, 50);
+        const done = v => { o.remove(); resolve(v); };
+        inp.addEventListener('keydown', e => { if (e.key === 'Enter') done(inp.value.trim()); });
         o.addEventListener('click', e => {
             const a = e.target.dataset && e.target.dataset.a; if (!a) return;
-            o.remove(); resolve(a === 'yes' ? inp.value.trim() : null);
+            done(a === 'yes' ? inp.value.trim() : null);
         });
     });
 }
@@ -2941,9 +3562,310 @@ function toggleRole(uid) {
     col('staff').doc(uid).update({ role }).then(() => toast(`${p.name} is now ${role}`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
 function saveSettings() {
-    const settings = { dailyTarget: num($('setTarget').value), whatsapp: $('setWa').value.replace(/\D/g, '') };
+    const settings = { dailyTarget: num($('setTarget').value), whatsapp: $('setWa').value.replace(/\D/g, ''),
+        phone: normPhone($('setPhone').value), address: $('setAddr').value.trim(), footer: $('setFooter').value.trim(),
+        maxDiscount: Math.min(100, Math.max(0, num($('setMaxDisc').value))), cashierCredit: $('setCredit').checked };
     tRef().update({ settings }).then(() => toast('✅ Settings saved')).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
+
+// ════════════════════════════════════════════════
+//  STOCK FROM EXCEL  — template, export, upload with preview
+//  The spreadsheet tool (SheetJS) is only downloaded when this screen opens.
+// ════════════════════════════════════════════════
+const XLSX_URL = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+const IMPORT_COLS = [
+    ['name', 'Item name', 34, ['item name', 'name', 'item', 'product', 'bidhaa', 'jina']],
+    ['category', 'Category', 16, ['category', 'group', 'aina', 'kundi']],
+    ['sellPrice', 'Sell price', 12, ['sell price', 'selling price', 'price', 'bei', 'bei ya kuuza', 'sell']],
+    ['cost', 'Cost price', 12, ['cost price', 'cost', 'buying price', 'bei ya kununua', 'gharama']],
+    ['stock', 'Stock', 10, ['stock', 'qty', 'quantity', 'units', 'idadi', 'count']],
+    ['reorderLevel', 'Warn below', 11, ['warn below', 'reorder level', 'reorder', 'min', 'minimum']],
+    ['barcode', 'Barcode', 16, ['barcode', 'code', 'sku', 'bar code']],
+    ['unit', 'Unit', 9, ['unit', 'uom', 'kipimo']],
+    ['partQty', 'Part qty', 9, ['part qty', 'part', 'decimal', 'part units']],
+    ['packSize', 'Pack size', 10, ['pack size', 'pack', 'per pack', 'per box']],
+    ['warrantyMonths', 'Warranty months', 15, ['warranty months', 'warranty', 'dhamana']],
+    ['trackSerial', 'Serial required', 14, ['serial required', 'serial', 'imei', 'serial/imei']],
+    ['emoji', 'Icon', 6, ['icon', 'emoji']]
+];
+const yesNo = v => { const t = String(v ?? '').trim().toLowerCase(); return t === '' ? null : ['yes', 'y', 'true', '1', 'ndiyo', 'ndio'].includes(t); };
+function unitKey(v) {
+    const t = String(v ?? '').trim().toLowerCase(); if (!t) return null;
+    const hit = UNITS.find(([k, l, sh]) => [k, l.toLowerCase(), sh.toLowerCase(), l.toLowerCase() + 's', k + 's'].includes(t))
+        || { metres: ['m'], meter: ['m'], meters: ['m'], mita: ['m'], pcs: ['pc'], piece: ['pc'], pieces: ['pc'], kgs: ['kg'], litres: ['l'], liter: ['l'], ltr: ['l'], ctn: ['carton'], feet: ['ft'] }[t];
+    return hit ? hit[0] : undefined;
+}
+function loadScript(url) {
+    return new Promise((ok, fail) => {
+        if (document.querySelector(`script[src="${url}"]`) && window.XLSX) return ok();
+        const s = document.createElement('script'); s.src = url; s.onload = ok; s.onerror = () => fail(new Error('Could not load the Excel tool. Check your internet.'));
+        document.head.appendChild(s);
+    });
+}
+async function needXLSX() { if (!window.XLSX) await loadScript(XLSX_URL); return window.XLSX; }
+
+function openImport() {
+    if (!isAdmin()) return;
+    $('impStep1').classList.remove('hidden'); $('impStep2').classList.add('hidden');
+    $('impFile').value = '';
+    openSheet('sheetImport');
+    needXLSX().catch(() => {});
+}
+
+async function downloadTemplate(withStock) {
+    let X; try { X = await needXLSX(); } catch (e) { return toast('⚠️ ' + e.message, 'err'); }
+    const head = IMPORT_COLS.map(c => c[1]);
+    const rows = withStock && S.products.length
+        ? S.products.map(p => [p.name, p.category || '', Number(p.sellPrice) || 0, S.costs[p.id] ?? '', q3(p.stock), Number(p.reorderLevel) || 5, p.barcode || '',
+            unitOf(p), partOk(p) ? 'yes' : 'no', p.packSize || '', p.warrantyMonths || '', p.trackSerial ? 'yes' : 'no', p.emoji || ''])
+        : [['Example: Samsung A15 phone', 'Phones', 420000, 360000, 6, 2, '', 'pc', 'no', '', 12, 'yes', '📱'],
+           ['Example: Bosch drill GSB 550', 'Power tools', 185000, 150000, 4, 1, '3165140601324', 'pc', 'no', '', 6, 'yes', '🔧'],
+           ['Example: Electric cable 2.5mm', 'Electrical', 2500, 1800, 300, 50, '', 'm', 'yes', 100, '', 'no', '🔌'],
+           ['Example: Wood screws 1 inch', 'Hardware', 150, 90, 2400, 200, '', 'pc', 'no', 100, '', 'no', '🔩']];
+    const ws = X.utils.aoa_to_sheet([head, ...rows]);
+    ws['!cols'] = IMPORT_COLS.map(c => ({ wch: c[2] }));
+    ws['!autofilter'] = { ref: `A1:M${rows.length + 1}` };
+    const help = X.utils.aoa_to_sheet([
+        ['How to fill the Stock sheet'], [],
+        ['Item name', 'Required. Items with the same name (or barcode) as one in your shop are updated, not duplicated.'],
+        ['Category', 'Optional, e.g. Phones, Power tools, Plumbing, Paint. Empty = General.'],
+        ['Sell price', 'Required for new items. Numbers only, no commas or "TZS".'],
+        ['Cost price', 'Optional. What you pay per unit — used for profit and stock value.'],
+        ['Stock', 'Units you have. When uploading you choose: add to current stock, or replace it.'],
+        ['Warn below', 'Optional. The till shows LOW when stock falls to this number. Empty = 5.'],
+        ['Barcode', 'Optional. Lets you sell by scanning on a computer with a barcode scanner.'],
+        ['Unit', 'How you sell it: pc, m (metre), ft, kg, l (litre), box, pack, carton, set, pair, roll, bag, sheet, length. Empty = pc.'],
+        ['Part qty', 'yes = can sell part units like 2.5 m or 0.5 kg. Empty = yes for m/ft/kg/l, no for others.'],
+        ['Pack size', 'Optional. Units in one pack/box (e.g. 100 screws per box) — lets you restock by the box.'],
+        ['Warranty months', 'Optional. Printed on the receipt with the end date. Empty or 0 = no warranty.'],
+        ['Serial required', 'yes = the till asks for the serial / IMEI of each unit sold (phones, laptops, power tools).'],
+        ['Icon', 'Optional emoji, e.g. 🍞 🥛 🧴.'], [],
+        ['Rows whose name starts with "Example" are skipped — delete them or overwrite them.'],
+        ['Empty cells on existing items keep the current value.']
+    ]);
+    help['!cols'] = [{ wch: 14 }, { wch: 90 }];
+    const wb = X.utils.book_new();
+    X.utils.book_append_sheet(wb, ws, 'Stock');
+    X.utils.book_append_sheet(wb, help, 'How to fill');
+    const shop = (S.tenant || 'shop').replace(/[^a-z0-9-]/gi, '');
+    X.writeFile(wb, withStock ? `${shop}-stock-${dayStr()}.xlsx` : 'matinyo-stock-template.xlsx');
+    toast(withStock ? '⬇️ Your stock list downloaded — edit it and upload it back' : '⬇️ Template downloaded');
+}
+
+const cellNum = v => {
+    if (v === null || v === undefined || String(v).trim() === '') return null;
+    const n = parseFloat(String(v).replace(/[^0-9.\-]/g, ''));
+    return isFinite(n) ? n : NaN;
+};
+// Keep the icon only if it is a real emoji (some files store emoji in a way that reads back garbled)
+function validEmoji(v) { try { return v && /\p{Extended_Pictographic}/u.test(v) && [...v].length <= 4 ? v : ''; } catch (e) { return ''; } }
+async function readImportFile(input) {
+    const file = input.files && input.files[0]; if (!file) return;
+    let X; try { X = await needXLSX(); } catch (e) { return toast('⚠️ ' + e.message, 'err'); }
+    loader(true, 'READING FILE...');
+    try {
+        const wb = X.read(await file.arrayBuffer(), { type: 'array' });
+        const sheetName = wb.SheetNames.find(n => n.toLowerCase() === 'stock') || wb.SheetNames[0];
+        const grid = X.utils.sheet_to_json(wb.Sheets[sheetName], { header: 1, defval: '', raw: true });
+        // Find the header row (first row that has a "name"-like column)
+        let hIdx = grid.findIndex(r => r.some(c => IMPORT_COLS[0][3].includes(String(c).trim().toLowerCase())));
+        if (hIdx < 0) throw new Error('Could not find an "Item name" column. Use the template.');
+        const head = grid[hIdx].map(c => String(c).trim().toLowerCase());
+        const map = {};
+        IMPORT_COLS.forEach(([k, , , names]) => { const i = head.findIndex(h => names.includes(h)); if (i >= 0) map[k] = i; });
+        const rows = [];
+        grid.slice(hIdx + 1).forEach((r, i) => {
+            const g = k => map[k] === undefined ? '' : r[map[k]];
+            const name = String(g('name') ?? '').trim().replace(/\s+/g, ' ');
+            if (!name && !r.some(c => String(c).trim())) return;     // blank line
+            if (/^example\b/i.test(name)) return;                     // template examples
+            rows.push({
+                line: hIdx + i + 2, name, category: String(g('category') ?? '').trim(),
+                sellPrice: cellNum(g('sellPrice')), cost: cellNum(g('cost')), stock: cellNum(g('stock')),
+                reorderLevel: cellNum(g('reorderLevel')), barcode: String(g('barcode') ?? '').trim().replace(/\.0$/, ''), emoji: validEmoji(String(g('emoji') ?? '').trim()),
+                unit: unitKey(g('unit')), partQty: yesNo(g('partQty')), packSize: cellNum(g('packSize')), warrantyMonths: cellNum(g('warrantyMonths')), trackSerial: yesNo(g('trackSerial'))
+            });
+        });
+        if (!rows.length) throw new Error('The file has no item rows.');
+        S.importRows = rows;
+        $('impMode').value = 'add'; $('impPrices').value = 'update';
+        $('impStep1').classList.add('hidden'); $('impStep2').classList.remove('hidden');
+        renderImportPreview();
+    } catch (e) {
+        toast('⚠️ ' + (e.message || 'Could not read that file.'), 'err');
+    } finally { loader(false); input.value = ''; }
+}
+
+// Work out what each row will do
+function planImport() {
+    const mode = $('impMode').value, prices = $('impPrices').value;
+    const byName = {}, byCode = {}, seen = {};
+    S.products.forEach(p => { byName[(p.name || '').toLowerCase()] = p; if (p.barcode) byCode[p.barcode] = p; });
+    return S.importRows.map(r => {
+        const out = { ...r, errors: [] };
+        const key = r.name.toLowerCase();
+        if (!r.name) out.errors.push('no name');
+        if (seen[key]) out.errors.push(`same name as line ${seen[key]}`); else if (r.name) seen[key] = r.line;
+        if (r.unit === undefined) out.errors.push('unknown unit');
+        if (r.trackSerial && (r.partQty || PART_UNITS.includes(r.unit || ''))) out.errors.push('serial items must be sold in whole units');
+        ['sellPrice', 'cost', 'stock', 'reorderLevel', 'packSize', 'warrantyMonths'].forEach(k => { if (Number.isNaN(r[k])) out.errors.push(`${k === 'sellPrice' ? 'sell price' : k === 'reorderLevel' ? 'warn below' : k} is not a number`); else if (r[k] !== null && r[k] < 0) out.errors.push('negative number'); });
+        const match = (r.barcode && byCode[r.barcode]) || byName[key];
+        out.match = match || null;
+        if (!match) {
+            out.action = 'new';
+            if (!(r.sellPrice > 0)) out.errors.push('sell price needed');
+            if (r.barcode && byCode[r.barcode]) out.errors.push('barcode already used');
+            const part = r.partQty ?? PART_UNITS.includes(r.unit || 'pc');
+            out.newStock = Math.max(0, part ? q3(r.stock || 0) : Math.round(r.stock || 0));
+        } else {
+            out.action = 'update';
+            const part = r.partQty ?? (r.unit ? PART_UNITS.includes(r.unit) : partOk(match));
+            const cur = Number(match.stock) || 0, q = r.stock === null ? null : part ? q3(r.stock) : Math.round(r.stock);
+            out.oldStock = cur;
+            out.newStock = q3(mode === 'keep' || q === null ? cur : mode === 'add' ? cur + q : q);
+            out.keepPrices = prices === 'keep';
+            if (r.barcode && byCode[r.barcode] && byCode[r.barcode].id !== match.id) out.errors.push('barcode belongs to another item');
+        }
+        if (out.errors.length) out.action = 'error';
+        return out;
+    });
+}
+function renderImportPreview() {
+    const plan = planImport();
+    const n = plan.filter(x => x.action === 'new').length, u = plan.filter(x => x.action === 'update').length, e = plan.filter(x => x.action === 'error').length;
+    const maxP = Number((S.tenantInfo.limits || {}).maxProducts) || 0;
+    const over = maxP && S.products.length + n > maxP;
+    $('impCounts').innerHTML = `
+        <div><b style="color:var(--pos);">${n}</b><small>New items</small></div>
+        <div style="background:#eff6ff;"><b style="color:var(--blue);">${u}</b><small>Updated</small></div>
+        <div style="background:${e ? '#fff5f5' : '#f8fafc'};"><b style="color:${e ? 'var(--red)' : 'var(--gray)'};">${e}</b><small>With problems</small></div>`;
+    $('impWarn').innerHTML = over ? `<div class="hint amber">⚠️ Your plan allows ${maxP} items. You have ${S.products.length}, so only ${Math.max(0, maxP - S.products.length)} new items will be added.</div>` : '';
+    const chip = x => x.action === 'new' ? '<span class="tag tag-closed" style="margin:0;">NEW</span>' : x.action === 'update' ? '<span class="tag tag-prog" style="margin:0;">UPDATE</span>' : '<span class="tag" style="margin:0;background:#fee2e2;color:#991b1b;">FIX</span>';
+    const order = { error: 0, new: 1, update: 2 };
+    const list = [...plan].sort((a, b) => order[a.action] - order[b.action] || a.line - b.line);
+    const sell = x => x.sellPrice === null ? (x.match ? '<small>keep</small>' : '—') : (x.match && x.keepPrices ? `<span class="was">${n0(x.sellPrice)}</span>${n0(x.match.sellPrice)}` : n0(x.sellPrice));
+    $('impRows').innerHTML = list.slice(0, 400).map(x => `
+        <tr class="${x.action === 'error' ? 'err' : ''}">
+            <td>${chip(x)}</td>
+            <td>${esc(x.emoji || (x.match && x.match.emoji) || '')} ${esc(x.name || '(no name)')}<small>${x.action === 'error' ? '⚠️ line ' + x.line + ': ' + esc(x.errors.join(', ')) : esc(x.category || (x.match && x.match.category) || 'General')}${x.barcode ? ' · ' + esc(x.barcode) : ''}</small></td>
+            <td class="n">${sell(x)}</td>
+            <td class="n">${x.cost === null ? '<small>—</small>' : n0(x.cost)}</td>
+            <td class="n">${x.action === 'update' && x.newStock !== x.oldStock ? `<span class="was">${q3(x.oldStock)}</span>` : ''}${x.action === 'error' ? '' : q3(x.newStock)}${x.action !== 'error' && (x.unit || (x.match && unitOf(x.match))) && (x.unit || unitOf(x.match)) !== 'pc' ? ' ' + (UNITS.find(u => u[0] === (x.unit || unitOf(x.match))) || [, , ''])[2] : ''}${x.trackSerial ? '<small>🔢 serial</small>' : ''}${x.warrantyMonths ? '<small>🛡️ ' + x.warrantyMonths + 'm</small>' : ''}</td>
+        </tr>`).join('') + (list.length > 400 ? `<tr><td colspan="5" style="text-align:center;color:var(--gray);">…and ${list.length - 400} more rows</td></tr>` : '');
+    const ok = n + u;
+    $('impBtn').disabled = !ok;
+    $('impBtn').textContent = ok ? `✅ IMPORT ${ok} ITEM${ok > 1 ? 'S' : ''}${e ? ` · SKIP ${e}` : ''}` : 'NOTHING TO IMPORT';
+}
+
+async function runImport() {
+    let plan = planImport().filter(x => x.action !== 'error');
+    const maxP = Number((S.tenantInfo.limits || {}).maxProducts) || 0;
+    if (maxP) {
+        let room = Math.max(0, maxP - S.products.length);
+        plan = plan.filter(x => x.action === 'update' || room-- > 0);
+    }
+    if (!plan.length) return toast('Nothing to import.', 'err');
+    if (!navigator.onLine) return toast('⚠️ Importing from Excel needs internet.', 'err');
+    const day = dayStr(), mode = $('impMode').value;
+    loader(true, 'IMPORTING...');
+    let added = 0, updated = 0;
+    try {
+        for (let i = 0; i < plan.length; i += 150) {               // 3 writes per item, max 500 per batch
+            const b = db.batch();
+            plan.slice(i, i + 150).forEach(x => {
+                const ref = x.match ? col('products').doc(x.match.id) : col('products').doc();
+                const d = { updatedAt: now() };
+                if (!x.match) {
+                    Object.assign(d, { name: x.name, category: x.category || 'General', sellPrice: x.sellPrice, stock: x.newStock,
+                        reorderLevel: x.reorderLevel !== null ? q3(x.reorderLevel) : 5, barcode: x.barcode || '', emoji: x.emoji || '📦',
+                        unit: x.unit || 'pc', partQty: x.partQty ?? PART_UNITS.includes(x.unit || 'pc'), packSize: Math.round(x.packSize || 0),
+                        warrantyMonths: Math.round(x.warrantyMonths || 0), trackSerial: !!x.trackSerial });
+                    added++;
+                } else {
+                    if (x.category) d.category = x.category;
+                    if (x.sellPrice !== null && !x.keepPrices) d.sellPrice = x.sellPrice;
+                    if (x.reorderLevel !== null) d.reorderLevel = q3(x.reorderLevel);
+                    if (x.unit) d.unit = x.unit;
+                    if (x.partQty !== null) d.partQty = x.partQty;
+                    if (x.packSize !== null) d.packSize = Math.round(x.packSize);
+                    if (x.warrantyMonths !== null) d.warrantyMonths = Math.round(x.warrantyMonths);
+                    if (x.trackSerial !== null) d.trackSerial = x.trackSerial;
+                    if (x.barcode) d.barcode = x.barcode;
+                    if (x.emoji) d.emoji = x.emoji;
+                    if (x.newStock !== x.oldStock) d.stock = x.newStock;
+                    updated++;
+                }
+                b.set(ref, d, { merge: true });
+                if (x.cost !== null && !(x.match && x.keepPrices)) b.set(col('costs').doc(ref.id), { costPrice: x.cost, updatedAt: now() }, { merge: true });
+                const before = x.match ? x.oldStock : 0;
+                if (x.newStock !== before) b.set(col('movements').doc(), {
+                    productId: ref.id, name: x.name, type: x.match ? (mode === 'add' ? 'restock' : 'stocktake') : 'opening', qty: x.newStock - before,
+                    before, after: x.newStock, source: 'excel', day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
+                });
+            });
+            await commit(b);
+        }
+        closeModals();
+        toast(`✅ ${added} added · ${updated} updated`);
+    } catch (e) { toast('⚠️ Import stopped: ' + friendlyErr(e), 'err'); }
+    finally { loader(false); }
+}
+
+// ════════════════════════════════════════════════
+//  DEVICE-AWARE LAYOUT
+//  phone  (< 640px)  — one column, cart opens from the bottom bar
+//  tablet (640–1023) — more columns, screens open as centred windows
+//  computer / tablet sideways (≥ 900px wide) — cart stays open on the right
+//  A mouse/keyboard also turns on shortcuts and barcode-scanner support.
+// ════════════════════════════════════════════════
+function detectDevice() {
+    const w = window.innerWidth, fine = window.matchMedia && matchMedia('(pointer: fine)').matches;
+    const dev = w >= 1024 ? 'desktop' : w >= 640 ? 'tablet' : 'phone';
+    if (S.device !== dev) {
+        document.body.classList.remove('dev-phone', 'dev-tablet', 'dev-desktop');
+        document.body.classList.add('dev-' + dev);
+        S.device = dev;
+    }
+    document.body.classList.toggle('has-keyboard', !!fine);
+    S.dockCart = w >= 900;
+    const nav = document.querySelector('.tab-nav');
+    document.documentElement.style.setProperty('--navH', (nav && nav.offsetHeight ? nav.offsetHeight : 0) + 'px');
+    syncCartDock();
+}
+function syncCartDock() {
+    const c = $('sheetCart');
+    const want = !!(S.dockCart && S.me && $('mainApp').style.display === 'block' && $('page-pos').classList.contains('active'));
+    if (want) { c.classList.add('docked', 'active'); renderCart(); }
+    else if (c.classList.contains('docked')) c.classList.remove('docked', 'active');
+    document.body.classList.toggle('cart-docked', want);
+}
+let resizeTimer;
+window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(detectDevice, 120); });
+window.addEventListener('orientationchange', () => setTimeout(detectDevice, 300));
+
+// Keyboard & barcode scanner (computers)
+function posSearchEnter() {
+    const q = $('posSearch').value.trim(); if (!q) return;
+    const byCode = S.products.find(p => p.barcode && p.barcode === q);
+    const shown = [...document.querySelectorAll('#posGrid .item-card:not(.out)')];
+    const pick = byCode || (shown.length === 1 ? productById((shown[0].getAttribute('onclick') || '').match(/'([^']+)'/)?.[1]) : null);
+    if (!pick) return toast(shown.length ? 'Several items match — keep typing or tap one' : 'No item with that name or barcode', 'err');
+    addToCart(pick.id);
+    $('posSearch').value = ''; renderPOS();
+}
+document.addEventListener('keydown', e => {
+    if (!S.me || $('mainApp').style.display !== 'block') return;
+    const tag = (e.target.tagName || '').toLowerCase(), typing = ['input', 'textarea', 'select'].includes(tag);
+    const modalOpen = !!document.querySelector('.modal-overlay.active:not(.docked)');
+    if (e.key === 'Escape' && modalOpen) { closeModals(); return; }
+    if (e.target.id === 'posSearch' && e.key === 'Enter') { e.preventDefault(); posSearchEnter(); return; }
+    if (e.key === 'F2' && $('page-pos').classList.contains('active') && cartCount()) { e.preventDefault(); S.dockCart ? confirmSale() : openCart(); return; }
+    if (typing || modalOpen || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (!$('page-pos').classList.contains('active')) return;
+    if (e.key === '/') { e.preventDefault(); $('posSearch').focus(); return; }
+    // A barcode scanner "types" fast: send stray keys straight into the search box
+    if (e.key.length === 1) { e.preventDefault(); $('posSearch').focus(); $('posSearch').value += e.key; renderPOS(); }
+});
 
 // ════════════════════════════════════════════════
 //  OFFLINE, UPDATE & INSTALL
@@ -2972,6 +3894,7 @@ function doInstall() { $('installBanner').classList.remove('show'); if (installP
 function dismissInstall() { $('installBanner').classList.remove('show'); sSet('matinyo.installDismissed', '1'); }
 
 renderLogin();
+detectDevice();
 loader(true, 'STARTING...');
 </script>
 </body>
