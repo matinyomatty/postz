@@ -1936,15 +1936,13 @@ function renderCart() {
 }
 function renderCartInner() {
     const lines = Object.entries(S.cart);
-    // keep typed serials while re-rendering
-    document.querySelectorAll('#cartLines .serial-in').forEach(i => { const m = meta(i.dataset.id); m.serials[+i.dataset.n] = i.value.trim(); });
     $('cartLines').innerHTML = lines.length ? lines.map(([id, q]) => {
         const p = productById(id); if (!p) return '';
         const price = linePrice(id), changed = Math.abs(price - p.sellPrice) >= 0.5;
         const onShelf = p.trackSerial ? inStockSerials(id) : [];
         const serials = p.trackSerial && q === Math.round(q) ? `<datalist id="sl-${id}">${onShelf.map(x => `<option value="${esc(x.serial)}">`).join('')}</datalist>`
             + Array.from({ length: Math.min(q, 20) }, (_, n) =>
-            `<input class="serial-in" list="sl-${id}" data-id="${id}" data-n="${n}" placeholder="Serial / IMEI #${n + 1}${onShelf.length ? ' — tap to pick' : ''}" value="${esc((meta(id).serials || [])[n] || '')}">`).join('')
+            `<input class="serial-in" list="sl-${id}" data-id="${id}" data-n="${n}" oninput="meta('${id}').serials[${n}]=this.value.trim()" placeholder="Serial / IMEI #${n + 1}${onShelf.length ? ' — tap to pick' : ''}" value="${esc((meta(id).serials || [])[n] || '')}">`).join('')
             + `<button class="cl-edit" style="padding:4px 0;" onclick="scanCartSerial('${id}')">📷 scan serial</button>${onShelf.length ? ` <span class="cl-price">${onShelf.length} on the shelf</span>` : ''}` : '';
         return `<div class="cart-line" style="align-items:flex-start;">
             <span class="cl-emoji">${esc(p.emoji || '📦')}</span>
@@ -1997,7 +1995,6 @@ function checkPay() {
 function confirmSale() {
     const lines = Object.entries(S.cart);
     if (!lines.length) return toast('Cart is empty');
-    document.querySelectorAll('#cartLines .serial-in').forEach(i => { meta(i.dataset.id).serials[+i.dataset.n] = i.value.trim(); });
     if (!checkPay()) return toast('⚠️ The payment must add up to the total.', 'err');
     if (!isAdmin() && discPctNow() > maxDiscPct() + 0.01) return toast(`⚠️ Discount is ${discPctNow().toFixed(1)}% — your limit is ${maxDiscPct()}%. Ask the owner.`, 'err');
     const credit = num($('payCredit').value);
@@ -2172,7 +2169,7 @@ function saveItem() {
     const before = id ? productById(id) : null;
     const b = db.batch();
     const barcode = $('itemBarcode').value.trim();
-    if (barcode && S.products.some(p => p.id !== id && p.barcode === barcode)) return toast('⚠️ Another item already uses that barcode.', 'err');
+    if (barcode && S.products.some(p => p.id !== id && p.barcode && normCode(p.barcode) === normCode(barcode))) return toast('⚠️ Another item already uses that barcode.', 'err');
     b.set(ref, { name, emoji: S.emoji, category: $('itemCat').value.trim() || 'General', sellPrice, stock, reorderLevel, barcode,
         unit: $('itemUnit').value, partQty: part, packSize: Math.max(0, Math.round(num($('itemPack').value))) || 0,
         warrantyMonths: Math.max(0, Math.round(num($('itemWarranty').value))) || 0, trackSerial: serial, updatedAt: now() }, { merge: true });
@@ -2716,7 +2713,8 @@ async function openScanner(opts) {
     try {
         if ('BarcodeDetector' in window && (await BarcodeDetector.getSupportedFormats()).length) {
             const det = new BarcodeDetector();
-            SC.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false });
+            SC.stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+            try { await SC.stream.getVideoTracks()[0].applyConstraints({ advanced: [{ focusMode: 'continuous' }] }); } catch (e) {}
             const v = $('scanVideo'); v.srcObject = SC.stream; v.classList.remove('hidden'); $('scanReader').classList.add('hidden');
             await v.play();
             $('scanMsg').textContent = '';
@@ -2731,9 +2729,13 @@ async function openScanner(opts) {
             $('scanVideo').classList.add('hidden'); $('scanReader').classList.remove('hidden');
             const F = window.Html5QrcodeSupportedFormats || {};
             const formats = ['QR_CODE', 'EAN_13', 'EAN_8', 'UPC_A', 'UPC_E', 'CODE_128', 'CODE_39', 'CODE_93', 'ITF', 'CODABAR', 'DATA_MATRIX'].map(k => F[k]).filter(x => x !== undefined);
-            SC.lib = new Html5Qrcode('scanReader', { formatsToSupport: formats, verbose: false });
-            const w = Math.min(320, window.innerWidth - 40);
-            await SC.lib.start({ facingMode: 'environment' }, { fps: 12, qrbox: { width: w, height: Math.round(w * 0.55) } }, gotCode, () => {});
+            SC.lib = new Html5Qrcode('scanReader', { formatsToSupport: formats, verbose: false, experimentalFeatures: { useBarCodeDetectorIfSupported: true } });
+            await SC.lib.start({ facingMode: 'environment' }, {
+                fps: 15,
+                // scan most of the picture — long IMEI / serial barcodes need the width
+                qrbox: (vw, vh) => ({ width: Math.floor(vw * 0.9), height: Math.floor(Math.min(vh * 0.6, vw * 0.55)) }),
+                videoConstraints: { facingMode: 'environment', width: { ideal: 1920 }, height: { ideal: 1080 }, advanced: [{ focusMode: 'continuous' }] }
+            }, gotCode, () => {});
             $('scanMsg').textContent = '';
         }
     } catch (e) {
@@ -2756,12 +2758,14 @@ function gotCode(raw) {
     const t = Date.now(); if (SC.last[code] && t - SC.last[code] < 2500) return;   // same code held in view
     SC.last[code] = t;
     beep();
+    $('scanMsg').innerHTML = `<span style="background:rgba(22,163,74,.9);padding:6px 12px;border-radius:10px;font-weight:800;">✓ Read: ${esc(code)}</span>`;
+    setTimeout(() => { if (SC.on && /Read:/.test($('scanMsg').textContent)) $('scanMsg').textContent = ''; }, 1500);
     const o = SC.opts;
     const res = o.onCode(code);
     if (o.multi) {
         SC.list.unshift({ code, ok: res !== false, note: typeof res === 'string' ? res : '' });
         $('scanList').innerHTML = SC.list.slice(0, 6).map(x => `<div class="scan-chip ${x.ok ? '' : 'bad'}">${x.ok ? '✓' : '✗'} ${esc(x.note || x.code)}</div>`).join('');
-    } else closeScanner();
+    } else { closeScanner(); toast('✓ Scanned ' + code); }
 }
 function scanTypeInstead() {
     const o = SC.opts; closeScanner();
@@ -2777,8 +2781,10 @@ async function toggleTorch() {
 
 // ── What a scanned code means on each screen ──────────
 // Till: product barcode → add to cart. Serial / IMEI on the shelf → add that item with the serial filled in.
+const normCode = c => String(c || '').replace(/\s+/g, '').replace(/^0+(?=\d)/, '');
+const productByCode = c => { const n = normCode(c); return n ? S.products.find(x => x.barcode && normCode(x.barcode) === n) : null; };
 function sellByCode(code) {
-    const p = S.products.find(x => x.barcode && x.barcode === code);
+    const p = productByCode(code);
     if (p) {
         if ((Number(p.stock) || 0) - (S.cart[p.id] || 0) < 1 && !partOk(p)) { toast(`⚠️ No more ${p.name} in stock`, 'err'); return false; }
         if (p.trackSerial) { toast(`Now scan the serial / IMEI of the ${p.name}`); }
@@ -2806,7 +2812,7 @@ function sellByCode(code) {
         });
         return false;
     }
-    toast(`Unknown code ${code}`, 'err');
+    toast(`Unknown code ${code} — ask the owner to add it`, 'err');
     return false;
 }
 function scanToSell() { openScanner({ title: '📷 Scan to sell', hint: 'Barcode on the box, or the serial / IMEI label', multi: true, onCode: sellByCode }); }
@@ -2834,7 +2840,7 @@ function scanCartSerial(id) {
 function scanLookup() { openScanner({ title: 'Serial / IMEI', onCode: c => { $('serialQ').value = c; runSerialLookup(); } }); }
 function scanStockSearch() {
     openScanner({ title: 'Find in stock', onCode: c => {
-        const p = S.products.find(x => x.barcode === c) || productById((S.serialsIn[serialId(c)] || {}).productId);
+        const p = productByCode(c) || productById((S.serialsIn[serialId(c)] || {}).productId);
         if (p) { $('invSearch').value = p.name; renderInventory(); } else { serialLookup(); $('serialQ').value = c; runSerialLookup(); }
     } });
 }
@@ -4289,8 +4295,8 @@ window.addEventListener('orientationchange', () => setTimeout(detectDevice, 300)
 // Keyboard & barcode scanner (computers)
 function posSearchEnter() {
     const q = $('posSearch').value.trim(); if (!q) return;
-    if (!S.products.some(p => p.barcode === q) && S.serialsIn[serialId(q)]) { sellByCode(q); $('posSearch').value = ''; renderPOS(); return; }
-    const byCode = S.products.find(p => p.barcode && p.barcode === q);
+    if (!productByCode(q) && S.serialsIn[serialId(q)]) { sellByCode(q); $('posSearch').value = ''; renderPOS(); return; }
+    const byCode = productByCode(q);
     const shown = [...document.querySelectorAll('#posGrid .item-card:not(.out)')];
     const pick = byCode || (shown.length === 1 ? productById((shown[0].getAttribute('onclick') || '').match(/'([^']+)'/)?.[1]) : null);
     if (!pick) return toast(shown.length ? 'Several items match — keep typing or tap one' : 'No item with that name or barcode', 'err');
