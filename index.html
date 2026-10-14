@@ -34,7 +34,7 @@
             --ai: linear-gradient(135deg, #1a56db 0%, #7c3aed 100%);
         }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; margin: 0; padding: 0; }
-        html, body { min-height: 100vh; }
+        html, body { min-height: 100vh; max-width: 100%; overflow-x: hidden; }
         html { background: var(--ink); }
         body { background: var(--ink); font-family: 'DM Sans', system-ui, sans-serif; color: var(--ink); }
         body.unlocked { background: var(--light); }
@@ -351,6 +351,8 @@
         .pos-header { background: var(--ink); color: #fff; padding: 14px 16px 12px; border-bottom: 3px solid var(--blue); }
         .pos-header .header-top { margin-bottom: 10px; }
         .pos-logo { font-family: 'Syne', sans-serif; font-size: 1.05rem; letter-spacing: 3px; color: #60a5fa; }
+        .pos-logo { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        @media (max-width: 380px) { .header-meta .hdr-date { display: none; } .header-meta { gap: 2px; } .pos-logo, .inv-logo { letter-spacing: 1.5px; } }
         .pos-strip { font-size: 0.66rem; color: rgba(255,255,255,0.55); margin-bottom: 10px; }
         .pos-strip b { color: var(--yellow); }
         .search-wrap { position: relative; }
@@ -422,6 +424,11 @@
         .inv-logo { font-family: 'Syne', sans-serif; font-size: 1.05rem; letter-spacing: 3px; color: var(--yellow); }
         .hdr-chip { background: rgba(255,255,255,0.1); border: none; border-radius: 10px; padding: 8px 12px; font-size: 0.7rem; font-weight: 800; cursor: pointer; color: #fff; letter-spacing: .5px; }
         .hdr-chip.yellow { background: var(--yellow); color: var(--ink); }
+        /* Stock page buttons: always one row that fits the screen */
+        .stock-actions { display: flex; gap: 6px; margin-top: 10px; }
+        .stock-actions .hdr-chip { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 8px 2px; font-size: 0.6rem; letter-spacing: .3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .stock-actions .hdr-chip i { font-style: normal; font-size: 1rem; line-height: 1; }
+        body:not(.is-admin) .stock-actions .role-admin { display: none; }
         .inv-strip { display: flex; gap: 8px; padding: 10px 16px; background: var(--ink); overflow-x: auto; scrollbar-width: none; }
         .inv-strip::-webkit-scrollbar { display: none; }
         .inv-strip-card { flex-shrink: 0; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; padding: 8px 14px; min-width: 90px; }
@@ -719,15 +726,13 @@
     <!-- ── STOCK ── -->
     <div class="tab-page" id="page-inventory">
         <div class="inv-header">
-            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">
-                <div class="inv-logo">STOCK</div>
-                <div style="display:flex;gap:6px;">
-                    <button class="hdr-chip" onclick="serialLookup()">🔍 SERIAL</button>
-                    <button class="hdr-chip yellow" onclick="openDeliveries()">🚚 DELIVERY</button>
-                    <button class="hdr-chip" onclick="openStocktake()">📋 STOCKTAKE</button>
-                    <button class="hdr-chip role-admin" onclick="openImport()">📥 EXCEL</button>
-                    <button class="hdr-chip yellow role-admin" onclick="openItem()">+ ADD ITEM</button>
-                </div>
+            <div class="inv-logo">STOCK</div>
+            <div class="stock-actions">
+                <button class="hdr-chip" onclick="serialLookup()"><i>🔍</i>SERIAL</button>
+                <button class="hdr-chip yellow" onclick="openDeliveries()"><i>🚚</i>DELIVERY</button>
+                <button class="hdr-chip" onclick="openStocktake()"><i>📋</i>COUNT</button>
+                <button class="hdr-chip role-admin" onclick="openImport()"><i>📥</i>EXCEL</button>
+                <button class="hdr-chip yellow role-admin" onclick="openItem()"><i>➕</i>ADD ITEM</button>
             </div>
         </div>
         <div class="inv-strip" id="invStrip"></div>
