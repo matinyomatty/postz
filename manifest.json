@@ -1,6 +1,6 @@
 {
-  "name": "Matinyo POS",
-  "short_name": "Matinyo POS",
+  "name": "Keep POS",
+  "short_name": "Keep",
   "description": "Point of sale, stock and daily accounts for your shop",
   "start_url": "./",
   "scope": "./",

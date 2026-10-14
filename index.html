@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover, interactive-widget=resizes-visual">
-    <title>Matinyo POS</title>
+    <title>Keep POS</title>
 
     <!-- Install as an app (works once the files are hosted) -->
     <link rel="manifest" href="manifest.json">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Matinyo POS">
+    <meta name="apple-mobile-web-app-title" content="Keep POS">
     <meta name="theme-color" content="#0b0d12">
     <link rel="apple-touch-icon" href="icon-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
@@ -18,11 +18,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --ink: #0b0d12;          /* Matinyo black */
+            --ink: #0b0d12;          /* Keep black */
             --ink2: #161b27;
-            --blue: #1a56db;         /* Matinyo blue */
+            --blue: #1a56db;         /* Keep blue */
             --blue-d: #1442b0;
-            --yellow: #ffc72c;       /* Matinyo yellow */
+            --yellow: #ffc72c;       /* Keep yellow */
             --light: #f2f4f8;
             --green: #16a34a;
             --pos: #00875a;
@@ -43,7 +43,7 @@
         .is-cashier .role-admin { display: none !important; }
 
         /* ── LOGIN ── */
-        #loginPage {
+        #loginPage, #setPinPage {
             position: fixed; inset: 0; z-index: 100; overflow-y: auto;
             background: radial-gradient(circle at 15% 0%, #16245a 0, var(--ink) 55%);
             display: flex; align-items: center; justify-content: center;
@@ -516,7 +516,7 @@
 <div id="pendingBadge">⏳ Waiting to sync</div>
 <div id="installBanner">
     <div style="font-size:1.8rem;">📲</div>
-    <div style="flex:1;"><strong>Install Matinyo POS</strong><span>Add to home screen — opens like an app</span></div>
+    <div style="flex:1;"><strong>Install Keep POS</strong><span>Add to home screen — opens like an app</span></div>
     <button class="install-btn" onclick="doInstall()">INSTALL</button>
     <button class="icon-btn" onclick="dismissInstall()">✕</button>
 </div>
@@ -545,7 +545,7 @@
 <!-- ══════════════ LOGIN ══════════════ -->
 <div id="loginPage">
     <div class="login-card">
-        <div class="login-logo">MATINYO<span>POS</span></div>
+        <div class="login-logo">KEEP<span>POS</span></div>
         <div class="login-bar"></div>
         <div class="login-sub">Authorized staff only</div>
 
@@ -569,6 +569,23 @@
     </div>
 </div>
 
+<!-- ══════════════ SET / RESET PIN (opened from the email link) ══════════════ -->
+<div id="setPinPage" style="display:none;z-index:110;">
+    <div class="login-card">
+        <div class="login-logo">KEEP<span>POS</span></div>
+        <div class="login-bar"></div>
+        <div style="font-size:1.05rem;font-weight:800;margin:6px 0 4px;">🔑 Set your PIN</div>
+        <div style="font-size:.82rem;color:var(--gray);margin-bottom:14px;line-height:1.5;" id="spWho">Checking your link…</div>
+        <div id="spFields" class="hidden"><div style="font-size:.72rem;color:var(--gray);margin-bottom:6px;">6 to 12 numbers</div>
+            <input type="password" id="spPin" class="login-field pass-input" placeholder="New PIN" inputmode="numeric" autocomplete="new-password">
+            <input type="password" id="spPin2" class="login-field pass-input" placeholder="PIN again" inputmode="numeric" autocomplete="new-password" onkeydown="if(event.key==='Enter') saveNewPin()">
+            <button class="primary-cta" id="spBtn" style="margin:4px 0 0;" onclick="saveNewPin()">SAVE PIN &amp; OPEN MY SHOP</button>
+        </div>
+        <div id="spError" style="font-size:.8rem;margin-top:10px;color:var(--red);"></div>
+        <button class="link-btn" onclick="leaveSetPin()">Go to sign in</button>
+    </div>
+</div>
+
 <!-- ══════════════ SUBSCRIPTION LOCK ══════════════ -->
 <div id="lockPage">
     <div class="login-card">
@@ -578,8 +595,8 @@
         <div style="font-size:.9rem;font-weight:700;margin:10px 0 4px;" id="lockTitle">Till locked</div>
         <div style="font-size:.8rem;color:var(--gray);" id="lockWhy"></div>
         <div class="pay-box" id="lockPay"></div>
-        <div style="font-size:.72rem;color:var(--gray);margin-bottom:14px;">✨ The till unlocks by itself as soon as Matinyo records your payment — no need to sign in again.</div>
-        <button class="primary-cta green" id="lockWa" onclick="lockWhatsApp()">📲 I've paid — tell Matinyo</button>
+        <div style="font-size:.72rem;color:var(--gray);margin-bottom:14px;">✨ The till unlocks by itself as soon as Keep records your payment — no need to sign in again.</div>
+        <button class="primary-cta green" id="lockWa" onclick="lockWhatsApp()">📲 I've paid — tell Keep</button>
         <button class="link-btn" onclick="logout('Signed out')">Sign out</button>
     </div>
 </div>
@@ -598,7 +615,7 @@
     <div class="tab-page role-admin" id="page-dashboard">
         <div class="header">
             <div class="header-top">
-                <div class="header-logo shop-name">MATINYO</div>
+                <div class="header-logo shop-name">KEEP</div>
                 <div class="header-meta">
                     <span class="who me-name"></span>
                     <button class="icon-btn" onclick="openTeam()" title="Team & settings">👥</button>
@@ -664,7 +681,7 @@
     <div class="tab-page" id="page-pos">
         <div class="pos-header">
             <div class="header-top">
-                <div class="pos-logo">POS · <span class="shop-name" style="color:#fff;">MATINYO</span></div>
+                <div class="pos-logo">POS · <span class="shop-name" style="color:#fff;">KEEP</span></div>
                 <div class="header-meta">
                     <span class="who me-name"></span>
                     <span class="hdr-date today-label"></span>
@@ -1243,7 +1260,7 @@ db.enablePersistence({ synchronizeTabs: true }).catch(e => console.warn('Offline
 const FV = firebase.firestore.FieldValue;
 const inc = n => FV.increment(n);
 // Plan usage list — the database checks it against the plan's limits.
-// Only written once Matinyo HQ has set it up for the shop.
+// Only written once Keep HQ has set it up for the shop.
 const usageRef = () => col('plan').doc('usage');
 function usageAdd(b, kind, id) { if (S.usage) b.update(usageRef(), { [`${kind}.${id}`]: true, updatedAt: now() }); }
 function usageDel(b, kind, id) { if (S.usage) b.update(usageRef(), { [`${kind}.${id}`]: FV.delete(), updatedAt: now() }); }
@@ -1500,16 +1517,50 @@ async function rejectLogin(msg) {
     loginError(msg);
 }
 
+// ── Set-PIN link from the email (Firebase sends ?mode=resetPassword&oobCode=…) ──
+S.resetCode = (() => { const q = new URLSearchParams(location.search); return q.get('mode') === 'resetPassword' ? q.get('oobCode') : null; })();
+if (new URLSearchParams(location.search).get('mode')) history.replaceState(null, '', location.pathname);
+async function openSetPin() {
+    $('loginPage').style.display = 'none'; $('setPinPage').style.display = 'flex';
+    try {
+        S.resetEmail = await auth.verifyPasswordResetCode(S.resetCode);
+        $('spWho').innerHTML = `Choose a PIN for <b>${esc(S.resetEmail)}</b>.<br>You will use it with this email or your phone number to open the till.`;
+        $('spFields').classList.remove('hidden'); setTimeout(() => $('spPin').focus(), 200);
+    } catch (e) {
+        $('spWho').innerHTML = '⚠️ This link has expired or was already used.<br>On the sign-in page, type your email and tap <b>Forgot PIN?</b> to get a new one.';
+    }
+}
+async function saveNewPin() {
+    const pin = $('spPin').value.trim(); $('spError').textContent = '';
+    if (!/^\d{6,12}$/.test(pin)) return $('spError').textContent = 'The PIN must be 6 to 12 digits (numbers only).';
+    if (pin !== $('spPin2').value.trim()) return $('spError').textContent = 'The two PINs do not match.';
+    const btn = $('spBtn'); btn.disabled = true; btn.textContent = 'SAVING...';
+    try {
+        await auth.confirmPasswordReset(S.resetCode, pin);
+        S.resetCode = null; $('setPinPage').style.display = 'none';
+        if (auth.currentUser) await auth.signOut();
+        S.pendingLoginId = S.resetEmail;
+        loader(true, 'OPENING SHOP...');
+        await auth.signInWithEmailAndPassword(S.resetEmail, pin);
+        setTimeout(() => toast('✅ PIN saved — welcome!'), 800);
+    } catch (e) {
+        loader(false);
+        $('spError').textContent = (e.code || '').includes('expired') || (e.code || '').includes('invalid-action') ? 'This link has expired. Use Forgot PIN on the sign-in page.' : 'Could not save: ' + friendlyErr(e);
+    } finally { btn.disabled = false; btn.textContent = 'SAVE PIN & OPEN MY SHOP'; }
+}
+function leaveSetPin() { S.resetCode = null; $('setPinPage').style.display = 'none'; if (!auth.currentUser) showLogin(); else location.reload(); }
+
 auth.onAuthStateChanged(async user => {
     stopListeners();
+    if (S.resetCode) { loader(false); if ($('setPinPage').style.display !== 'flex') openSetPin(); return; }
     if (!user) { loader(false); showLogin(); return; }
     loader(true, 'OPENING SHOP...');
     try {
         const link = await db.collection('users').doc(user.uid).get();
-        if (!link.exists || !link.data().shop) return rejectLogin('This login is not linked to any shop. Contact Matinyo support.');
+        if (!link.exists || !link.data().shop) return rejectLogin('This login is not linked to any shop. Contact Keep support.');
         S.tenant = link.data().shop;
         const [tSnap, stSnap] = await Promise.all([tRef().get(), col('staff').doc(user.uid).get()]);
-        if (!tSnap.exists) return rejectLogin('Shop not found. Contact Matinyo support.');
+        if (!tSnap.exists) return rejectLogin('Shop not found. Contact Keep support.');
         if (!stSnap.exists) return rejectLogin('Your staff account is not set up. Ask the shop owner.');
         const st = stSnap.data();
         if (st.replacedBy) return rejectLogin('Your PIN was reset. Sign in with your new PIN.');
@@ -1517,6 +1568,7 @@ auth.onAuthStateChanged(async user => {
         S.tenantInfo = tSnap.data();
         S.me = { uid: user.uid, email: user.email, loginId: st.loginId || '', name: st.name || 'Staff', role: st.role === 'admin' ? 'admin' : 'cashier' };
         rememberUser(S.pendingLoginId || st.loginId || user.email, S.me.name, S.tenantInfo.name || S.tenant);
+        if (!isSellerEmail(user.email || '') && S.tenantInfo.name && user.displayName !== S.tenantInfo.name && user.updateProfile) user.updateProfile({ displayName: S.tenantInfo.name }).catch(() => {});
         S.pendingLoginId = null;
         S.platform = await db.collection('platform').doc('config').get().then(d => d.data() || {}).catch(() => ({}));
         if (subState(S.tenantInfo).locked) showLocked(); else enterApp();
@@ -1684,7 +1736,7 @@ function stopListeners() {
 
 function renderAll() { renderPOS(); renderInventory(); renderPosStrip(); if (isAdmin()) renderDashboard(); }
 function renderShopName() {
-    const n = (S.tenantInfo.name || S.tenant || 'MATINYO').toUpperCase();
+    const n = (S.tenantInfo.name || S.tenant || 'KEEP').toUpperCase();
     document.querySelectorAll('.shop-name').forEach(e => e.textContent = n);
     document.querySelectorAll('.today-label').forEach(e => e.textContent = shortDay(dayStr()));
 }
@@ -2222,7 +2274,7 @@ function saveItem() {
     const prev = id ? productById(id) : null;
     if (serial && stock !== (prev ? Number(prev.stock) || 0 : 0)) return toast(prev ? '⚠️ For serial items, add stock with 📥 Restock so each serial is scanned in.' : '⚠️ Save serial items with stock 0, then use 📥 Restock to scan each serial in.', 'err');
     const maxP = Number((S.tenantInfo.limits || {}).maxProducts) || 0;
-    if (!id && maxP && usedItems() >= maxP) return toast(`⚠️ Your plan allows ${maxP} items. Ask Matinyo to upgrade your plan.`, 'err');
+    if (!id && maxP && usedItems() >= maxP) return toast(`⚠️ Your plan allows ${maxP} items. Ask Keep to upgrade your plan.`, 'err');
     const ref = id ? col('products').doc(id) : col('products').doc();
     const before = id ? productById(id) : null;
     const b = db.batch();
@@ -3306,7 +3358,7 @@ async function submitShift() {
     commit(b, '✅ Cash-up sent to the owner', { label: `Cash-up: counted ${n0(countedCash)}` });
     closeModals();
     const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, '');
-    const text = `🧾 *Cash-up — ${(S.tenantInfo.name || S.tenant)}*\n👤 ${S.me.name} · ${prettyDay(day)} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Lipa kwa Simu: ${n0(countedMobile)}` : ''}\n🛒 My sales this shift: ${salesCount}${paidOuts.length ? '\n\n💸 Paid out of the drawer:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nPlease review it in Matinyo POS.`;
+    const text = `🧾 *Cash-up — ${(S.tenantInfo.name || S.tenant)}*\n👤 ${S.me.name} · ${prettyDay(day)} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Lipa kwa Simu: ${n0(countedMobile)}` : ''}\n🛒 My sales this shift: ${salesCount}${paidOuts.length ? '\n\n💸 Paid out of the drawer:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nPlease review it in Keep POS.`;
     if (wa && await showConfirm('Also send the cash-up to the owner on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
     if (await showConfirm('Your shift is done. Sign out now so the next person can sign in?', 'Sign out', 'var(--blue)')) logout('👋 Shift ended');
 }
@@ -3853,7 +3905,7 @@ function subState(t) {
 }
 function payInstructions() {
     const P = S.platform || {}, t = S.tenantInfo;
-    return `Amount: ${fmt(t.monthlyFee || 0)} per month\n${P.payHow || 'Contact Matinyo for payment details.'}\nReference: ${S.tenant}`;
+    return `Amount: ${fmt(t.monthlyFee || 0)} per month\n${P.payHow || 'Contact Keep for payment details.'}\nReference: ${S.tenant}`;
 }
 function stopLockWatch() { if (S.lockWatch) { S.lockWatch(); S.lockWatch = null; } }
 function showLocked() {
@@ -3863,7 +3915,7 @@ function showLocked() {
     syncCartDock();
     renderLock();
     $('lockPage').style.display = 'flex';
-    // Watch the shop record: the moment Matinyo records a payment, the till opens again.
+    // Watch the shop record: the moment Keep records a payment, the till opens again.
     S.lockWatch = tRef().onSnapshot(s => {
         S.tenantInfo = s.data() || {};
         if (!subState(S.tenantInfo).locked) { toast('✅ Subscription active — welcome back!'); enterApp(); }
@@ -3873,19 +3925,19 @@ function showLocked() {
 function renderLock() {
     const t = S.tenantInfo, st = subState(t), P = S.platform || {};
     $('lockShop').textContent = (t.name || S.tenant || '').toUpperCase();
-    $('lockTitle').textContent = st.reason === 'expired' ? 'Subscription ended' : st.reason === 'suspended' ? 'Shop paused by Matinyo' : 'Shop closed';
+    $('lockTitle').textContent = st.reason === 'expired' ? 'Subscription ended' : st.reason === 'suspended' ? 'Shop paused by Keep' : 'Shop closed';
     $('lockWhy').textContent = st.reason === 'expired'
-        ? `The Matinyo POS subscription ended on ${tsDay(t.paidUntil)}. Your sales and stock are safe.${isAdmin() ? '' : ' Please tell the shop owner.'}`
-        : `Please contact Matinyo to reopen this shop.${isAdmin() ? '' : ' Tell the shop owner.'}`;
-    $('lockPay').textContent = st.reason === 'expired' ? payInstructions() : (P.supportPhone ? 'Matinyo support: ' + prettyPhone(P.supportPhone) : 'Contact Matinyo support.');
+        ? `The Keep POS subscription ended on ${tsDay(t.paidUntil)}. Your sales and stock are safe.${isAdmin() ? '' : ' Please tell the shop owner.'}`
+        : `Please contact Keep to reopen this shop.${isAdmin() ? '' : ' Tell the shop owner.'}`;
+    $('lockPay').textContent = st.reason === 'expired' ? payInstructions() : (P.supportPhone ? 'Keep support: ' + prettyPhone(P.supportPhone) : 'Contact Keep support.');
     $('lockWa').classList.toggle('hidden', !P.supportPhone);
-    $('lockWa').textContent = st.reason === 'expired' ? "📲 I've paid — tell Matinyo" : '📲 Contact Matinyo';
+    $('lockWa').textContent = st.reason === 'expired' ? "📲 I've paid — tell Keep" : '📲 Contact Keep';
 }
 function lockWhatsApp() {
     const P = S.platform || {}, t = S.tenantInfo;
     const text = subState(t).reason === 'expired'
-        ? `Hello Matinyo, I have paid the subscription for *${t.name}* (shop code ${S.tenant}).\nAmount: \nTransaction ID: `
-        : `Hello Matinyo, I need help with shop *${t.name}* (shop code ${S.tenant}).`;
+        ? `Hello Keep, I have paid the subscription for *${t.name}* (shop code ${S.tenant}).\nAmount: \nTransaction ID: `
+        : `Hello Keep, I need help with shop *${t.name}* (shop code ${S.tenant}).`;
     window.open(`https://wa.me/${P.supportPhone}?text=${encodeURIComponent(text)}`, '_blank');
 }
 
@@ -3940,7 +3992,7 @@ function openSub() {
         </div>
         <span class="section-label">How to pay</span>
         <div class="pay-box" style="margin-top:0;">${esc(payInstructions())}</div>
-        ${(S.platform || {}).supportPhone ? `<button class="btn-sec wide" onclick="lockWhatsApp()">📲 Tell Matinyo you've paid</button>` : ''}
+        ${(S.platform || {}).supportPhone ? `<button class="btn-sec wide" onclick="lockWhatsApp()">📲 Tell Keep you've paid</button>` : ''}
         <span class="section-label" style="margin-top:10px;">Payments & receipts</span>
         <div id="subPays"><div style="font-size:.75rem;color:var(--gray);padding:8px 0;">Loading…</div></div>`;
     S.sheetListeners.push(col('payments').onSnapshot(s => {
@@ -3958,7 +4010,7 @@ function tillReceipt(pid) {
     if (!window.jspdf) return toast('PDF tool did not load — check your connection.', 'err');
     const P = S.platform || {}, { jsPDF } = window.jspdf, doc = new jsPDF({ unit: 'mm', format: 'a5' }), W = 148;
     doc.setFillColor(11, 13, 18); doc.rect(0, 0, W, 30, 'F');
-    doc.setTextColor(255, 199, 44); doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text('MATINYO', 12, 15);
+    doc.setTextColor(255, 199, 44); doc.setFont('helvetica', 'bold'); doc.setFontSize(18); doc.text('KEEP', 12, 15);
     doc.setTextColor(96, 165, 250); doc.setFontSize(9); doc.text('POS SUBSCRIPTION', 12, 22);
     doc.setTextColor(255, 255, 255); doc.setFontSize(11); doc.text('RECEIPT', W - 12, 15, { align: 'right' });
     doc.setFontSize(9); doc.setFont('helvetica', 'normal'); doc.text(p.receiptNo || '', W - 12, 22, { align: 'right' });
@@ -4082,7 +4134,7 @@ async function makeSellerLogin(pin) {
 
 async function sendLoginDetails(name, phone, pin, isNew) {
     const link = location.href.split('#')[0].split('?')[0];
-    const text = `Habari ${name.split(' ')[0]}! ${isNew ? 'Your Matinyo POS account for' : 'Your new PIN for'} *${S.tenantInfo.name || S.tenant}* is ready.\n\n📱 Phone: ${prettyPhone(phone)}\n🔑 PIN: ${pin}\n\nOpen: ${link}`;
+    const text = `Habari ${name.split(' ')[0]}! ${isNew ? 'Your Keep POS account for' : 'Your new PIN for'} *${S.tenantInfo.name || S.tenant}* is ready.\n\n📱 Phone: ${prettyPhone(phone)}\n🔑 PIN: ${pin}\n\nOpen: ${link}`;
     const ok = await showConfirm(`<b>${esc(name)}</b> can sign in with<br><br>📱 <b>${esc(prettyPhone(phone))}</b><br>🔑 PIN <b>${esc(pin)}</b><br><br>Send these details to them on WhatsApp?`, '📲 WhatsApp', 'var(--pos)');
     if (ok) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
 }
@@ -4094,7 +4146,7 @@ async function addStaff() {
     if (!/^\d{6,12}$/.test(pin)) return toast('⚠️ PIN must be 6 to 12 digits.', 'err');
     if (!navigator.onLine) return toast('⚠️ Adding a seller needs internet.', 'err');
     const maxS = Number((S.tenantInfo.limits || {}).maxStaff) || 0;
-    if (maxS && usedStaff() >= maxS) return toast(`⚠️ Your plan allows ${maxS} staff logins. Switch someone off or ask Matinyo to upgrade.`, 'err');
+    if (maxS && usedStaff() >= maxS) return toast(`⚠️ Your plan allows ${maxS} staff logins. Switch someone off or ask Keep to upgrade.`, 'err');
     const btn = $('stBtn'); btn.disabled = true; btn.textContent = 'ADDING...';
     try {
         const taken = await db.collection('logins').doc(phone).get({ source: 'server' });
@@ -4147,7 +4199,7 @@ function toggleStaff(uid) {
     const on = p.active === false;
     if (uid === S.me.uid) return toast('You cannot switch yourself off.', 'err');
     const maxS = Number((S.tenantInfo.limits || {}).maxStaff) || 0;
-    if (on && maxS && usedStaff() >= maxS) return toast(`⚠️ Your plan allows ${maxS} staff logins. Switch someone else off first, or ask Matinyo to upgrade.`, 'err');
+    if (on && maxS && usedStaff() >= maxS) return toast(`⚠️ Your plan allows ${maxS} staff logins. Switch someone else off first, or ask Keep to upgrade.`, 'err');
     const b = db.batch();
     b.update(col('staff').doc(uid), { active: on });
     if (on) usageAdd(b, 'staff', uid); else usageDel(b, 'staff', uid);
