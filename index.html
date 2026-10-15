@@ -1095,6 +1095,7 @@
         <button class="btn-sec wide" style="margin-bottom:12px;" onclick="addPaidOut()">➕ Add a payment (e.g. LUKU, transport, supplier)</button>
         <div class="field-group"><span class="field-label">📝 Note for the owner (optional)</span><textarea id="shNote" placeholder="e.g. A customer will pay 5,000 tomorrow"></textarea></div>
         <div class="save-bar">
+            <label class="check hidden" id="shCloseWrap" style="background:#fffbeb;border-radius:12px;padding:10px;margin-bottom:8px;"><input type="checkbox" id="shCloseDay" onchange="$('shBtn').textContent=this.checked?'🔒 SUBMIT & CLOSE THE DAY':'✅ SUBMIT CASH-UP'"><span><b>I'm the last one today — close the day</b><br><small style="color:var(--gray);">Sends the day's summary to the owner on WhatsApp.</small></span></label>
             <button class="primary-cta yellow" id="shBtn" onclick="submitShift()">✅ SUBMIT CASH-UP</button>
             <button class="btn-sec wide ghost" onclick="closeModals()">CANCEL</button>
         </div>
@@ -1232,6 +1233,7 @@
         <div class="field-group"><span class="field-label">Receipt footer</span><input type="text" id="setFooter" placeholder="e.g. Goods once sold cannot be returned without receipt"></div>
         <label class="check"><input type="checkbox" id="setCredit"><span>Sellers can sell on credit (owners always can)</span></label>
         <label class="check"><input type="checkbox" id="setReturns"><span>Sellers can take returns and give refunds</span></label>
+        <label class="check"><input type="checkbox" id="setCloseDay"><span>Sellers can close the day (with their last cash-up)</span></label>
         <label class="check"><input type="checkbox" id="setManual"><span>Sellers can record manual sales (today only)</span></label>
         <label class="check"><input type="checkbox" id="setExpenses"><span>Sellers can record expenses paid from the drawer or Lipa kwa Simu</span></label>
         <div class="hint gray" style="margin-top:-4px;">Sellers never see profit, balances, banking or savings.</div>
@@ -2689,7 +2691,7 @@ function renderDayBody(d, sales, entries) {
             <div class="sum-row"><span>🏦 Banked (net)</span><strong style="color:var(--blue);">${fmt(x.bankIn - x.bankOut)}</strong></div>
             <div class="sum-row big"><span>📈 Day profit</span><strong style="color:${x.sales - x.supplier - x.expense >= 0 ? 'var(--green)' : 'var(--red)'};">${fmt(x.sales - x.supplier - x.expense)}</strong></div>
         </div>`;
-    if (c) html += `<div class="hint green">🔒 Closed by ${esc(c.by || '')}${c.countedCash != null ? ` · cash counted ${n0(c.countedCash)} (${signed(c.countedCash - c.systemCash)})` : ''}${afterClose(x) ? `<br>⚠️ ${fmt(afterClose(x))} of sales came in after the day was closed.` : ''}</div>`;
+    if (c) html += `<div class="hint green">🔒 Closed by ${esc(c.by || '')}${c.bySeller ? ' (seller)' : ''}${c.countedCash != null ? ` · cash counted ${n0(c.countedCash)}` + (c.systemCash != null ? ` (${signed(c.countedCash - c.systemCash)})` : ' — see their cash-up for the difference') : ''}${afterClose(x) ? `<br>⚠️ ${fmt(afterClose(x))} of sales came in after the day was closed.` : ''}</div>`;
     html += `<button class="btn-sec wide" onclick="openEntry('${d}')">➕ Add expense / banking for this date</button>`;
     if (entries.length) html += `<span class="section-label" style="margin-top:12px;">📒 Money entries (${entries.length})</span>` + entries.map(entryLine).join('');
     if (sales.length) {
@@ -3303,6 +3305,18 @@ async function shareOrSave(blob, name, type, text) {
 //  SELLER TOOLS — the owner decides if sellers may record manual sales
 //  and expenses. Balances, profit and banking stay with the owner.
 // ════════════════════════════════════════════════
+const canCloseDay = () => !isAdmin() && !!(S.tenantInfo.settings || {}).cashierCloseDay;
+// What a seller can see of today: all sales rung up today (not money entries or balances)
+function todaySalesFig() {
+    const L = (S.todaySales || []).filter(x => !x.voided), f = { n: 0, sales: 0, cash: 0, mobile: 0, credit: 0, debt: 0, returns: 0 };
+    L.forEach(x => {
+        if (x.kind === 'pos' || x.kind === 'manual') { f.sales += x.total; f.credit += x.credit || 0; if (x.kind === 'pos') f.n++; }
+        if (x.kind === 'return') { f.sales -= x.total; f.returns += x.total; }
+        if (x.kind === 'repay') f.debt += x.total;
+        f.cash += x.cash || 0; f.mobile += x.mobile || 0;
+    });
+    return f;
+}
 const canManual = () => isAdmin() || !!(S.tenantInfo.settings || {}).cashierManual;
 const canExpense = () => isAdmin() || !!(S.tenantInfo.settings || {}).cashierExpenses;
 function renderSellerTools() {
@@ -3954,6 +3968,7 @@ function openShiftEnd() {
     ['shCash', 'shMobile', 'shNote'].forEach(id => $(id).value = '');
     $('poRows').innerHTML = '';
     openSheet('sheetShift');
+    $('shCloseWrap').classList.toggle('hidden', !canCloseDay()); $('shCloseDay').checked = false; $('shBtn').textContent = '✅ SUBMIT CASH-UP';
     renderShiftInfo(); S.shiftDeliveries = []; $('shDeliveries').innerHTML = ''; loadShiftDeliveries();
     S.sheetListeners.push(col('cashups').where('staffUid', '==', S.me.uid).where('day', '==', dayStr()).onSnapshot(s => {
         S.myCashups = s.docs.map(d => ({ id: d.id, ...d.data() }));
@@ -4003,11 +4018,13 @@ async function submitShift() {
         countedCash, countedMobile, paidOuts, paidOutTotal, note: $('shNote').value.trim(), salesCount,
         status: 'pending', createdAt: now()
     });
-    commit(b, '✅ Cash-up sent to the owner', { label: `Cash-up: counted ${n0(countedCash)}` });
+    const closeDay = canCloseDay() && $('shCloseDay').checked, df = todaySalesFig();
+    if (closeDay) b.set(col('days').doc(day), { day, month: day.slice(0, 7), closing: { by: S.me.name, bySeller: true, at: now(), countedCash, countedMobile, paidOut: paidOutTotal, sales: df.sales }, updatedAt: now() }, { merge: true });
+    commit(b, closeDay ? '🔒 Day closed — summary ready for the owner' : '✅ Cash-up sent to the owner', { label: `${closeDay ? 'Close day + cash-up' : 'Cash-up'}: counted ${n0(countedCash)}` });
     closeModals();
     const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, '');
-    const text = `🧾 *Cash-up — ${(S.tenantInfo.name || S.tenant)}*\n👤 ${S.me.name} · ${prettyDay(day)} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Lipa kwa Simu: ${n0(countedMobile)}` : ''}\n🛒 My sales this shift: ${salesCount}${paidOuts.length ? '\n\n💸 Paid out of the drawer:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nPlease review it in Keep POS.`;
-    if (wa && await showConfirm('Also send the cash-up to the owner on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
+    const text = closeDay ? `🔒 *Day closed — ${(S.tenantInfo.name || S.tenant)}*\n📅 ${prettyDay(day)} · closed by ${S.me.name} at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n🛒 Sales today: ${n0(df.sales)} (${df.n} POS sales)\n💵 Cash taken: ${n0(df.cash)} · 📱 Simu: ${n0(df.mobile)}${df.credit ? `\n📒 On credit: ${n0(df.credit)}` : ''}${df.debt ? `\n💰 Debts collected: ${n0(df.debt)}` : ''}${df.returns ? `\n↩️ Returns: ${n0(df.returns)}` : ''}\n\n🧾 My cash-up\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Simu balance: ${n0(countedMobile)}` : ''}${paidOuts.length ? '\n💸 Paid out:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nCheck the cash-up in Keep POS to see if the drawer matches.` : `🧾 *Cash-up — ${(S.tenantInfo.name || S.tenant)}*\n👤 ${S.me.name} · ${prettyDay(day)} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Lipa kwa Simu: ${n0(countedMobile)}` : ''}\n🛒 My sales this shift: ${salesCount}${paidOuts.length ? '\n\n💸 Paid out of the drawer:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nPlease review it in Keep POS.`;
+    if (wa && await showConfirm(closeDay ? 'Send the day summary to the owner on WhatsApp?' : 'Also send the cash-up to the owner on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
     if (await showConfirm('Your shift is done. Sign out now so the next person can sign in?', 'Sign out', 'var(--blue)')) logout('👋 Shift ended');
 }
 
@@ -4709,7 +4726,7 @@ function openTeam() {
     const st = S.tenantInfo.settings || {};
     $('setTarget').value = st.dailyTarget || ''; $('setWa').value = st.whatsapp || '';
     $('setPhone').value = st.phone ? prettyPhone(st.phone) : ''; $('setAddr').value = st.address || ''; $('setFooter').value = st.footer || '';
-    $('setMaxDisc').value = st.maxDiscount ?? 10; $('setCredit').checked = !!st.cashierCredit; $('setReturns').checked = !!st.cashierReturns; $('setManual').checked = !!st.cashierManual; $('setExpenses').checked = !!st.cashierExpenses;
+    $('setMaxDisc').value = st.maxDiscount ?? 10; $('setCredit').checked = !!st.cashierCredit; $('setReturns').checked = !!st.cashierReturns; $('setManual').checked = !!st.cashierManual; $('setCloseDay').checked = !!st.cashierCloseDay; $('setExpenses').checked = !!st.cashierExpenses;
     ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = ''); $('stRole').value = 'cashier';
     openSheet('sheetTeam');
     $('staffList').innerHTML = '<div style="font-size:0.75rem;color:var(--gray);padding:8px 0;">Loading…</div>';
@@ -4866,7 +4883,7 @@ function toggleRole(uid) {
 function saveSettings() {
     const settings = { dailyTarget: num($('setTarget').value), whatsapp: $('setWa').value.replace(/\D/g, ''),
         phone: normPhone($('setPhone').value), address: $('setAddr').value.trim(), footer: $('setFooter').value.trim(),
-        maxDiscount: Math.min(100, Math.max(0, num($('setMaxDisc').value))), cashierCredit: $('setCredit').checked, cashierReturns: $('setReturns').checked, cashierManual: $('setManual').checked, cashierExpenses: $('setExpenses').checked };
+        maxDiscount: Math.min(100, Math.max(0, num($('setMaxDisc').value))), cashierCredit: $('setCredit').checked, cashierReturns: $('setReturns').checked, cashierManual: $('setManual').checked, cashierCloseDay: $('setCloseDay').checked, cashierExpenses: $('setExpenses').checked };
     tRef().update({ settings }).then(() => toast('✅ Settings saved')).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
 
