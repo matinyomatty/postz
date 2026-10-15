@@ -1511,6 +1511,12 @@ function normPhone(v) {
     else if (d.length === 9 && /^[67]/.test(d)) d = '255' + d;
     return d;
 }
+// WhatsApp links need the number in international form (2557XXXXXXXX), never 07XX…
+// With no number, WhatsApp opens and lets you pick who to send it to.
+function openWa(number, text) {
+    const n = normPhone(number);
+    window.open(`https://wa.me/${/^\d{10,15}$/.test(n) ? n : ''}?text=${encodeURIComponent(text)}`, '_blank');
+}
 function normLoginId(v) {
     v = String(v || '').trim().toLowerCase();
     return v.includes('@') ? v : normPhone(v);
@@ -2948,7 +2954,7 @@ async function deliveryShare(d, justSaved) {
     const how = await choose(`${justSaved ? '✅ <b>Delivery saved.</b><br>' : ''}🚚 <b>${esc(d.receiptNo)}</b> · ${d.items.length} item${d.items.length > 1 ? 's' : ''} · ${fmt(d.total)}<br>Send the delivery note to the owner?`,
         [['share', '📄 Send PDF (WhatsApp / email)', 'var(--pos)'], ['wa', '📲 WhatsApp as text', 'var(--blue)'], ['pdf', '⬇️ Download PDF', 'var(--ink)']]);
     if (!how) return;
-    if (how === 'wa') { const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, ''); window.open(`https://wa.me/${wa}?text=${encodeURIComponent(deliveryText(d))}`, '_blank'); return; }
+    if (how === 'wa') { const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, ''); openWa(wa, deliveryText(d)); return; }
     const doc = deliveryPdf(d); if (!doc) return;
     const name = `Delivery_${d.receiptNo}.pdf`;
     if (how === 'share') {
@@ -3796,14 +3802,14 @@ async function receivePayment(id) {
     if (c.phone && await showConfirm('Send them a confirmation on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) {
         const left = Math.max(0, (c.balance || 0) - amt);
         const text = `${S.tenantInfo.name || ''}: Asante ${c.name.split(' ')[0]}! We received ${fmt(amt)} (${receiptNo}).\n${left ? `Balance remaining: ${fmt(left)}` : 'Your account is fully paid ✅'}`;
-        window.open(`https://wa.me/${c.phone}?text=${encodeURIComponent(text)}`, '_blank');
+        openWa(c.phone, text);
     }
 }
 function remindCustomer(id) {
     const c = S.customers.find(x => x.id === id); if (!c || !c.phone) return;
     const pay = (S.tenantInfo.settings || {}).phone ? `\nCall us: ${prettyPhone(S.tenantInfo.settings.phone)}` : '';
     const text = `Habari ${c.name.split(' ')[0]}, this is ${S.tenantInfo.name || 'the shop'}. A friendly reminder that your balance is ${fmt(c.balance)}. Asante!${pay}`;
-    window.open(`https://wa.me/${c.phone}?text=${encodeURIComponent(text)}`, '_blank');
+    openWa(c.phone, text);
 }
 
 // ════════════════════════════════════════════════
@@ -3899,7 +3905,7 @@ async function receiptMenu(s) {
     if (how === 'wa') {
         let to = phone;
         if (!to) { const v = await askValue('Customer WhatsApp number', '07XX XXX XXX', 'Send'); if (v === null || !v) return; to = normPhone(v); }
-        window.open(`https://wa.me/${to}?text=${encodeURIComponent(receiptText(s))}`, '_blank');
+        openWa(to, receiptText(s));
     } else if (how === 'pdf') receiptPdf(s);
 }
 
@@ -4024,7 +4030,7 @@ async function submitShift() {
     closeModals();
     const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, '');
     const text = closeDay ? `🔒 *Day closed — ${(S.tenantInfo.name || S.tenant)}*\n📅 ${prettyDay(day)} · closed by ${S.me.name} at ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n🛒 Sales today: ${n0(df.sales)} (${df.n} POS sales)\n💵 Cash taken: ${n0(df.cash)} · 📱 Simu: ${n0(df.mobile)}${df.credit ? `\n📒 On credit: ${n0(df.credit)}` : ''}${df.debt ? `\n💰 Debts collected: ${n0(df.debt)}` : ''}${df.returns ? `\n↩️ Returns: ${n0(df.returns)}` : ''}\n\n🧾 My cash-up\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Simu balance: ${n0(countedMobile)}` : ''}${paidOuts.length ? '\n💸 Paid out:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nCheck the cash-up in Keep POS to see if the drawer matches.` : `🧾 *Cash-up — ${(S.tenantInfo.name || S.tenant)}*\n👤 ${S.me.name} · ${prettyDay(day)} ${new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })}\n\n💵 Cash counted: ${n0(countedCash)}${countedMobile !== null ? `\n📱 Lipa kwa Simu: ${n0(countedMobile)}` : ''}\n🛒 My sales this shift: ${salesCount}${paidOuts.length ? '\n\n💸 Paid out of the drawer:\n' + paidOuts.map(p => `• ${p.note} — ${n0(p.amount)}`).join('\n') : ''}${$('shNote').value.trim() ? '\n\n📝 ' + $('shNote').value.trim() : ''}\n\nPlease review it in Keep POS.`;
-    if (wa && await showConfirm(closeDay ? 'Send the day summary to the owner on WhatsApp?' : 'Also send the cash-up to the owner on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
+    if (wa && await showConfirm(closeDay ? 'Send the day summary to the owner on WhatsApp?' : 'Also send the cash-up to the owner on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) openWa(wa, text);
     if (await showConfirm('Your shift is done. Sign out now so the next person can sign in?', 'Sign out', 'var(--blue)')) logout('👋 Shift ended');
 }
 
@@ -4148,7 +4154,7 @@ async function confirmCashup() {
     const phone = seller && /^\d+$/.test(seller.loginId || '') ? seller.loginId : '';
     if (phone && Math.abs(dCash) >= 1 && await showConfirm(`Tell ${esc(first)} about the ${dCash < 0 ? 'shortage' : 'difference'} on WhatsApp?`, '📲 WhatsApp', 'var(--pos)')) {
         const text = `Habari ${first}, I checked your cash-up of ${prettyDay(c.day)} ${timeOf(c.createdAt)}.\nCounted: ${n0(c.countedCash)}\nShould have been: ${n0(exp.cash - (c.paidOutTotal || 0))}\n${dCash < 0 ? 'Short' : 'Over'}: ${n0(Math.abs(dCash))}${ownerNote ? '\n\n' + ownerNote : ''}`;
-        window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+        openWa(phone, text);
     }
     openCashups();
 }
@@ -4258,7 +4264,7 @@ Closed by ${S.me.name}`;
 function shareText(text) {
     if (!text) return;
     const wa = String((S.tenantInfo.settings || {}).whatsapp || '').replace(/\D/g, '');
-    window.open(`https://wa.me/${wa}?text=${encodeURIComponent(text)}`, '_blank');
+    openWa(wa, text);
 }
 
 // ════════════════════════════════════════════════
@@ -4603,7 +4609,7 @@ function lockWhatsApp() {
     const text = subState(t).reason === 'expired'
         ? `Hello Keep, I have paid the subscription for *${t.name}* (shop code ${S.tenant}).\nAmount: \nTransaction ID: `
         : `Hello Keep, I need help with shop *${t.name}* (shop code ${S.tenant}).`;
-    window.open(`https://wa.me/${P.supportPhone}?text=${encodeURIComponent(text)}`, '_blank');
+    openWa(P.supportPhone, text);
 }
 
 function dismissedNotices() { try { return JSON.parse(sGet('matinyo.dismissed') || '[]'); } catch (e) { return []; } }
@@ -4806,7 +4812,7 @@ async function sendLoginDetails(name, phone, pin, isNew) {
     const link = location.href.split('#')[0].split('?')[0];
     const text = `Habari ${name.split(' ')[0]}! ${isNew ? 'Your Keep POS account for' : 'Your new PIN for'} *${S.tenantInfo.name || S.tenant}* is ready.\n\n📱 Phone: ${prettyPhone(phone)}\n🔑 PIN: ${pin}\n\nOpen: ${link}`;
     const ok = await showConfirm(`<b>${esc(name)}</b> can sign in with<br><br>📱 <b>${esc(prettyPhone(phone))}</b><br>🔑 PIN <b>${esc(pin)}</b><br><br>Send these details to them on WhatsApp?`, '📲 WhatsApp', 'var(--pos)');
-    if (ok) window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
+    if (ok) openWa(phone, text);
 }
 
 async function addStaff() {
@@ -4881,7 +4887,7 @@ function toggleRole(uid) {
     col('staff').doc(uid).update({ role }).then(() => toast(`${p.name} is now ${role}`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
 function saveSettings() {
-    const settings = { dailyTarget: num($('setTarget').value), whatsapp: $('setWa').value.replace(/\D/g, ''),
+    const settings = { dailyTarget: num($('setTarget').value), whatsapp: normPhone($('setWa').value),
         phone: normPhone($('setPhone').value), address: $('setAddr').value.trim(), footer: $('setFooter').value.trim(),
         maxDiscount: Math.min(100, Math.max(0, num($('setMaxDisc').value))), cashierCredit: $('setCredit').checked, cashierReturns: $('setReturns').checked, cashierManual: $('setManual').checked, cashierCloseDay: $('setCloseDay').checked, cashierExpenses: $('setExpenses').checked };
     tRef().update({ settings }).then(() => toast('✅ Settings saved')).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
