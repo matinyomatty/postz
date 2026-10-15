@@ -470,6 +470,37 @@
         .stk-line input { width: 78px; padding: 8px 10px; text-align: center; }
 
         /* ── TEAM ── */
+        .seg { display: flex; background: #eef2f7; border-radius: 12px; padding: 4px; gap: 3px; margin-bottom: 14px; }
+        .seg button { flex: 1; border: none; background: transparent; border-radius: 9px; padding: 9px 2px; font-size: .68rem; font-weight: 800; color: var(--gray); cursor: pointer; white-space: nowrap; }
+        .seg button.on { background: #fff; color: var(--ink); box-shadow: 0 1px 4px rgba(0,0,0,.12); }
+        .tm-usage { font-size: .72rem; color: var(--gray); text-align: center; margin-bottom: 10px; }
+        .tm-card { background: #fff; border: 1px solid #e8edf3; border-radius: 14px; padding: 12px; margin-bottom: 8px; }
+        .tm-card.off { opacity: .7; background: #f8fafc; }
+        .tm-top { display: flex; align-items: center; gap: 10px; }
+        .tm-name { font-weight: 800; font-size: .88rem; } .tm-name small { font-weight: 600; color: var(--gray); font-size: .68rem; }
+        .tm-sub { font-size: .7rem; color: var(--gray); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .staff-av.adm { background: var(--yellow); color: var(--ink); }
+        .tm-acts { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; }
+        .tm-acts button { flex: 1 1 0; min-width: 90px; border: 1.5px solid #e3e8ef; background: #fff; border-radius: 10px; padding: 8px 6px; font-size: .7rem; font-weight: 800; cursor: pointer; color: var(--ink); }
+        .tm-acts button.stop { color: #b91c1c; border-color: #fecaca; } .tm-acts button.go { color: #15803d; border-color: #bbf7d0; }
+        .tm-off summary { cursor: pointer; font-size: .74rem; font-weight: 800; color: var(--gray); padding: 8px 2px; }
+        .tm-box { background: #f8fafc; border: 1px solid #e8edf3; border-radius: 14px; padding: 12px; margin-bottom: 10px; }
+        .tm-box-title { font-weight: 800; font-size: .82rem; margin-bottom: 8px; }
+        .role-pick { display: grid; gap: 6px; margin-bottom: 12px; }
+        .role-pick label { display: flex; gap: 10px; align-items: flex-start; background: #fff; border: 1.5px solid #e3e8ef; border-radius: 12px; padding: 10px; cursor: pointer; }
+        .role-pick label:has(input:checked) { border-color: var(--blue); background: #eff6ff; }
+        .role-pick input { margin-top: 3px; width: auto; } .role-pick b { display: block; font-size: .82rem; } .role-pick small { display: block; font-size: .68rem; color: var(--gray); line-height: 1.35; }
+        .tg-list { background: #fff; border: 1px solid #e8edf3; border-radius: 14px; padding: 0 12px; }
+        .tg-row { display: flex; align-items: center; gap: 10px; padding: 12px 0; border-bottom: 1px solid #f1f5f9; cursor: pointer; }
+        .tg-row:last-child { border-bottom: none; }
+        .tg-ic { font-size: 1.15rem; width: 26px; text-align: center; } .tg-tx { flex: 1; min-width: 0; } .tg-tx b { display: block; font-size: .84rem; } .tg-tx small { display: block; font-size: .68rem; color: var(--gray); line-height: 1.35; }
+        .switch { position: relative; width: 46px; height: 26px; flex-shrink: 0; }
+        .switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; z-index: 1; }
+        .switch i { position: absolute; inset: 0; background: #cbd5e1; border-radius: 26px; transition: .2s; }
+        .switch i::after { content: ''; position: absolute; width: 20px; height: 20px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+        .switch input:checked + i { background: var(--pos); } .switch input:checked + i::after { transform: translateX(20px); }
+        .tg-num { display: flex; align-items: center; gap: 4px; font-weight: 800; font-size: .8rem; } .tg-num input { width: 64px; text-align: center; padding: 8px; }
+        .tm-meter { margin-bottom: 10px; } .tm-track { height: 8px; background: #e2e8f0; border-radius: 6px; margin-top: 5px; overflow: hidden; } .tm-track i { display: block; height: 100%; border-radius: 6px; }
         .staff-line { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid #f0f0f0; }
         .staff-av { width: 34px; height: 34px; border-radius: 50%; background: var(--ink); color: var(--yellow); display: flex; align-items: center; justify-content: center; font-weight: 800; flex-shrink: 0; }
         .role-pill { font-size: 0.58rem; font-weight: 800; padding: 2px 7px; border-radius: 6px; text-transform: uppercase; letter-spacing: .5px; }
@@ -1203,42 +1234,74 @@
 <div class="modal-overlay" id="sheetTeam" onclick="overlayClose(event)">
     <div class="modal">
         <div class="modal-handle"></div>
-        <div class="modal-title">👥 Team & Settings</div>
-        <button class="btn-sec wide" style="border-color:var(--yellow);" onclick="openSub()">💳 Subscription, plan & receipts</button>
-        <div id="planUsage" style="font-size:.7rem;color:var(--gray);text-align:center;margin:-2px 0 12px;"></div>
-        <span class="section-label">Staff</span>
-        <div id="staffList"></div>
-        <span class="section-label" style="margin-top:16px;">Add a seller</span>
-        <div class="form-row">
-            <div class="field-group"><span class="field-label">Full name</span><input type="text" id="stName" placeholder="e.g. Amina Juma"></div>
-            <div class="field-group"><span class="field-label">Phone number</span><input type="tel" id="stPhone" placeholder="07XX XXX XXX"></div>
+        <div class="modal-title">⚙️ Team & Settings</div>
+        <div class="seg" id="tmTabs">
+            <button data-t="team" onclick="teamTab('team')">👥 Team</button>
+            <button data-t="perm" onclick="teamTab('perm')">🔐 Permissions</button>
+            <button data-t="shop" onclick="teamTab('shop')">🏪 Shop</button>
+            <button data-t="plan" onclick="teamTab('plan')">💳 Plan</button>
         </div>
-        <div class="form-row">
-            <div class="field-group"><span class="field-label">Role</span>
-                <select id="stRole"><option value="cashier">Cashier — sells & restocks</option><option value="admin">Admin — full access</option></select></div>
-            <div class="field-group"><span class="field-label">PIN (6–12 digits)</span><input type="tel" id="stPin" inputmode="numeric" placeholder="e.g. 482915"></div>
-        </div>
-        <button class="primary-cta" id="stBtn" onclick="addStaff()">➕ ADD SELLER</button>
 
-        <span class="section-label" style="margin-top:6px;">Shop settings</span>
-        <div class="form-row">
-            <div class="field-group"><span class="field-label">Daily sales target (TZS)</span><input type="number" id="setTarget" inputmode="decimal" placeholder="e.g. 50000"></div>
-            <div class="field-group"><span class="field-label">WhatsApp for summaries</span><input type="tel" id="setWa" placeholder="2557XXXXXXXX"></div>
+        <!-- TEAM -->
+        <div class="tm-pane" data-p="team">
+            <div class="tm-usage" id="planUsage"></div>
+            <div id="staffList"></div>
+            <button class="primary-cta" style="margin-top:6px;" id="stOpenBtn" onclick="toggleAddStaff(true)">➕ ADD STAFF</button>
+            <div id="addStaffForm" class="tm-box hidden">
+                <div class="tm-box-title">New staff login</div>
+                <div class="field-group"><span class="field-label">Full name</span><input type="text" id="stName" placeholder="e.g. Amina Juma"></div>
+                <div class="form-row">
+                    <div class="field-group"><span class="field-label">Phone number</span><input type="tel" id="stPhone" placeholder="07XX XXX XXX"></div>
+                    <div class="field-group"><span class="field-label">PIN (6–12 digits)</span><input type="tel" id="stPin" inputmode="numeric" placeholder="e.g. 482915"></div>
+                </div>
+                <span class="field-label">Role</span>
+                <div class="role-pick">
+                    <label><input type="radio" name="stRoleR" value="cashier" checked onchange="$('stRole').value=this.value"><span><b>🛒 Seller</b><small>Sells, receives stock, does cash-ups. Extra rights come from Permissions.</small></span></label>
+                    <label><input type="radio" name="stRoleR" value="admin" onchange="$('stRole').value=this.value"><span><b>👑 Admin</b><small>Everything the owner can do — money, reports, team.</small></span></label>
+                </div>
+                <input type="hidden" id="stRole" value="cashier">
+                <button class="primary-cta" id="stBtn" onclick="addStaff()">➕ ADD SELLER</button>
+                <button class="btn-sec wide ghost" onclick="toggleAddStaff(false)">CANCEL</button>
+            </div>
         </div>
-        <div class="form-row">
-            <div class="field-group"><span class="field-label">Shop phone (on receipts)</span><input type="tel" id="setPhone" placeholder="07XX XXX XXX"></div>
-            <div class="field-group"><span class="field-label">Sellers' max discount %</span><input type="number" id="setMaxDisc" inputmode="numeric" placeholder="e.g. 10"></div>
+
+        <!-- PERMISSIONS -->
+        <div class="tm-pane hidden" data-p="perm">
+            <div class="hint gray" style="margin-bottom:6px;">What <b>sellers</b> may do. Admins can always do everything. Changes save straight away.</div>
+            <div class="tg-list">
+                <label class="tg-row"><span class="tg-ic">📒</span><span class="tg-tx"><b>Sell on credit</b><small>Let customers take goods and pay later</small></span><span class="switch"><input type="checkbox" id="setCredit" data-k="cashierCredit" onchange="setPerm(this)"><i></i></span></label>
+                <label class="tg-row"><span class="tg-ic">↩️</span><span class="tg-tx"><b>Returns & refunds</b><small>Take goods back and give money back</small></span><span class="switch"><input type="checkbox" id="setReturns" data-k="cashierReturns" onchange="setPerm(this)"><i></i></span></label>
+                <label class="tg-row"><span class="tg-ic">✍️</span><span class="tg-tx"><b>Manual sales</b><small>Record sales made without the till — today only</small></span><span class="switch"><input type="checkbox" id="setManual" data-k="cashierManual" onchange="setPerm(this)"><i></i></span></label>
+                <label class="tg-row"><span class="tg-ic">💸</span><span class="tg-tx"><b>Expenses</b><small>Record money paid from the drawer or Lipa kwa Simu</small></span><span class="switch"><input type="checkbox" id="setExpenses" data-k="cashierExpenses" onchange="setPerm(this)"><i></i></span></label>
+                <label class="tg-row"><span class="tg-ic">🔒</span><span class="tg-tx"><b>Close the day</b><small>The last seller closes the day and sends you the summary</small></span><span class="switch"><input type="checkbox" id="setCloseDay" data-k="cashierCloseDay" onchange="setPerm(this)"><i></i></span></label>
+                <div class="tg-row"><span class="tg-ic">🏷️</span><span class="tg-tx"><b>Biggest discount</b><small>Most a seller can take off a sale</small></span><span class="tg-num"><input type="number" id="setMaxDisc" inputmode="numeric" onchange="setPerm(this)" data-k="maxDiscount">%</span></div>
+            </div>
+            <div class="hint gray" style="margin-top:10px;">🔐 Sellers never see profit, cost prices, balances, banking or savings.</div>
         </div>
-        <div class="field-group"><span class="field-label">Address / TIN (on receipts)</span><input type="text" id="setAddr" placeholder="e.g. Mwanakwerekwe, Zanzibar · TIN 123-456-789"></div>
-        <div class="field-group"><span class="field-label">Receipt footer</span><input type="text" id="setFooter" placeholder="e.g. Goods once sold cannot be returned without receipt"></div>
-        <label class="check"><input type="checkbox" id="setCredit"><span>Sellers can sell on credit (owners always can)</span></label>
-        <label class="check"><input type="checkbox" id="setReturns"><span>Sellers can take returns and give refunds</span></label>
-        <label class="check"><input type="checkbox" id="setCloseDay"><span>Sellers can close the day (with their last cash-up)</span></label>
-        <label class="check"><input type="checkbox" id="setManual"><span>Sellers can record manual sales (today only)</span></label>
-        <label class="check"><input type="checkbox" id="setExpenses"><span>Sellers can record expenses paid from the drawer or Lipa kwa Simu</span></label>
-        <div class="hint gray" style="margin-top:-4px;">Sellers never see profit, balances, banking or savings.</div>
-        <button class="btn-sec wide" onclick="saveSettings()">💾 SAVE SETTINGS</button>
-        <button class="btn-sec wide ghost" onclick="closeModals()">CLOSE</button>
+
+        <!-- SHOP -->
+        <div class="tm-pane hidden" data-p="shop">
+            <div class="tm-box">
+                <div class="tm-box-title">📲 Reports to the owner</div>
+                <div class="field-group"><span class="field-label">Owner's WhatsApp number</span><input type="tel" id="setWa" placeholder="07XX XXX XXX"></div>
+                <div class="field-group"><span class="field-label">Daily sales target (TZS)</span><input type="number" id="setTarget" inputmode="decimal" placeholder="e.g. 50000"></div>
+            </div>
+            <div class="tm-box">
+                <div class="tm-box-title">🧾 On customer receipts</div>
+                <div class="field-group"><span class="field-label">Shop phone</span><input type="tel" id="setPhone" placeholder="07XX XXX XXX"></div>
+                <div class="field-group"><span class="field-label">Address / TIN</span><input type="text" id="setAddr" placeholder="e.g. Mwanakwerekwe, Zanzibar · TIN 123-456-789"></div>
+                <div class="field-group"><span class="field-label">Footer message</span><input type="text" id="setFooter" placeholder="e.g. Goods once sold cannot be returned without receipt"></div>
+            </div>
+            <button class="primary-cta" onclick="saveSettings()">💾 SAVE SHOP DETAILS</button>
+        </div>
+
+        <!-- PLAN -->
+        <div class="tm-pane hidden" data-p="plan">
+            <div id="tmPlan"></div>
+            <button class="primary-cta yellow" onclick="openSub()">💳 SUBSCRIPTION, PAYMENTS & RECEIPTS</button>
+        </div>
+
+        <button class="btn-sec wide ghost" style="margin-top:10px;" onclick="closeModals()">CLOSE</button>
     </div>
 </div>
 
@@ -4727,37 +4790,65 @@ function cashStatText(uid) {
     if (!x || !x.n) return '';
     return `<div style="font-size:0.66rem;margin-top:2px;color:${x.short ? 'var(--red)' : 'var(--gray)'};">🧾 ${x.n} cash-up${x.n > 1 ? 's' : ''} in 30 days${x.short ? ' · short ' + n0(x.short) : ''}${x.over ? ' · over ' + n0(x.over) : ''}${!x.short && !x.over ? ' · no differences' : ''}</div>`;
 }
+function teamTab(t) {
+    S.teamTab = t;
+    document.querySelectorAll('#tmTabs button').forEach(b => b.classList.toggle('on', b.dataset.t === t));
+    document.querySelectorAll('#sheetTeam .tm-pane').forEach(p => p.classList.toggle('hidden', p.dataset.p !== t));
+    if (t === 'plan') renderTeamPlan();
+}
+function toggleAddStaff(show) {
+    $('addStaffForm').classList.toggle('hidden', !show); $('stOpenBtn').classList.toggle('hidden', show);
+    if (show) { ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = ''); $('stRole').value = 'cashier'; document.querySelector('input[name=stRoleR][value=cashier]').checked = true; setTimeout(() => $('stName').focus(), 150); }
+}
+// Seller permissions save the moment they're switched
+function setPerm(el) {
+    const k = el.dataset.k, v = el.type === 'checkbox' ? el.checked : Math.min(100, Math.max(0, num(el.value)));
+    if (el.type !== 'checkbox') el.value = v;
+    tRef().update({ ['settings.' + k]: v })
+        .then(() => toast(el.type === 'checkbox' ? (v ? '✅ Sellers can now: ' : '⛔ Sellers can no longer: ') + el.closest('.tg-row').querySelector('b').textContent.toLowerCase() : `✅ Biggest discount: ${v}%`))
+        .catch(e => { toast('⚠️ ' + friendlyErr(e), 'err'); if (el.type === 'checkbox') el.checked = !v; });
+}
+function renderTeamPlan() {
+    const t = S.tenantInfo, lim = t.limits || {}, st = subState(t);
+    const bar = (used, max, label) => `<div class="tm-meter"><div style="display:flex;justify-content:space-between;font-size:.74rem;"><b>${label}</b><span>${used} of ${max || '∞'}</span></div>
+        <div class="tm-track"><i style="width:${max ? Math.min(100, used / max * 100) : 8}%;background:${max && used >= max ? 'var(--red)' : 'var(--blue)'};"></i></div></div>`;
+    $('tmPlan').innerHTML = `<div class="tm-box"><div class="tm-box-title">💳 ${esc(t.plan || 'Plan')} · ${fmt(t.monthlyFee || 0)}/month</div>
+        <div style="font-size:.78rem;color:var(--gray);margin-bottom:10px;">${st.trial ? '🧪 Free trial · ' : ''}${tms(t.paidUntil) ? 'Paid until <b style="color:var(--ink);">' + tsDay(t.paidUntil) + '</b>' : ''}${st.daysLeft != null ? ` · ${st.daysLeft} day${st.daysLeft === 1 ? '' : 's'} left` : ''}</div>
+        ${bar(usedStaff(), lim.maxStaff, '👥 Staff logins')}${bar(usedItems(), lim.maxProducts, '📦 Items')}</div>`;
+}
 function openTeam() {
     loadCashStats().then(() => { if ($('sheetTeam').classList.contains('active') && S.renderStaff) S.renderStaff(); });
     const st = S.tenantInfo.settings || {};
-    $('setTarget').value = st.dailyTarget || ''; $('setWa').value = st.whatsapp || '';
+    $('setTarget').value = st.dailyTarget || ''; $('setWa').value = st.whatsapp ? prettyPhone(st.whatsapp) : '';
     $('setPhone').value = st.phone ? prettyPhone(st.phone) : ''; $('setAddr').value = st.address || ''; $('setFooter').value = st.footer || '';
     $('setMaxDisc').value = st.maxDiscount ?? 10; $('setCredit').checked = !!st.cashierCredit; $('setReturns').checked = !!st.cashierReturns; $('setManual').checked = !!st.cashierManual; $('setCloseDay').checked = !!st.cashierCloseDay; $('setExpenses').checked = !!st.cashierExpenses;
-    ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = ''); $('stRole').value = 'cashier';
-    openSheet('sheetTeam');
+    toggleAddStaff(false);
+    openSheet('sheetTeam'); teamTab(S.teamTab || 'team');
     $('staffList').innerHTML = '<div style="font-size:0.75rem;color:var(--gray);padding:8px 0;">Loading…</div>';
     S.sheetListeners.push(col('staff').onSnapshot(s => {
-        S.staff = s.docs.map(d => ({ uid: d.id, ...d.data() })).filter(p => !p.replacedBy).sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        S.staff = s.docs.map(d => ({ uid: d.id, ...d.data() })).filter(p => !p.replacedBy).sort((a, b) => (a.role === 'admin' ? 0 : 1) - (b.role === 'admin' ? 0 : 1) || (a.name || '').localeCompare(b.name || ''));
         S.renderStaff();
     }, e => { $('staffList').innerHTML = `<div class="hint amber">${esc(friendlyErr(e))}</div>`; }));
     S.renderStaff = () => {
-        $('staffList').innerHTML = S.staff.map(p => {
+        const card = p => {
             const me = p.uid === S.me.uid, off = p.active === false, byEmail = (p.loginId || '').includes('@');
-            const login = byEmail ? esc(p.loginId) : '📱 ' + esc(prettyPhone(p.loginId || ''));
-            return `<div class="staff-line" style="flex-wrap:wrap;">
-                <div class="staff-av">${esc((p.name || '?').charAt(0).toUpperCase())}</div>
-                <div style="flex:1;min-width:150px;">
-                    <div style="font-size:0.85rem;font-weight:800;">${esc(p.name)}${me ? ' <span style="font-size:0.65rem;color:var(--gray);">(you)</span>' : ''}</div>
-                    <div style="font-size:0.68rem;color:var(--gray);">${login} · <span class="role-pill ${off ? 'off' : p.role}">${off ? 'switched off' : p.role}</span></div>
-                    ${cashStatText(p.uid)}
-                </div>
-                ${me ? `<button class="tiny-btn" onclick="openPin()">🔑 My PIN</button>` : `<div style="display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end;">
-                    <button class="tiny-btn" onclick="resetStaffPin('${p.uid}')">🔑 ${byEmail ? 'Email reset' : 'Reset PIN'}</button>
-                    <button class="tiny-btn" onclick="toggleRole('${p.uid}')">${p.role === 'admin' ? '↓ Cashier' : '↑ Admin'}</button>
-                    <button class="tiny-btn ${off ? '' : 'red'}" onclick="toggleStaff('${p.uid}')">${off ? 'Switch on' : 'Switch off'}</button></div>`}
+            const login = byEmail ? '✉️ ' + esc(p.loginId) : '📱 ' + esc(prettyPhone(p.loginId || ''));
+            return `<div class="tm-card ${off ? 'off' : ''}">
+                <div class="tm-top"><div class="staff-av ${p.role === 'admin' ? 'adm' : ''}">${esc((p.name || '?').charAt(0).toUpperCase())}</div>
+                    <div style="flex:1;min-width:0;"><div class="tm-name">${esc(p.name)}${me ? ' <small>(you)</small>' : ''}</div><div class="tm-sub">${login}</div>${cashStatText(p.uid)}</div>
+                    <span class="role-pill ${off ? 'off' : p.role}">${off ? 'Off' : p.role === 'admin' ? 'Admin' : 'Seller'}</span></div>
+                <div class="tm-acts">${me ? `<button onclick="openPin()">🔑 Change my PIN</button>` : off
+                    ? `<button class="go" data-u="${p.uid}" onclick="toggleStaff(this.dataset.u)">✅ Switch on</button>`
+                    : `<button data-u="${p.uid}" onclick="resetStaffPin(this.dataset.u)">🔑 ${byEmail ? 'Email reset' : 'Reset PIN'}</button>
+                       <button data-u="${p.uid}" onclick="toggleRole(this.dataset.u)">${p.role === 'admin' ? '⬇️ Make seller' : '👑 Make admin'}</button>
+                       <button class="stop" data-u="${p.uid}" onclick="toggleStaff(this.dataset.u)">⛔ Switch off</button>`}</div>
             </div>`;
-        }).join('') + `<div style="font-size:0.68rem;color:var(--gray);margin-top:8px;">Sellers sign in with their phone number and PIN.</div>`;
-        $('planUsage').textContent = planUsageText();
+        };
+        const on = S.staff.filter(p => p.active !== false), off = S.staff.filter(p => p.active === false);
+        $('staffList').innerHTML = on.map(card).join('') +
+            (off.length ? `<details class="tm-off"><summary>Switched off (${off.length})</summary>${off.map(card).join('')}</details>` : '');
+        const lim = (S.tenantInfo.limits || {}).maxStaff;
+        $('planUsage').innerHTML = `<b>${usedStaff()}</b> of ${lim || '∞'} staff logins used${lim && usedStaff() >= lim ? ' · <span style="color:var(--red);">plan full</span>' : ''}`;
     };
 }
 
@@ -4834,7 +4925,7 @@ async function addStaff() {
         b.set(db.collection('logins').doc(phone), { email, shop: S.tenant, uid });
         usageAdd(b, 'staff', uid);
         await b.commit();
-        ['stName', 'stPhone', 'stPin'].forEach(id => $(id).value = '');
+        toggleAddStaff(false);
         await sendLoginDetails(name, phone, pin, true);
     } catch (e) {
         toast('⚠️ ' + friendlyErr(e), 'err');
@@ -4887,10 +4978,11 @@ function toggleRole(uid) {
     col('staff').doc(uid).update({ role }).then(() => toast(`${p.name} is now ${role}`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
 function saveSettings() {
-    const settings = { dailyTarget: num($('setTarget').value), whatsapp: normPhone($('setWa').value),
-        phone: normPhone($('setPhone').value), address: $('setAddr').value.trim(), footer: $('setFooter').value.trim(),
-        maxDiscount: Math.min(100, Math.max(0, num($('setMaxDisc').value))), cashierCredit: $('setCredit').checked, cashierReturns: $('setReturns').checked, cashierManual: $('setManual').checked, cashierCloseDay: $('setCloseDay').checked, cashierExpenses: $('setExpenses').checked };
-    tRef().update({ settings }).then(() => toast('✅ Settings saved')).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
+    const wa = $('setWa').value.trim();
+    if (wa && !/^\d{10,15}$/.test(normPhone(wa))) return toast('⚠️ WhatsApp number looks wrong — e.g. 0712 345 678.', 'err');
+    const upd = { 'settings.dailyTarget': num($('setTarget').value), 'settings.whatsapp': normPhone(wa),
+        'settings.phone': normPhone($('setPhone').value), 'settings.address': $('setAddr').value.trim(), 'settings.footer': $('setFooter').value.trim() };
+    tRef().update(upd).then(() => toast('✅ Shop details saved')).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
 
 // ════════════════════════════════════════════════
