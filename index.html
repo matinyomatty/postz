@@ -637,7 +637,7 @@
             <button class="link-btn hidden" id="otherAccountBtn" onclick="otherAccount()">Use another account</button>
         </div>
         <div style="text-align:center;font-size:.72rem;margin-top:12px;"><a href="help.html" style="color:#6b7280;font-weight:700;text-decoration:none;">❓ Help · FAQ · Terms</a></div>
-        <div style="text-align:center;font-size:.62rem;color:#9ca3af;margin-top:6px;">Keep v23</div>
+        <div style="text-align:center;font-size:.62rem;color:#9ca3af;margin-top:6px;">Keep v24</div>
     </div>
 </div>
 
@@ -1305,9 +1305,15 @@
             </div>
             <div class="tm-box">
                 <div class="tm-box-title">🧾 On customer receipts</div>
+                <div class="field-group"><span class="field-label">Shop logo</span>
+                    <div id="logoBox" style="text-align:center;"></div>
+                    <input type="file" id="logoFile" accept="image/png,image/jpeg,image/webp" class="hidden" onchange="pickLogo(this)">
+                </div>
                 <div class="field-group"><span class="field-label">Shop phone</span><input type="tel" id="setPhone" placeholder="07XX XXX XXX"></div>
                 <div class="field-group"><span class="field-label">Address / TIN</span><input type="text" id="setAddr" placeholder="e.g. Mwanakwerekwe, Zanzibar · TIN 123-456-789"></div>
                 <div class="field-group"><span class="field-label">Footer message</span><input type="text" id="setFooter" placeholder="e.g. Goods once sold cannot be returned without receipt"></div>
+                <div class="field-group"><span class="field-label">Receipt paper</span><select id="setPaper"><option value="80">80 mm (standard receipt printer)</option><option value="58">58 mm (small / Bluetooth printer)</option></select></div>
+                <button class="btn-sec wide" style="margin-top:4px;" onclick="previewReceipt()">🧾 PREVIEW A SAMPLE RECEIPT</button>
             </div>
             <button class="primary-cta" onclick="saveSettings()">💾 SAVE SHOP DETAILS</button>
             <div class="hint" style="margin-top:14px;">🛟 <b>Backup:</b> download a full copy of your shop's records (items, sales, customers, stock history, money, cash-ups). Keep it somewhere safe — do it every week.</div>
@@ -1440,7 +1446,7 @@ const ENTRY_COLORS = {
 
 firebase.initializeApp(firebaseConfig);
 // App version — shown on the sign-in screen and saved on each sale, so you can tell when every till has updated.
-const APP_VERSION = 23;
+const APP_VERSION = 24;
 // App Check: proves requests come from the real Keep app, not a script. Paste your reCAPTCHA v3 SITE key
 // between the quotes to switch it on (see the setup guide). Empty = off.
 const APP_CHECK_SITE_KEY = '';
@@ -3964,49 +3970,199 @@ function receiptText(s) {
     L.push('Asante kwa kununua!');
     return L.join('\n');
 }
-function receiptPdf(s) {
+// ── Receipt PDF — 80 mm or 58 mm roll (owner picks in Settings → Shop); also reads well on a phone ──
+// Drawn twice: once to measure the height, then for real on a page cut to fit.
+function receiptPdf(s, opts = {}) {
     if (!window.jspdf) return toast('PDF tool did not load — check your connection.', 'err');
     const st = S.tenantInfo.settings || {}, { jsPDF } = window.jspdf;
-    const lines = (s.items || []).reduce((a, i) => a + 2 + (i.serials || []).length + (i.warrantyMonths ? 1 : 0), 0);
-    const H = 70 + lines * 4.6 + (s.customer ? 5 : 0) + (st.footer ? 8 : 0);
-    const doc = new jsPDF({ unit: 'mm', format: [80, Math.max(110, H)] }), W = 80;
-    let y = 9;
-    const c = (t, size = 8, bold = false) => { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(size); doc.text(String(t), W / 2, y, { align: 'center' }); y += size * 0.5; };
-    const lr = (l, r, bold = false) => { doc.setFont('helvetica', bold ? 'bold' : 'normal'); doc.setFontSize(bold ? 9 : 7.5); doc.text(String(l), 5, y); doc.text(String(r), W - 5, y, { align: 'right' }); y += bold ? 5 : 4; };
-    const rule = () => { doc.setDrawColor(180); doc.setLineDashPattern([1, 1], 0); doc.line(5, y - 2, W - 5, y - 2); y += 2; };
-    c((S.tenantInfo.name || '').toUpperCase(), 12, true); y += 1;
-    if (st.address) c(st.address, 7);
-    if (st.phone) c('Tel: ' + prettyPhone(st.phone), 7);
-    y += 2; rule();
-    if (s.kind === 'return') { c('RETURN / REFUND', 9, true); y += 1; lr('Original receipt', s.refReceipt || ''); }
-    lr('Receipt', s.receiptNo || ''); lr('Date', `${new Date(tms(s.createdAt) || Date.now()).toLocaleDateString('en-GB')} ${timeOf(s.createdAt)}`);
-    if (s.customer) lr('Customer', s.customer.name);
-    lr('Served by', s.staffName || ''); rule();
-    (s.items || []).forEach(i => {
-        doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5); doc.text(doc.splitTextToSize(i.name, 70)[0], 5, y); y += 4;
-        lr(`  ${qtyTxt(i.qty, { unit: i.unit })} x ${n0(i.unitPrice)}`, n0(i.subtotal));
-        (i.serials || []).forEach(x => { doc.setFont('helvetica', 'normal'); doc.setFontSize(6.5); doc.text('  S/N: ' + x, 5, y); y += 3.6; });
-        if (i.warrantyMonths) { doc.setFontSize(6.5); doc.text(`  Warranty ${i.warrantyMonths} months, to ${warrantyEnd(s, i).toLocaleDateString('en-GB')}`, 5, y); y += 3.6; }
-        y += 0.6;
-    });
-    rule();
-    if (s.kind === 'return') {
-        lr('REFUND TZS', n0(s.total), true);
-        if (s.cash) lr('Cash given back', n0(-s.cash));
-        if (s.mobile) lr('Lipa kwa Simu', n0(-s.mobile));
-        if (s.credit) lr('Off customer balance', n0(-s.credit));
-    } else {
-    if (s.discount) lr('Discount', '-' + n0(s.discount));
-    lr('TOTAL TZS', n0(s.total), true);
-    if (s.cash) lr('Cash', n0(s.cash));
-    if (s.mobile) lr('Lipa kwa Simu', n0(s.mobile));
-    if (s.credit) lr('On credit (owed)', n0(s.credit));
-    }
-    if (s.voided) { doc.setTextColor(220, 38, 38); doc.setFontSize(22); doc.setFont('helvetica', 'bold'); doc.text('VOID', W / 2, y + 4, { align: 'center' }); doc.setTextColor(0); y += 10; }
-    y += 3;
-    if (st.footer) { doc.setFontSize(6.5); doc.setFont('helvetica', 'normal'); doc.splitTextToSize(st.footer, 70).forEach(t => { doc.text(t, W / 2, y, { align: 'center' }); y += 3.4; }); }
-    c('Asante kwa kununua!', 7.5, true);
+    const narrow = Number(opts.paperWidth || st.paperWidth) === 58;
+    const W = narrow ? 58 : 80, M = narrow ? 3.5 : 5, R = W - M, CW = W - 2 * M;
+    const k = narrow ? 0.9 : 1;                      // text scale; smallest text never below 6.6 pt
+    const fs = n => Math.max(6.6, n * k);
+    const isRet = s.kind === 'return', when = new Date(tms(s.createdAt) || Date.now());
+    const logo = st.logo || null;
+    const date = when.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + '  ' + when.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const xQty = M + CW * 0.66;                      // right edge of the QTY column
+
+    const draw = doc => {
+        let y = narrow ? 5.5 : 7;
+        const font = (size, style = 'normal', gray = 0) => { doc.setFont('helvetica', style); doc.setFontSize(fs(size)); doc.setTextColor(gray); };
+        const lh = size => fs(size) * 0.42;
+        const center = (t, size, style, gray, gap) => { font(size, style, gray); doc.splitTextToSize(String(t), CW).forEach(l => { doc.text(l, W / 2, y, { align: 'center' }); y += lh(size); }); y += gap || 0; };
+        const row = (l, r, size = 7.5, style = 'normal', gray = 0) => {
+            font(size, style, gray);
+            const rw = doc.getTextWidth(String(r)), left = doc.splitTextToSize(String(l), Math.max(10, CW - rw - 2));
+            doc.text(String(r), R, y, { align: 'right' });
+            left.forEach((t, i) => { doc.text(t, M, y); if (i < left.length - 1) y += lh(size); });
+            y += lh(size) + 0.9;
+        };
+        const label = t => { font(6.8, 'bold', 40); doc.setCharSpace(0.3); doc.text(t, M, y); doc.setCharSpace(0); y += lh(6.8) + 1; };
+        const rule = (w = 0.2, dash) => { doc.setDrawColor(0); doc.setLineWidth(w); doc.setLineDashPattern(dash || [], 0); doc.line(M, y, R, y); doc.setLineDashPattern([], 0); };
+
+        // ─ Header
+        if (logo) {
+            try {
+                const p = doc.getImageProperties(logo), maxW = CW * 0.68, maxH = narrow ? 16 : 20;
+                const f = Math.min(maxW / p.width, maxH / p.height), w = p.width * f, h = p.height * f;
+                doc.addImage(logo, p.fileType || 'PNG', (W - w) / 2, y - 2, w, h); y += h + 2.6;
+            } catch (e) { /* unreadable logo — skip */ }
+        }
+        if (!(logo && st.logoHasName)) center((S.tenantInfo.name || '').toUpperCase(), narrow ? 11.5 : 12.5, 'bold', 0, 0.6);
+        if (st.address) center(st.address, 7.2, 'normal', 35);
+        if (st.phone) center('Tel ' + prettyPhone(st.phone), 7.2, 'normal', 35);
+        y += 2; rule(0.6); y += 4.6;
+
+        // ─ Title, number, details
+        font(narrow ? 8.5 : 9, 'bold'); doc.setCharSpace(narrow ? 0.3 : 0.6);
+        doc.text(isRet ? (narrow ? 'RETURN' : 'RETURN RECEIPT') : 'RECEIPT', M, y); doc.setCharSpace(0);
+        doc.text(String(s.receiptNo || ''), R, y, { align: 'right' }); y += 4.8;
+        row('Date', date, 7.5, 'normal', 25);
+        if (isRet) row('Original receipt', s.refReceipt || '', 7.5, 'normal', 25);
+        row('Served by', s.staffName || '', 7.5, 'normal', 25);
+        if (s.customer) {
+            row('Customer', s.customer.name, 7.5, 'normal', 25);
+            if (s.customer.phone) row('Phone', prettyPhone(s.customer.phone), 7.5, 'normal', 25);
+        }
+        y += 1; rule(0.2); y += 4;
+
+        // ─ Items
+        font(6.8, 'bold', 40); doc.text('ITEM', M, y); doc.text('QTY', xQty, y, { align: 'right' }); doc.text('AMOUNT', R, y, { align: 'right' }); y += 2.2;
+        rule(0.15, [0.6, 0.6]); y += 3.9;
+        (s.items || []).forEach(i => {
+            font(8, 'bold');
+            const nameW = xQty - M - (narrow ? 7 : 10);
+            const name = doc.splitTextToSize(i.name, nameW).slice(0, 2);
+            name.forEach((t, n) => {
+                doc.text(t, M, y);
+                if (n === 0) { font(8, 'normal'); doc.text(qtyTxt(i.qty, { unit: i.unit }), xQty, y, { align: 'right' }); font(8, 'bold'); doc.text(n0(i.subtotal), R, y, { align: 'right' }); }
+                y += lh(8) + 0.2;
+            });
+            font(7, 'normal', 40);
+            const was = !isRet && i.listPrice && i.listPrice > i.unitPrice ? `   was ${n0(i.listPrice)}` : '';
+            doc.text(`@ ${n0(i.unitPrice)}${was}`, M, y); y += lh(7) + 0.4;
+            (i.serials || []).forEach(x => { doc.setFont('courier', 'bold'); doc.setFontSize(fs(7.2)); doc.setTextColor(0); doc.text('S/N ' + x, M + 1, y); y += lh(7.2) + 0.3; });
+            y += 1.6;
+        });
+        rule(0.2); y += 4.4;
+
+        // ─ Total: between two strong lines (prints reliably, looks light on screen)
+        const big = (l, r) => {
+            rule(0.7); y += 5.4;
+            font(9, 'bold'); doc.setCharSpace(0.4); doc.text(l, M, y); doc.setCharSpace(0);
+            font(narrow ? 12 : 13.5, 'bold'); doc.text(r, R, y + 0.3, { align: 'right' });
+            y += 3.2; rule(0.7); y += 4.6;
+        };
+        if (isRet) {
+            big('REFUND', 'TZS ' + n0(s.total));
+            if (s.cash) row('Cash given back', n0(-s.cash), 7.6, 'normal', 15);
+            if (s.mobile) row('Sent by Lipa kwa Simu', n0(-s.mobile), 7.6, 'normal', 15);
+            if (s.credit) row('Taken off your balance', n0(-s.credit), 7.6, 'normal', 15);
+        } else {
+            if (s.discount) { row('Subtotal', n0((s.total || 0) + (s.discount || 0)), 7.5, 'normal', 25); row('Discount', '- ' + n0(s.discount), 7.5, 'normal', 25); y += 0.6; }
+            big('TOTAL', 'TZS ' + n0(s.total));
+            label('PAID BY');
+            if (s.cash) row('Cash', n0(s.cash), 7.6, 'normal', 15);
+            if (s.mobile) row('Lipa kwa Simu', n0(s.mobile), 7.6, 'normal', 15);
+            if (s.credit) row('On credit — to pay', n0(s.credit), 7.8, 'bold', 0);
+            if (s.discount) { y += 0.8; center(`You saved TZS ${n0(s.discount)}`, 7.4, 'bold', 0); }
+        }
+        // ─ Warranty card
+        const wItems = isRet ? [] : (s.items || []).filter(i => i.warrantyMonths);
+        if (wItems.length) {
+            y += 2.6; const top = y;
+            y += 4.6; font(8, 'bold'); doc.setCharSpace(0.5); doc.text('WARRANTY', M + 2.6, y); doc.setCharSpace(0); y += 4.2;
+            wItems.forEach(i => {
+                font(7.6, 'bold'); doc.splitTextToSize(i.name, CW - 5).slice(0, 2).forEach(t => { doc.text(t, M + 2.6, y); y += lh(7.6) + 0.2; });
+                (i.serials || []).forEach(x => { doc.setFont('courier', 'bold'); doc.setFontSize(fs(7.2)); doc.setTextColor(0); doc.text('S/N ' + x, M + 2.6, y); y += lh(7.2) + 0.3; });
+                font(7.2, 'normal', 15); doc.splitTextToSize(`${i.warrantyMonths} month${i.warrantyMonths > 1 ? 's' : ''} · valid until ${warrantyEnd(s, i).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}`, CW - 5).forEach(t => { doc.text(t, M + 2.6, y); y += lh(7.2); });
+                y += 1.6;
+            });
+            font(6.8, 'normal', 40); doc.splitTextToSize('Bring this receipt for any warranty claim.', CW - 5).forEach(t => { doc.text(t, M + 2.6, y); y += lh(6.8); });
+            y += 0.8;
+            doc.setDrawColor(0); doc.setLineWidth(0.35); doc.setLineDashPattern([1.2, 0.8], 0);
+            doc.roundedRect(M, top, CW, y - top, 1.6, 1.6); doc.setLineDashPattern([], 0); y += 2;
+        }
+
+        // ─ Void stamp
+        if (s.voided) {
+            y += 3; doc.setDrawColor(220, 38, 38); doc.setLineWidth(0.8); doc.rect(W / 2 - 16, y - 6, 32, 10);
+            doc.setTextColor(220, 38, 38); doc.setFont('helvetica', 'bold'); doc.setFontSize(16); doc.text('VOID', W / 2, y + 1.6, { align: 'center' }); y += 9;
+        }
+
+        // ─ Footer
+        y += 4;
+        if (st.footer) center(st.footer, 7.2, 'italic', 25, 1.2);
+        center('Asante kwa kununua!', 8.6, 'bold', 0, 1.6);
+        center('Not a tax (EFD) receipt', 6.8, 'normal', 50, 0.4);
+        center('Receipt by Keep', 6.6, 'normal', 90);
+        return y + 3;
+    };
+    const probe = new jsPDF({ unit: 'mm', format: [W, 1000] });
+    const H = draw(probe);
+    const doc = new jsPDF({ unit: 'mm', format: [W, Math.max(narrow ? 70 : 90, H)] });
+    draw(doc);
+    if (opts.returnDoc) return doc;
     doc.save(`${s.receiptNo || 'receipt'}.pdf`);
+}
+
+// ── Shop logo (owner): picked from the phone, shrunk and stored with the shop ──
+function renderLogoBox() {
+    const lg = (S.tenantInfo.settings || {}).logo, box = $('logoBox'); if (!box) return;
+    box.innerHTML = lg
+        ? `<img src="${lg}" alt="Shop logo" style="max-width:120px;max-height:64px;display:block;margin:0 auto 8px;">
+           <label style="display:flex;gap:8px;align-items:center;justify-content:center;font-size:.75rem;margin:0 0 8px;"><input type="checkbox" ${(S.tenantInfo.settings || {}).logoHasName ? 'checked' : ''} onchange="setLogoHasName(this.checked)"> My logo already shows the shop name</label>
+           <div class="row-btns"><button class="btn-sec" onclick="$('logoFile').click()">🔁 Change logo</button><button class="btn-sec" onclick="removeLogo()">🗑️ Remove</button></div>`
+        : `<div style="font-size:.75rem;color:var(--gray);margin-bottom:8px;">No logo yet. It is printed at the top of receipts.</div>
+           <button class="btn-sec wide" onclick="$('logoFile').click()">📷 UPLOAD LOGO</button>`;
+}
+function pickLogo(input) {
+    const f = input.files && input.files[0]; input.value = '';
+    if (!f) return;
+    if (!/^image\//.test(f.type)) return toast('⚠️ Choose a picture (PNG or JPG).', 'err');
+    if (f.size > 8 * 1024 * 1024) return toast('⚠️ That picture is too big (over 8 MB).', 'err');
+    const r = new FileReader();
+    r.onload = () => {
+        const img = new Image();
+        img.onload = () => {
+            // fit inside 480 × 240, keep the shape
+            const k = Math.min(1, 480 / img.width, 240 / img.height), w = Math.max(1, Math.round(img.width * k)), h = Math.max(1, Math.round(img.height * k));
+            const cv = document.createElement('canvas'); cv.width = w; cv.height = h;
+            const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0, w, h);
+            let data = cv.toDataURL('image/png');
+            if (data.length > 180000) {           // big photo-like logo: white background + JPEG
+                const c2 = document.createElement('canvas'); c2.width = w; c2.height = h;
+                const x2 = c2.getContext('2d'); x2.fillStyle = '#fff'; x2.fillRect(0, 0, w, h); x2.drawImage(cv, 0, 0);
+                data = c2.toDataURL('image/jpeg', 0.85);
+            }
+            if (data.length > 300000) return toast('⚠️ This logo is too detailed. Try a simpler PNG.', 'err');
+            loader(true, 'SAVING LOGO...');
+            tRef().update({ 'settings.logo': data }).then(() => {
+                S.tenantInfo.settings = { ...(S.tenantInfo.settings || {}), logo: data }; renderLogoBox(); toast('✅ Logo saved — it now prints on receipts');
+            }).catch(e => toast('⚠️ ' + friendlyErr(e), 'err')).finally(() => loader(false));
+        };
+        img.onerror = () => toast('⚠️ Could not read that picture.', 'err');
+        img.src = r.result;
+    };
+    r.readAsDataURL(f);
+}
+function setLogoHasName(on) {
+    tRef().update({ 'settings.logoHasName': !!on }).then(() => { S.tenantInfo.settings = { ...(S.tenantInfo.settings || {}), logoHasName: !!on }; toast(on ? 'The shop name will not be repeated under the logo' : 'The shop name will print under the logo'); }).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
+}
+async function removeLogo() {
+    if (!await showConfirm('Remove the shop logo from receipts?', 'Remove')) return;
+    tRef().update({ 'settings.logo': FV.delete() }).then(() => {
+        if (S.tenantInfo.settings) delete S.tenantInfo.settings.logo; renderLogoBox(); toast('Logo removed');
+    }).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
+}
+// A sample receipt, so the owner can see their logo and details before a real sale
+function previewReceipt() {
+    const P = (S.products || []).filter(p => !p.trackSerial).slice(0, 2);
+    const items = P.length ? P.map((p, k) => ({ name: p.name, unit: unitOf(p), qty: k + 1, unitPrice: Number(p.sellPrice) || 1000, listPrice: Number(p.sellPrice) || 1000, subtotal: (k + 1) * (Number(p.sellPrice) || 1000) }))
+        : [{ name: 'Sample item', unit: 'pc', qty: 2, unitPrice: 2500, listPrice: 2500, subtotal: 5000 }];
+    items.push({ name: 'Sample phone (warranty)', unit: 'pc', qty: 1, unitPrice: 250000, listPrice: 250000, subtotal: 250000, serials: ['356789104455221'], warrantyMonths: 12 });
+    const total = items.reduce((a, i) => a + i.subtotal, 0);
+    const pw = $('setPaper') ? Number($('setPaper').value) : 0;
+    receiptPdf({ kind: 'pos', receiptNo: 'SAMPLE-0001', items, total, cash: total, mobile: 0, credit: 0, discount: 0, staffName: S.me ? S.me.name : '', customer: { name: 'Sample Customer', phone: '' }, createdAt: { toMillis: () => Date.now(), toDate: () => new Date() } }, { paperWidth: pw });
 }
 async function receiptMenu(s) {
     if (!s) return;
@@ -4868,7 +5024,7 @@ function openTeam() {
     loadCashStats().then(() => { if ($('sheetTeam').classList.contains('active') && S.renderStaff) S.renderStaff(); });
     const st = S.tenantInfo.settings || {};
     $('setTarget').value = st.dailyTarget || ''; $('setWa').value = st.whatsapp ? prettyPhone(st.whatsapp) : '';
-    $('setPhone').value = st.phone ? prettyPhone(st.phone) : ''; $('setAddr').value = st.address || ''; $('setFooter').value = st.footer || '';
+    $('setPhone').value = st.phone ? prettyPhone(st.phone) : ''; $('setAddr').value = st.address || ''; $('setFooter').value = st.footer || ''; $('setPaper').value = String(st.paperWidth || 80); renderLogoBox();
     $('setMaxDisc').value = st.maxDiscount ?? 10; $('setCredit').checked = !!st.cashierCredit; $('setReturns').checked = !!st.cashierReturns; $('setManual').checked = !!st.cashierManual; $('setCloseDay').checked = !!st.cashierCloseDay; $('setExpenses').checked = !!st.cashierExpenses;
     toggleAddStaff(false);
     openSheet('sheetTeam'); teamTab(S.teamTab || 'team');
@@ -5085,7 +5241,7 @@ function saveSettings() {
     const wa = $('setWa').value.trim();
     if (wa && !/^\d{10,15}$/.test(normPhone(wa))) return toast('⚠️ WhatsApp number looks wrong — e.g. 0712 345 678.', 'err');
     const upd = { 'settings.dailyTarget': num($('setTarget').value), 'settings.whatsapp': normPhone(wa),
-        'settings.phone': normPhone($('setPhone').value), 'settings.address': $('setAddr').value.trim(), 'settings.footer': $('setFooter').value.trim() };
+        'settings.phone': normPhone($('setPhone').value), 'settings.address': $('setAddr').value.trim(), 'settings.footer': $('setFooter').value.trim(), 'settings.paperWidth': Number($('setPaper').value) || 80 };
     tRef().update(upd).then(() => toast('✅ Shop details saved')).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
 

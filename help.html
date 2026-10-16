@@ -258,7 +258,7 @@ en: () => `
 <h3>🏪 Shop</h3>
 <ul><li><b>Owner's WhatsApp number</b> — where day summaries and cash-ups are sent.</li>
 <li><b>Daily sales target</b> — shown as a progress bar on the dashboard.</li>
-<li><b>On customer receipts:</b> shop phone, address / TIN, footer message.</li>
+<li><b>On customer receipts:</b> <b>shop logo</b> (📷 Upload logo — tick “My logo already shows the shop name” if it does), shop phone, address / TIN, footer message, and <b>receipt paper</b> (80 mm or 58 mm printer). Tap <span class="k">🧾 Preview a sample receipt</span> to check it.</li>
 <li><span class="k">⬇️ DOWNLOAD FULL BACKUP</span> — a complete copy of your shop's records.</li>
 <li><span class="k">❓ Help · FAQ · Terms</span> — this page.</li></ul>
 <h3>💳 Plan</h3><p>See section 12.</p></div>
@@ -420,7 +420,7 @@ sw: () => `
 <h3>🏪 Shop</h3>
 <ul><li><b>Namba ya WhatsApp ya mmiliki</b> — muhtasari wa siku na hesabu za zamu hutumwa huko.</li>
 <li><b>Lengo la mauzo ya siku</b> — linaonyeshwa kama mstari wa maendeleo kwenye dashibodi.</li>
-<li><b>Kwenye risiti za wateja:</b> simu ya duka, anwani / TIN, ujumbe wa chini.</li>
+<li><b>Kwenye risiti za wateja:</b> <b>nembo ya duka</b> (📷 Upload logo — weka tiki “My logo already shows the shop name” kama nembo ina jina), simu ya duka, anwani / TIN, ujumbe wa chini, na <b>karatasi ya risiti</b> (printa ya 80 mm au 58 mm). Gusa <span class="k">🧾 Preview a sample receipt</span> kuiona.</li>
 <li><span class="k">⬇️ DOWNLOAD FULL BACKUP</span> — nakala kamili ya kumbukumbu za duka lako.</li>
 <li><span class="k">❓ Help · FAQ · Terms</span> — ukurasa huu.</li></ul>
 <h3>💳 Plan</h3><p>Angalia sehemu ya 12.</p></div>
@@ -470,6 +470,7 @@ ${[
 ["How do I get the daily summary on WhatsApp?", "Put the owner's WhatsApp number in 🏪 Shop. When the day is closed (by you, or by the last seller if allowed), Keep prepares the summary to send."],
 ["What are the coloured bars at the top?", "Alerts for the owner: cash-ups waiting to be checked, deliveries to confirm, items below zero, things that were not saved, a wrong phone clock, or the trial / subscription ending. Tap one to deal with it."],
 ["Can I print receipts?", "Yes. After a sale tap 🧾 Receipt and choose WhatsApp or PDF / print. Add your shop phone, address / TIN and a footer message in 🏪 Shop so they appear on receipts."],
+["Can I put my shop logo on receipts?", "Yes. Owner: your name → ⚙️ Settings → 🏪 Shop → 📷 Upload logo. Choose a PNG or JPG; Keep makes it the right size. If the logo already shows the shop name, tick the box so the name isn't printed twice. Also choose your receipt paper (80 mm or 58 mm) and tap “Preview a sample receipt”."],
 ["How do I check a warranty?", "Tap 🔍 SERIAL and type or scan the serial / IMEI. Keep shows who bought it, when, and whether the warranty (months set on the item) is still valid."],
 ["What is ✨ on the dashboard?", "Business insights: a plain-language review of the last 30 days — profit margin, spending on stock, weekday vs weekend sales, whether sales are rising or falling, and tips."],
 ["What happens when I close a month?", "In 📅 Monthly profit you see the month's sales, stock bought, expenses and profit. Closing the month saves its figures, and you can move part of the profit from bank or cash into savings."],
@@ -503,6 +504,7 @@ ${[
 ["Ninapataje muhtasari wa siku kwa WhatsApp?", "Weka namba ya WhatsApp ya mmiliki kwenye 🏪 Shop. Siku ikifungwa (na wewe, au na muuzaji wa mwisho kama umeruhusu), Keep inaandaa muhtasari wa kutuma."],
 ["Kanda za rangi juu ni nini?", "Taarifa kwa mmiliki: hesabu za zamu zinazosubiri kukaguliwa, mizigo ya kuthibitisha, bidhaa chini ya sifuri, vitu ambavyo havikuhifadhiwa, saa ya simu isiyo sahihi, au majaribio / usajili kukaribia kuisha. Gusa moja kuishughulikia."],
 ["Naweza kuchapisha risiti?", "Ndiyo. Baada ya kuuza gusa 🧾 Receipt na uchague WhatsApp au PDF / print. Weka simu ya duka, anwani / TIN na ujumbe wa chini kwenye 🏪 Shop ili vionekane kwenye risiti."],
+["Naweza kuweka nembo ya duka kwenye risiti?", "Ndiyo. Mmiliki: jina lako → ⚙️ Settings → 🏪 Shop → 📷 Upload logo. Chagua picha ya PNG au JPG; Keep inaipa ukubwa unaofaa. Kama nembo tayari ina jina la duka, weka tiki ili jina lisichapishwe mara mbili. Chagua pia karatasi ya risiti (80 mm au 58 mm) na gusa “Preview a sample receipt”."],
 ["Ninakaguaje waranti?", "Gusa 🔍 SERIAL na uandike au usome serial / IMEI. Keep inaonyesha nani aliinunua, lini, na kama waranti (miezi iliyowekwa kwenye bidhaa) bado ipo."],
 ["✨ kwenye dashibodi ni nini?", "Uchambuzi wa biashara: maelezo rahisi ya siku 30 zilizopita — kiwango cha faida, matumizi ya kununua stoku, mauzo ya siku za kazi na wikendi, kama mauzo yanapanda au kushuka, na ushauri."],
 ["Nini kinatokea ninapofunga mwezi?", "Kwenye 📅 Monthly profit unaona mauzo, stoku iliyonunuliwa, matumizi na faida ya mwezi. Kufunga mwezi kunahifadhi takwimu zake, na unaweza kuhamisha sehemu ya faida kutoka benki au taslimu kwenda akiba."],
