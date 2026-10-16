@@ -615,6 +615,7 @@
             <button class="link-btn" id="forgotBtn" onclick="forgotPin()">Forgot PIN?</button>
             <button class="link-btn hidden" id="otherAccountBtn" onclick="otherAccount()">Use another account</button>
         </div>
+        <div style="text-align:center;font-size:.62rem;color:#9ca3af;margin-top:10px;">Keep v21</div>
     </div>
 </div>
 
@@ -1293,6 +1294,8 @@
                 <div class="field-group"><span class="field-label">Footer message</span><input type="text" id="setFooter" placeholder="e.g. Goods once sold cannot be returned without receipt"></div>
             </div>
             <button class="primary-cta" onclick="saveSettings()">💾 SAVE SHOP DETAILS</button>
+            <div class="hint" style="margin-top:14px;">🛟 <b>Backup:</b> download a full copy of your shop's records (items, sales, customers, stock history, money, cash-ups). Keep it somewhere safe — do it every week.</div>
+            <button class="btn-sec wide" style="margin-top:8px;" onclick="downloadBackup()">⬇️ DOWNLOAD FULL BACKUP</button>
         </div>
 
         <!-- PLAN -->
@@ -1385,6 +1388,7 @@
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-check-compat.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 
@@ -1418,6 +1422,15 @@ const ENTRY_COLORS = {
 };
 
 firebase.initializeApp(firebaseConfig);
+// App version — shown on the sign-in screen and saved on each sale, so you can tell when every till has updated.
+const APP_VERSION = 21;
+// App Check: proves requests come from the real Keep app, not a script. Paste your reCAPTCHA v3 SITE key
+// between the quotes to switch it on (see the setup guide). Empty = off.
+const APP_CHECK_SITE_KEY = '';
+if (APP_CHECK_SITE_KEY && firebase.appCheck) {
+    try { firebase.appCheck().activate(new firebase.appCheck.ReCaptchaV3Provider(APP_CHECK_SITE_KEY), true); }
+    catch (e) { console.warn('App Check not started:', e); }
+}
 const auth = firebase.auth();
 const db = firebase.firestore();
 // Keep data on the device so the till keeps working when the internet drops.
@@ -1432,6 +1445,10 @@ function usageDel(b, kind, id) { if (S.usage) b.update(usageRef(), { [`${kind}.$
 const usedItems = () => S.usage ? Object.keys(S.usage.products || {}).length : S.products.length;
 const usedStaff = () => S.usage ? Object.keys(S.usage.staff || {}).length : (S.staff || []).filter(p => p.active !== false).length;
 const now = () => FV.serverTimestamp();
+// Every change a seller makes to stock, a customer's debt, the cash/mobile balances or the day totals
+// carries a link to the record that caused it (a sale, a stock movement, a delivery or an expense).
+// The database rules check the amounts against that record, so numbers can't be edited on their own.
+const src = (c, id) => ({ c, id });
 
 // ════════════════════════════════════════════════
 //  STATE
@@ -2316,19 +2333,21 @@ async function confirmSale() {
     const ref = col('sales').doc();
     const receiptNo = 'R' + day.slice(2).replace(/-/g, '') + '-' + ref.id.slice(0, 4).toUpperCase();
     const cust = S.saleCustomer ? { id: S.saleCustomer.id, name: S.saleCustomer.name, phone: S.saleCustomer.phone || '' } : null;
+    const lineOf = {}; items.forEach((i, ix) => { lineOf[i.productId] = ix; });
     const sale = {
-        kind: 'pos', items, subtotal: list, discount: Math.max(0, list - total), saleDiscount: disc, total, cash, mobile, credit,
+        kind: 'pos', appV: APP_VERSION, items, lineOf, subtotal: list, discount: Math.max(0, list - total), saleDiscount: disc, total, cash, mobile, credit,
         customer: cust, serials: allSerials, receiptNo, day, month, voided: false, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
     };
     const b = db.batch();
     b.set(ref, sale);
-    items.forEach(i => b.update(col('products').doc(i.productId), { stock: inc(-i.qty), updatedAt: now() }));
-    const dayUp = { day, month, sales: inc(total), cash: inc(cash), mobile: inc(mobile), txCount: inc(1), updatedAt: now() };
+    const why = src('sales', ref.id);
+    items.forEach(i => b.update(col('products').doc(i.productId), { stock: inc(-i.qty), src: why, updatedAt: now() }));
+    const dayUp = { day, month, sales: inc(total), cash: inc(cash), mobile: inc(mobile), txCount: inc(1), src: why, updatedAt: now() };
     if (credit) dayUp.credit = inc(credit);
     if (sale.discount) dayUp.discount = inc(sale.discount);
     b.set(col('days').doc(day), dayUp, { merge: true });
-    b.set(col('meta').doc('balances'), { cash: inc(cash), mobile: inc(mobile), updatedAt: now() }, { merge: true });
-    if (cust) b.update(col('customers').doc(cust.id), { balance: inc(credit), totalBought: inc(total), lastSaleAt: now(), updatedAt: now() });
+    b.set(col('meta').doc('balances'), { cash: inc(cash), mobile: inc(mobile), src: why, updatedAt: now() }, { merge: true });
+    if (cust) b.update(col('customers').doc(cust.id), { balance: inc(credit), totalBought: inc(total), lastSaleAt: now(), src: why, updatedAt: now() });
     items.forEach(i => (i.serials || []).forEach(sn => b.set(col('serials').doc(serialId(sn)), {
         serial: sn, productId: i.productId, name: i.name, status: 'sold', saleId: ref.id, soldAt: now(), soldBy: S.me.name,
         customerName: cust ? cust.name : null, updatedAt: now() }, { merge: true })));
@@ -2521,9 +2540,9 @@ function confirmRestock() {
     const paid = isAdmin() ? $('restockPaid').value : '';
     if (paid && cost <= 0) return toast('⚠️ Enter the cost per unit to record the payment.', 'err');
     const day = dayStr();
-    const b = db.batch();
-    b.update(col('products').doc(id), { stock: inc(qty), updatedAt: now() });
-    b.set(col('movements').doc(), {
+    const b = db.batch(), mv = col('movements').doc();
+    b.update(col('products').doc(id), { stock: inc(qty), src: src('movements', mv.id), updatedAt: now() });
+    b.set(mv, {
         productId: id, name: p.name, type: 'restock', qty, unitCost: isAdmin() ? cost : null,
         day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
     });
@@ -2560,13 +2579,15 @@ function confirmStocktake() {
     });
     if (!changes.length) { closeModals(); return toast('No differences found 👍'); }
     const day = dayStr();
-    for (let i = 0; i < changes.length; i += 200) {          // 2 writes per item, 500 max per batch
+    // 10 items per save: the database checks each count against its own movement record,
+    // and it can only look up about 20 records per save.
+    for (let i = 0; i < changes.length; i += 10) {
         const b = db.batch();
-        changes.slice(i, i + 200).forEach(c => {
-            const p = productById(c.id);
-            b.update(col('products').doc(c.id), { stock: inc(q3(c.actual - c.sys)), updatedAt: now() });
-            b.set(col('movements').doc(), {
-                productId: c.id, name: p ? p.name : '', type: 'stocktake', qty: c.actual - c.sys, before: c.sys, after: c.actual,
+        changes.slice(i, i + 10).forEach(c => {
+            const p = productById(c.id), mv = col('movements').doc(), d = q3(c.actual - c.sys);
+            b.update(col('products').doc(c.id), { stock: inc(d), src: src('movements', mv.id), updatedAt: now() });
+            b.set(mv, {
+                productId: c.id, name: p ? p.name : '', type: 'stocktake', qty: d, before: c.sys, after: c.actual,
                 day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
             });
         });
@@ -2588,21 +2609,22 @@ function entryDayField(e) {
 }
 // sign = +1 to apply an entry, -1 to undo it
 function writeEntries(b, entries, sign = 1, refs) {
-    const bal = {}, days = {};
+    const bal = {}, days = {}, made = [];
     entries.forEach((e, i) => {
         const a = (Number(e.amount) || 0) * sign;
         if (e.from) bal[e.from] = (bal[e.from] || 0) - a;
         if (e.to) bal[e.to] = (bal[e.to] || 0) + a;
         const f = entryDayField(e);
         if (f) { days[e.day] = days[e.day] || {}; days[e.day][f] = (days[e.day][f] || 0) + a; }
-        if (sign > 0) b.set(col('entries').doc(), { ...e, month: e.day.slice(0, 7), staffUid: S.me.uid, staffName: S.me.name, createdAt: now() });
+        if (sign > 0) { const r = col('entries').doc(); made.push(r.id); b.set(r, { ...e, month: e.day.slice(0, 7), staffUid: S.me.uid, staffName: S.me.name, createdAt: now() }); }
         else if (refs && refs[i]) b.delete(col('entries').doc(refs[i]));
     });
+    const why = made.length === 1 ? { src: src('entries', made[0]) } : {};
     const bu = {}; Object.entries(bal).forEach(([k, v]) => { if (v) bu[k] = inc(v); });
-    if (Object.keys(bu).length) b.set(col('meta').doc('balances'), { ...bu, updatedAt: now() }, { merge: true });
+    if (Object.keys(bu).length) b.set(col('meta').doc('balances'), { ...bu, ...why, updatedAt: now() }, { merge: true });
     Object.entries(days).forEach(([d, f]) => {
         const du = {}; Object.entries(f).forEach(([k, v]) => du[k] = inc(v));
-        b.set(col('days').doc(d), { day: d, month: d.slice(0, 7), ...du, updatedAt: now() }, { merge: true });
+        b.set(col('days').doc(d), { day: d, month: d.slice(0, 7), ...du, ...why, updatedAt: now() }, { merge: true });
     });
 }
 
@@ -2715,13 +2737,13 @@ function saveManualSale() {
     const day = $('msDate').value, cash = num($('msCash').value), mobile = num($('msMobile').value), total = cash + mobile;
     if (!day) return toast('⚠️ Choose a date.', 'err');
     if (total <= 0) return toast('⚠️ Enter an amount.', 'err');
-    const month = day.slice(0, 7), b = db.batch();
-    b.set(col('sales').doc(), {
+    const month = day.slice(0, 7), b = db.batch(), ref = col('sales').doc(), why = src('sales', ref.id);
+    b.set(ref, {
         kind: 'manual', items: [], total, cash, mobile, day, month, note: $('msNote').value.trim() || 'Manual sale', voided: false,
         staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
     });
-    b.set(col('days').doc(day), { day, month, sales: inc(total), cash: inc(cash), mobile: inc(mobile), updatedAt: now() }, { merge: true });
-    b.set(col('meta').doc('balances'), { cash: inc(cash), mobile: inc(mobile), updatedAt: now() }, { merge: true });
+    b.set(col('days').doc(day), { day, month, sales: inc(total), cash: inc(cash), mobile: inc(mobile), src: why, updatedAt: now() }, { merge: true });
+    b.set(col('meta').doc('balances'), { cash: inc(cash), mobile: inc(mobile), src: why, updatedAt: now() }, { merge: true });
     closeModals();
     commit(b, `✅ Manual sale of ${fmt(total)} recorded`);
 }
@@ -2965,13 +2987,14 @@ async function saveDelivery() {
     const supplier = $('dlSupplier').value.trim(), note = $('dlNote').value.trim();
     const day = dayStr(), ref = col('receipts').doc(), receiptNo = 'D' + day.slice(2).replace(/-/g, '') + '-' + ref.id.slice(0, 4).toUpperCase();
     const confirmed = isAdmin();
-    const doc = { receiptNo, supplier, note, items, total, paidFrom, day, month: day.slice(0, 7), status: confirmed ? 'confirmed' : 'pending',
+    const lineOf = {}; items.forEach((i, ix) => { lineOf[i.productId] = ix; });
+    const doc = { receiptNo, supplier, note, items, lineOf, total, paidFrom, day, month: day.slice(0, 7), status: confirmed ? 'confirmed' : 'pending',
         staffUid: S.me.uid, staffName: S.me.name, createdAt: now() };
     if (confirmed) Object.assign(doc, { reviewedBy: S.me.name, reviewedAt: now(), costsUpdated: items.some(i => i.unitCost != null), paymentRecorded: ['cash', 'mobile', 'bank'].includes(paidFrom) });
     const b = db.batch();
     b.set(ref, doc);
     items.forEach(i => {
-        b.update(col('products').doc(i.productId), { stock: inc(i.qty), updatedAt: now() });
+        b.update(col('products').doc(i.productId), { stock: inc(i.qty), src: src('receipts', ref.id), updatedAt: now() });
         b.set(col('movements').doc(), { productId: i.productId, name: i.name, type: 'restock', qty: i.qty, unitCost: confirmed ? i.unitCost : null, deliveryId: ref.id, day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now() });
         i.serials.forEach(sn => b.set(col('serials').doc(serialId(sn)), { serial: sn, productId: i.productId, name: i.name, status: 'in', receivedAt: now(), receivedBy: S.me.name,
             saleId: null, soldAt: null, soldBy: null, customerName: null, updatedAt: now() }, { merge: true }));
@@ -3488,12 +3511,14 @@ async function confirmReturn() {
     const cash = how === 'cash' ? refund : how === 'debt' ? refund - debt : 0, mobile = how === 'mobile' ? refund : 0;
     const howTxt = [debt ? `<b>${fmt(debt)}</b> off what they owe` : '', cash ? `<b>${fmt(cash)}</b> cash back` : '', mobile ? `<b>${fmt(mobile)}</b> by Lipa kwa Simu` : ''].filter(Boolean).join(' + ');
     if (!await showConfirm(`Return ${picked.map(x => qtyTxt(x.qty, { unit: x.i.unit }) + ' × ' + esc(x.i.name)).join(', ')}?<br><br>Refund ${fmt(refund)}: ${howTxt}.${how === 'debt' && debt < refund ? `<br><span style="font-size:.75rem;color:#6b7280;">They only owed ${fmt(owed)}.</span>` : ''}`, 'Return', 'var(--blue)')) return;
-    const day = dayStr(), ref = col('sales').doc(), b = db.batch();
+    const restockIds = new Set(picked.filter(x => x.where === 'restock' && productById(x.i.productId)).map(x => x.i.productId));
+    if (restockIds.size > 10) return toast('⚠️ Put back at most 10 different items per return — do the rest as a second return.', 'err');
+    const day = dayStr(), ref = col('sales').doc(), b = db.batch(), why = src('sales', ref.id);
     const receiptNo = 'RT' + day.slice(2).replace(/-/g, '') + '-' + ref.id.slice(0, 4).toUpperCase();
     const items = picked.map(x => ({ productId: x.i.productId, name: x.i.name, emoji: x.i.emoji || '', unit: x.i.unit || 'pc', qty: x.qty,
         unitPrice: Math.round(x.i.unitPrice * S.ret.factor), subtotal: Math.round(x.qty * x.i.unitPrice * S.ret.factor), serials: x.serials, restock: x.where === 'restock' }));
     b.set(ref, {
-        kind: 'return', refOf: s.id, refReceipt: s.receiptNo || '', items, total: refund, cash: -cash, mobile: -mobile, credit: -debt,
+        kind: 'return', refOf: s.id, refReceipt: s.receiptNo || '', items, serials: picked.flatMap(x => x.serials), total: refund, cash: -cash, mobile: -mobile, credit: -debt,
         customer: s.customer || null, reason: $('retReason').value.trim(), receiptNo, day, month: day.slice(0, 7), voided: false,
         staffUid: S.me.uid, staffName: S.me.name, createdAt: now()
     });
@@ -3502,23 +3527,27 @@ async function confirmReturn() {
     const allSer = picked.flatMap(x => x.serials);
     if (allSer.length) saleUp.returnedSerials = FV.arrayUnion(...allSer);
     b.update(col('sales').doc(s.id), saleUp);
+    // One stock change per item (added up if the same item is returned from two lines), each linked to its movement record
+    const back = {};
+    picked.forEach(x => { if (x.where === 'restock' && productById(x.i.productId)) back[x.i.productId] = { name: x.i.name, qty: q3((back[x.i.productId] ? back[x.i.productId].qty : 0) + x.qty) }; });
+    Object.entries(back).forEach(([pid, r]) => {
+        const mv = col('movements').doc();
+        b.update(col('products').doc(pid), { stock: inc(r.qty), src: src('movements', mv.id), updatedAt: now() });
+        b.set(mv, { productId: pid, name: r.name, type: 'return', qty: r.qty, saleId: ref.id, day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now() });
+    });
     picked.forEach(x => {
-        if (x.where === 'restock' && productById(x.i.productId)) {
-            b.update(col('products').doc(x.i.productId), { stock: inc(x.qty), updatedAt: now() });
-            b.set(col('movements').doc(), { productId: x.i.productId, name: x.i.name, type: 'return', qty: x.qty, day, staffUid: S.me.uid, staffName: S.me.name, createdAt: now() });
-        }
         x.serials.forEach(sn => b.set(col('serials').doc(serialId(sn)), {
             serial: sn, productId: x.i.productId, name: x.i.name, status: x.where === 'restock' ? 'in' : 'damaged',
             returnedAt: now(), returnSaleId: ref.id, updatedAt: now()
         }, { merge: true }));
     });
-    const dayUp = { day, month: day.slice(0, 7), sales: inc(-refund), returns: inc(refund), updatedAt: now() };
+    const dayUp = { day, month: day.slice(0, 7), sales: inc(-refund), returns: inc(refund), src: why, updatedAt: now() };
     if (cash) dayUp.cash = inc(-cash);
     if (mobile) dayUp.mobile = inc(-mobile);
     if (debt) dayUp.credit = inc(-debt);
     b.set(col('days').doc(day), dayUp, { merge: true });
-    if (cash || mobile) b.set(col('meta').doc('balances'), { cash: inc(-cash), mobile: inc(-mobile), updatedAt: now() }, { merge: true });
-    if (s.customer && s.customer.id) b.update(col('customers').doc(s.customer.id), { balance: inc(-debt), totalBought: inc(-refund), updatedAt: now() });
+    if (cash || mobile) b.set(col('meta').doc('balances'), { cash: inc(-cash), mobile: inc(-mobile), src: why, updatedAt: now() }, { merge: true });
+    if (s.customer && s.customer.id) b.update(col('customers').doc(s.customer.id), { balance: inc(-debt), totalBought: inc(-refund), src: why, updatedAt: now() });
     closeModals();
     commit(b, `↩️ Return recorded · ${fmt(refund)} refunded`, { label: `Return ${receiptNo} of ${s.receiptNo || ''} · ${fmt(refund)}` });
     const doc = { id: ref.id, kind: 'return', refReceipt: s.receiptNo, items, total: refund, cash: -cash, mobile: -mobile, credit: -debt, customer: s.customer, receiptNo, day, staffName: S.me.name, createdAt: { toDate: () => new Date(), toMillis: () => Date.now() } };
@@ -3858,9 +3887,10 @@ async function receivePayment(id) {
     const doc = { kind: 'repay', items: [], total: amt, cash: how === 'cash' ? amt : 0, mobile: how === 'mobile' ? amt : 0, credit: 0,
         customer: { id: c.id, name: c.name, phone: c.phone || '' }, receiptNo, day, month: day.slice(0, 7), voided: false, staffUid: S.me.uid, staffName: S.me.name, createdAt: now() };
     b.set(ref, doc);
-    b.update(col('customers').doc(id), { balance: inc(-amt), updatedAt: now() });
-    b.set(col('days').doc(day), { day, month: day.slice(0, 7), debtPaid: inc(amt), [how]: inc(amt), updatedAt: now() }, { merge: true });
-    b.set(col('meta').doc('balances'), { [how]: inc(amt), updatedAt: now() }, { merge: true });
+    const why = src('sales', ref.id);
+    b.update(col('customers').doc(id), { balance: inc(-amt), src: why, updatedAt: now() });
+    b.set(col('days').doc(day), { day, month: day.slice(0, 7), debtPaid: inc(amt), [how]: inc(amt), src: why, updatedAt: now() }, { merge: true });
+    b.set(col('meta').doc('balances'), { [how]: inc(amt), src: why, updatedAt: now() }, { merge: true });
     commit(b, `✅ ${fmt(amt)} received from ${c.name}`, { label: `Debt payment ${fmt(amt)} from ${c.name} (${how})` });
     if (c.phone && await showConfirm('Send them a confirmation on WhatsApp?', '📲 WhatsApp', 'var(--pos)')) {
         const left = Math.max(0, (c.balance || 0) - amt);
@@ -4977,6 +5007,34 @@ function toggleRole(uid) {
     const role = p.role === 'admin' ? 'cashier' : 'admin';
     col('staff').doc(uid).update({ role }).then(() => toast(`${p.name} is now ${role}`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
+// Full copy of the shop's records as one file (JSON), for the owner to keep safe.
+async function downloadBackup() {
+    if (!isAdmin()) return toast('⚠️ Only the owner can download a backup.', 'err');
+    if (!navigator.onLine) return toast('⚠️ Connect to the internet to make a backup.', 'err');
+    const cols = ['products', 'costs', 'sales', 'customers', 'serials', 'movements', 'entries', 'days', 'meta', 'receipts', 'cashups', 'months', 'staff'];
+    const plain = v => {
+        if (v && typeof v.toDate === 'function') return v.toDate().toISOString();
+        if (Array.isArray(v)) return v.map(plain);
+        if (v && typeof v === 'object') { const o = {}; Object.entries(v).forEach(([k, x]) => o[k] = plain(x)); return o; }
+        return v;
+    };
+    const out = { app: 'Keep', shop: S.tenant, shopName: S.tenantInfo.name || '', madeAt: new Date().toISOString(), madeBy: S.me.name, data: {} };
+    loader(true, 'MAKING BACKUP...');
+    try {
+        for (const c of cols) {
+            $('loadingText').textContent = 'BACKING UP ' + c.toUpperCase() + '...';
+            const snap = await col(c).get({ source: 'server' });
+            out.data[c] = {}; snap.docs.forEach(d => out.data[c][d.id] = plain(d.data()));
+        }
+    } catch (e) { loader(false); return toast('⚠️ Backup failed: ' + friendlyErr(e), 'err'); }
+    loader(false);
+    const counts = Object.entries(out.data).map(([k, v]) => `${k}: ${Object.keys(v).length}`).join(', ');
+    out.counts = counts;
+    const name = `Keep_backup_${S.tenant}_${dayStr()}.json`;
+    await shareOrSave(new Blob([JSON.stringify(out)], { type: 'application/json' }), name, 'application/json', `Keep backup — ${S.tenantInfo.name || S.tenant}`);
+    sSet('keep.lastBackup.' + S.tenant, String(Date.now()));
+}
+
 function saveSettings() {
     const wa = $('setWa').value.trim();
     if (wa && !/^\d{10,15}$/.test(normPhone(wa))) return toast('⚠️ WhatsApp number looks wrong — e.g. 0712 345 678.', 'err');
