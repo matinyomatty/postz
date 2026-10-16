@@ -180,6 +180,27 @@
         .hdr-date { font-size: 0.62rem; color: rgba(255,255,255,0.45); }
         .icon-btn { background: none; border: none; color: rgba(255,255,255,0.45); font-size: 0.85rem; cursor: pointer; padding: 4px 6px; border-radius: 8px; }
         .icon-btn:active { background: rgba(255,255,255,0.08); }
+        /* header: help · settings · my account */
+        .hdr-ico { display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 10px; border: 0; background: transparent; color: rgba(255,255,255,0.72); cursor: pointer; text-decoration: none; }
+        .hdr-ico svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+        .hdr-ico:hover, .hdr-ico:active { background: rgba(255,255,255,0.1); color: #fff; }
+        .me-chip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 8px 0 4px; margin-left: 2px; border-radius: 999px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.06); color: #fff; font: 800 0.72rem 'DM Sans', sans-serif; letter-spacing: .5px; text-transform: uppercase; cursor: pointer; max-width: 140px; }
+        .me-chip:active { background: rgba(255,255,255,0.14); }
+        .me-chip .me-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .me-av { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--yellow); color: var(--ink); display: inline-flex; align-items: center; justify-content: center; font-size: .78rem; font-weight: 800; }
+        .me-caret { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; opacity: .7; flex-shrink: 0; }
+        .me-menu { position: fixed; z-index: 9000; min-width: 236px; background: #fff; color: var(--ink); border-radius: 16px; box-shadow: 0 18px 50px rgba(0,0,0,.28); padding: 8px; animation: meIn .12s ease-out; }
+        @keyframes meIn { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        .me-menu .mm-head { display: flex; align-items: center; gap: 10px; padding: 8px 8px 12px; border-bottom: 1px solid var(--line); margin-bottom: 6px; }
+        .me-menu .mm-head .me-av { width: 38px; height: 38px; font-size: 1rem; }
+        .me-menu .mm-name { font-weight: 800; font-size: .95rem; line-height: 1.2; }
+        .me-menu .mm-sub { font-size: .72rem; color: var(--gray); }
+        .me-menu button, .me-menu a { display: flex; align-items: center; gap: 10px; width: 100%; border: 0; background: none; padding: 11px 10px; border-radius: 10px; font: 700 .86rem 'DM Sans', sans-serif; color: var(--ink); cursor: pointer; text-align: left; text-decoration: none; }
+        .me-menu button:active, .me-menu a:active, .me-menu button:hover, .me-menu a:hover { background: var(--light); }
+        .me-menu svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round; flex-shrink: 0; }
+        .me-menu .mm-out { color: var(--red); border-top: 1px solid var(--line); border-radius: 0 0 10px 10px; margin-top: 6px; }
+        @media (max-width: 440px) { .header-meta .hdr-date { display: none; } }
+        @media (max-width: 380px) { .me-chip .me-name { display: none; } .me-chip { padding-right: 6px; } .hdr-ico { width: 30px; } }
         .today-panel {
             display: grid; grid-template-columns: 1fr 1fr; gap: 8px;
             background: rgba(255,255,255,0.04); border: 1px solid rgba(255,199,44,0.2);
@@ -616,7 +637,7 @@
             <button class="link-btn hidden" id="otherAccountBtn" onclick="otherAccount()">Use another account</button>
         </div>
         <div style="text-align:center;font-size:.72rem;margin-top:12px;"><a href="help.html" style="color:#6b7280;font-weight:700;text-decoration:none;">❓ Help · FAQ · Terms</a></div>
-        <div style="text-align:center;font-size:.62rem;color:#9ca3af;margin-top:6px;">Keep v21</div>
+        <div style="text-align:center;font-size:.62rem;color:#9ca3af;margin-top:6px;">Keep v22</div>
     </div>
 </div>
 
@@ -668,10 +689,9 @@
             <div class="header-top">
                 <div class="header-logo shop-name">KEEP</div>
                 <div class="header-meta">
-                    <span class="who me-name"></span>
-                    <button class="icon-btn" onclick="openTeam()" title="Team & settings">👥</button>
-                    <button class="icon-btn" onclick="forceUpdate()" title="Refresh app">🔄</button>
-                    <button class="icon-btn" onclick="logout()" title="Sign out">⏻</button>
+                    <a class="hdr-ico" href="help.html" title="Help, guide & FAQ" aria-label="Help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/></svg></a>
+                    <button class="hdr-ico role-admin" onclick="openTeam()" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8.9 4.6 1.7 1.7 0 0 0 9.93 3.04V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8.9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.07z"/></svg></button>
+                    <button class="me-chip" onclick="openMeMenu(event)" title="My account"><span class="me-av"></span><span class="me-name"></span><svg class="me-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
                 </div>
             </div>
             <div id="monthBanner" style="margin-bottom:8px;"></div>
@@ -734,11 +754,10 @@
             <div class="header-top">
                 <div class="pos-logo">POS · <span class="shop-name" style="color:#fff;">KEEP</span></div>
                 <div class="header-meta">
-                    <span class="who me-name"></span>
                     <span class="hdr-date today-label"></span>
-                    <button class="icon-btn" onclick="openPin()" title="Change my PIN">🔑</button>
-                    <button class="icon-btn" onclick="forceUpdate()" title="Refresh app">🔄</button>
-                    <button class="icon-btn" onclick="logout()" title="Sign out">⏻</button>
+                    <a class="hdr-ico" href="help.html" title="Help, guide & FAQ" aria-label="Help"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/></svg></a>
+                    <button class="hdr-ico role-admin" onclick="openTeam()" title="Settings" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8.9 4.6 1.7 1.7 0 0 0 9.93 3.04V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8.9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.07z"/></svg></button>
+                    <button class="me-chip" onclick="openMeMenu(event)" title="My account"><span class="me-av"></span><span class="me-name"></span><svg class="me-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></button>
                 </div>
             </div>
             <div id="sellerTools" class="seller-tools hidden">
@@ -1425,7 +1444,7 @@ const ENTRY_COLORS = {
 
 firebase.initializeApp(firebaseConfig);
 // App version — shown on the sign-in screen and saved on each sale, so you can tell when every till has updated.
-const APP_VERSION = 21;
+const APP_VERSION = 22;
 // App Check: proves requests come from the real Keep app, not a script. Paste your reCAPTCHA v3 SITE key
 // between the quotes to switch it on (see the setup guide). Empty = off.
 const APP_CHECK_SITE_KEY = '';
@@ -1789,6 +1808,7 @@ function enterApp() {
     document.body.classList.toggle('is-admin', isAdmin());
     document.body.classList.toggle('is-cashier', !isAdmin());
     document.querySelectorAll('.me-name').forEach(e => e.textContent = S.me.name.split(' ')[0]);
+    document.querySelectorAll('.me-av').forEach(e => e.textContent = (S.me.name || '?').trim().charAt(0).toUpperCase());
     renderShopName();
     S.today = dayStr();
     startListeners();
@@ -5009,6 +5029,34 @@ function toggleRole(uid) {
     const role = p.role === 'admin' ? 'cashier' : 'admin';
     col('staff').doc(uid).update({ role }).then(() => toast(`${p.name} is now ${role}`)).catch(e => toast('⚠️ ' + friendlyErr(e), 'err'));
 }
+// ── My account menu (tap your name in the header) ──
+function closeMeMenu() { const m = document.getElementById('meMenu'); if (m) m.remove(); document.removeEventListener('click', meOutside, true); }
+function meOutside(e) { const m = document.getElementById('meMenu'); if (m && !m.contains(e.target)) closeMeMenu(); }
+function openMeMenu(ev) {
+    ev.stopPropagation();
+    if (document.getElementById('meMenu')) return closeMeMenu();
+    const r = ev.currentTarget.getBoundingClientRect(), me = S.me || {};
+    const role = me.role === 'admin' ? (me.uid === (S.tenantInfo || {}).ownerUid ? 'Owner' : 'Admin') : 'Seller';
+    const ic = d => `<svg viewBox="0 0 24 24" aria-hidden="true">${d}</svg>`;
+    const m = document.createElement('div');
+    m.id = 'meMenu'; m.className = 'me-menu'; m.setAttribute('role', 'menu');
+    m.innerHTML = `
+        <div class="mm-head"><span class="me-av">${esc((me.name || '?').trim().charAt(0).toUpperCase())}</span>
+            <div><div class="mm-name">${esc(me.name || '')}</div><div class="mm-sub">${role} · ${esc((S.tenantInfo || {}).name || S.tenant || '')}</div></div></div>
+        <button onclick="closeMeMenu();openPin()">${ic('<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>')}Change my PIN</button>
+        ${isAdmin() ? `<button onclick="closeMeMenu();openTeam()">${ic('<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09A1.7 1.7 0 0 0 8.9 19.4a1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.7 1.7 0 0 0 4.6 15a1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09A1.7 1.7 0 0 0 4.6 8.9a1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.7 1.7 0 0 0 8.9 4.6 1.7 1.7 0 0 0 9.93 3.04V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.7 1.7 0 0 0 19.4 8.9a1.7 1.7 0 0 0 1.56 1.03H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1.07z"/>')}Settings</button>` : ''}
+        <a href="help.html" onclick="closeMeMenu()">${ic('<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M5.6 5.6l3.6 3.6M14.8 14.8l3.6 3.6M18.4 5.6l-3.6 3.6M9.2 14.8l-3.6 3.6"/>')}Help, guide &amp; FAQ</a>
+        <button onclick="closeMeMenu();forceUpdate()">${ic('<path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 3v6h-6"/>')}Refresh app</button>
+        <button class="mm-out" onclick="closeMeMenu();logout()">${ic('<path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5M5 12h11"/>')}Sign out</button>`;
+    document.body.appendChild(m);
+    const w = m.offsetWidth;
+    m.style.top = Math.round(r.bottom + 8) + 'px';
+    m.style.left = Math.round(Math.max(8, Math.min(window.innerWidth - w - 8, r.right - w))) + 'px';
+    setTimeout(() => document.addEventListener('click', meOutside, true), 0);
+}
+window.addEventListener('resize', closeMeMenu);
+window.addEventListener('scroll', closeMeMenu, true);
+
 // Full copy of the shop's records as one file (JSON), for the owner to keep safe.
 async function downloadBackup() {
     if (!isAdmin()) return toast('⚠️ Only the owner can download a backup.', 'err');
