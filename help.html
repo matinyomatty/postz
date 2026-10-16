@@ -1,0 +1,513 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Keep — Help, FAQ & Terms</title>
+<meta name="theme-color" content="#0b0d12">
+<link rel="icon" href="icon-192.png">
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+    :root {
+        --ink: #0b0d12; --ink2: #161b27; --blue: #1a56db; --yellow: #ffc72c;
+        --light: #f2f4f8; --line: #e3e8ef; --gray: #6b7280; --text: #1b2230; --card: #fff;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { -webkit-text-size-adjust: 100%; }
+    body { font-family: 'DM Sans', system-ui, sans-serif; background: var(--light); color: var(--text); line-height: 1.55; font-size: 15.5px; }
+    header { background: var(--ink); color: #fff; padding: 18px 16px 0; position: sticky; top: 0; z-index: 5; }
+    .top { max-width: 780px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .brand { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.45rem; letter-spacing: -.3px; }
+    .brand span { color: var(--yellow); }
+    .back { color: #c9d2e3; text-decoration: none; font-size: .85rem; font-weight: 700; }
+    .lang { display: flex; background: var(--ink2); border-radius: 999px; padding: 3px; }
+    .lang button { border: 0; background: transparent; color: #c9d2e3; font: 800 .78rem 'DM Sans'; padding: 6px 12px; border-radius: 999px; cursor: pointer; }
+    .lang button.on { background: var(--yellow); color: var(--ink); }
+    nav { max-width: 780px; margin: 14px auto 0; display: flex; gap: 4px; overflow-x: auto; }
+    nav button { flex: 1; min-width: 0; border: 0; background: transparent; color: #c9d2e3; font: 800 .86rem 'DM Sans'; padding: 11px 6px 12px; cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+    nav button.on { color: #fff; border-bottom-color: var(--yellow); }
+    main { max-width: 780px; margin: 0 auto; padding: 20px 16px 60px; }
+    h1 { font-family: 'Syne', sans-serif; font-size: 1.55rem; line-height: 1.2; margin-bottom: 6px; color: var(--ink); }
+    .lead { color: var(--gray); margin-bottom: 18px; }
+    h2 { font-family: 'Syne', sans-serif; font-size: 1.12rem; color: var(--ink); margin: 26px 0 8px; padding-top: 4px; }
+    h3 { font-size: .98rem; margin: 16px 0 4px; color: var(--ink); }
+    p { margin: 6px 0; }
+    ul, ol { margin: 6px 0 6px 22px; }
+    li { margin: 3px 0; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 4px 16px 12px; margin: 12px 0; }
+    .tip { background: #fff8e1; border-left: 4px solid var(--yellow); border-radius: 8px; padding: 10px 12px; margin: 10px 0; font-size: .93rem; }
+    .who { display: inline-block; font-size: .7rem; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; padding: 2px 8px; border-radius: 999px; margin-left: 6px; vertical-align: 2px; }
+    .who.o { background: #e8efff; color: var(--blue); }
+    .who.s { background: #e6f6f0; color: #00875a; }
+    .toc { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 12px 16px; margin: 6px 0 4px; }
+    .toc a { color: var(--blue); text-decoration: none; font-weight: 700; }
+    .toc ol { margin-left: 20px; }
+    details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; margin: 8px 0; padding: 0 14px; }
+    summary { font-weight: 800; cursor: pointer; padding: 13px 0; list-style: none; color: var(--ink); }
+    summary::-webkit-details-marker { display: none; }
+    summary::before { content: '+'; display: inline-block; width: 18px; color: var(--blue); font-weight: 800; }
+    details[open] summary::before { content: '–'; }
+    details > div { padding: 0 0 12px 18px; }
+    .contact { background: var(--ink); color: #fff; border-radius: 14px; padding: 14px 16px; margin: 22px 0 0; }
+    .contact a { color: var(--yellow); font-weight: 700; text-decoration: none; }
+    .meta { color: var(--gray); font-size: .85rem; }
+    .doc { display: none; } .doc.on { display: block; }
+    .k { font-weight: 800; white-space: nowrap; }
+    footer { text-align: center; color: var(--gray); font-size: .78rem; padding: 0 16px 30px; }
+    /* print / PDF */
+    @media print {
+        @page { size: A4; margin: 16mm 15mm 16mm; }
+        body { background: #fff; font-size: 10.6pt; }
+        header, nav, .back, .lang, footer.screen { display: none !important; }
+        main { padding: 0; max-width: none; }
+        .pdfhead { display: flex !important; }
+        details { border: 0; padding: 0; margin: 0 0 8px; break-inside: avoid; }
+        details > div { padding: 0 0 4px 0; }
+        summary { padding: 4px 0 2px; }
+        summary::before, details[open] summary::before { content: none; }
+        summary { color: var(--blue); }
+        body { font-size: 10pt; line-height: 1.45; }
+        h2 { margin: 16px 0 6px; }
+        .card { padding: 2px 12px 8px; margin: 8px 0; }
+        .contact { padding: 9px 12px; margin-top: 14px; }
+        .card, .tip, .toc { break-inside: avoid; }
+        h2 { break-after: avoid; }
+        .contact { break-inside: avoid; }
+        a { color: inherit; }
+    }
+    .pdfhead { display: none; align-items: center; justify-content: space-between; border-bottom: 3px solid var(--yellow); padding-bottom: 8px; margin-bottom: 14px; }
+    .pdfhead .brand { color: var(--ink); font-size: 18pt; }
+    .pdfhead .brand span { color: var(--blue); }
+    .pdfhead small { color: var(--gray); font-size: 9pt; }
+</style>
+</head>
+<body>
+<header>
+    <div class="top">
+        <a class="back" href="./" id="backLink">← Keep</a>
+        <div class="brand">Keep<span>.</span></div>
+        <div class="lang" role="group" aria-label="Language">
+            <button data-l="en" class="on">EN</button><button data-l="sw">SW</button>
+        </div>
+    </div>
+    <nav id="tabs">
+        <button data-d="guide" class="on"></button>
+        <button data-d="faq"></button>
+        <button data-d="terms"></button>
+    </nav>
+</header>
+<main id="main"></main>
+<footer class="screen" id="foot"></footer>
+
+<script>
+const CONTACT = { phone: '+255 740 116 251', wa: '255740116251', email: 'maternusadriano@gmail.com' };
+const TILL = './';
+const contactBox = {
+    en: `<div class="contact"><b>Keep support</b><br>📞 WhatsApp / call: <a href="https://wa.me/${CONTACT.wa}">${CONTACT.phone}</a><br>✉️ Email: <a href="mailto:${CONTACT.email}">${CONTACT.email}</a></div>`,
+    sw: `<div class="contact"><b>Huduma kwa wateja wa Keep</b><br>📞 WhatsApp / simu: <a href="https://wa.me/${CONTACT.wa}">${CONTACT.phone}</a><br>✉️ Barua pepe: <a href="mailto:${CONTACT.email}">${CONTACT.email}</a></div>`
+};
+const O = { en: '<span class="who o">Owner</span>', sw: '<span class="who o">Mmiliki</span>' };
+const S_ = { en: '<span class="who s">Seller</span>', sw: '<span class="who s">Muuzaji</span>' };
+
+const LABELS = {
+    en: { guide: '📘 Guide', faq: '❓ FAQ', terms: '📜 Terms', back: '← Keep', foot: 'Keep · Shop POS · provided by Matinyo, Zanzibar' },
+    sw: { guide: '📘 Mwongozo', faq: '❓ Maswali', terms: '📜 Masharti', back: '← Keep', foot: 'Keep · Mfumo wa mauzo · inatolewa na Matinyo, Zanzibar' }
+};
+
+const DOCS = {
+/* ═════════════════════════ USER GUIDE ═════════════════════════ */
+guide: {
+en: () => `
+<h1>How to use Keep</h1>
+<p class="lead">A short guide for shop owners and sellers. Labels like ${O.en} or ${S_.en} show who usually does each step.</p>
+<div class="toc"><ol>
+<li><a href="#g1">Getting started</a></li><li><a href="#g2">Making a sale</a></li><li><a href="#g3">Customers and credit</a></li>
+<li><a href="#g4">Returns and mistakes</a></li><li><a href="#g5">Stock</a></li><li><a href="#g6">Ending a shift</a></li>
+<li><a href="#g7">For the owner</a></li><li><a href="#g8">Good habits</a></li></ol></div>
+
+<h2 id="g1">1. Getting started</h2>
+<div class="card">
+<h3>Open Keep</h3>
+<p>Open the Keep link your shop was given in Chrome (Android) or Safari (iPhone). Tap <span class="k">📲 Install</span> (or “Add to Home Screen”) so Keep opens like an app.</p>
+<h3>Sign in</h3>
+<ul><li>Tap your name under <b>Who's working?</b> or type your phone number (owners can also use their email).</li>
+<li>Type your PIN (6–12 numbers) and tap <span class="k">UNLOCK</span>.</li>
+<li>Keep signs you out after 10 minutes without use, so nobody can sell in your name.</li></ul>
+<h3>Forgot your PIN?</h3>
+<ul><li>${S_.en} Ask the owner. They reset it in <span class="k">👥 Team</span>.</li>
+<li>${O.en} Type your email on the sign-in screen and tap <span class="k">Forgot PIN?</span>. We email you a link to set a new PIN.</li></ul>
+</div>
+<div class="tip">📵 <b>No internet?</b> Keep keeps working. Sales are saved on the phone and sent when the internet comes back. A ⏳ badge shows anything still waiting.</div>
+
+<h2 id="g2">2. Making a sale ${S_.en}</h2>
+<div class="card"><ol>
+<li>Open <span class="k">🛒 Point of Sale</span>.</li>
+<li>Add items: tap them, search, or scan the barcode with 📷 (a USB/Bluetooth scanner also works).</li>
+<li>Items sold in parts (kg, metres) can take amounts like 1.5.</li>
+<li>For phones and electronics, Keep asks for the <b>serial / IMEI</b>. Scan or type it — Keep stops you if it's wrong or already sold.</li>
+<li>Optional: <span class="k">👤 Add customer</span> and <span class="k">🏷️ Discount</span> (sellers have a discount limit set by the owner).</li>
+<li>Choose how they paid: <b>💵 Cash</b>, <b>📱 Lipa kwa Simu</b>, <b>📒 Credit</b>, or split between them. The payment must add up to the total.</li>
+<li>Tap <span class="k">✅ CONFIRM SALE</span>. Tap <span class="k">🧾 Receipt</span> to share a receipt on WhatsApp.</li></ol></div>
+
+<h2 id="g3">3. Customers and credit</h2>
+<div class="card">
+<ul><li>Add a customer with name and phone in <span class="k">👥 Customers</span>, or while selling.</li>
+<li>To sell on credit, add the customer to the sale and put the amount in <b>📒 On credit</b>. Sellers can do this only if the owner allows it.</li>
+<li>When they pay: open the customer → <span class="k">💰 RECEIVE PAYMENT</span> → amount → cash or Simu. Offer the WhatsApp confirmation.</li>
+<li><span class="k">📲 Remind</span> sends a polite WhatsApp reminder of what they owe.</li></ul></div>
+
+<h2 id="g4">4. Returns and mistakes</h2>
+<div class="card">
+<ul><li><b>Return</b>: find the sale (customer history or ${O.en} 🔍 Find date) → <span class="k">↩️ Return</span> → choose items, whether they go back on the shelf or are damaged, and how the money goes back (cash, Simu, or off their debt). Sellers can do returns only if the owner allows it.</li>
+<li><b>Void</b> ${O.en}: cancels a whole sale that was a mistake. Stock, cash and debt are put back.</li>
+<li>Sales are never deleted — every change is kept in the history.</li></ul></div>
+
+<h2 id="g5">5. Stock</h2>
+<div class="card">
+<ul><li>${O.en} <span class="k">➕ ADD ITEM</span>: name, price, cost, stock, low-stock level, barcode. Tick <b>Ask for serial / IMEI</b> for phones and electronics, and add the warranty months.</li>
+<li><span class="k">📥</span> on an item: <b>Restock</b> when goods come in. For serial items, scan each serial.</li>
+<li><span class="k">🚚 DELIVERY</span>: record a supplier delivery with many items. A seller's delivery waits for the owner to check it.</li>
+<li><span class="k">📋 COUNT</span>: stocktake — type the real count; Keep corrects the stock and records who counted.</li>
+<li><span class="k">🔍 SERIAL</span>: find any phone/laptop by serial — in stock, sold (to whom, when) or returned.</li>
+<li>${O.en} <span class="k">📥 EXCEL</span>: download your stock to Excel, or upload many items at once.</li>
+<li>Items that run low or out show in red and yellow, and on the owner's dashboard.</li></ul></div>
+
+<h2 id="g6">6. Ending a shift ${S_.en}</h2>
+<div class="card"><ol>
+<li>Tap <span class="k">🔒 END SHIFT</span>.</li>
+<li>Count all the cash in the drawer and type it. Add the Lipa kwa Simu balance if you can see it.</li>
+<li>List any money you paid out of the drawer (LUKU, transport, supplier) with a note.</li>
+<li>If you are the last one and the owner allows it, tick <b>close the day</b> to send the day's summary to the owner on WhatsApp.</li>
+<li>Tap <span class="k">✅ SUBMIT CASH-UP</span>, then sign out so the next person signs in as themselves.</li></ol>
+<div class="tip">Expenses you already recorded with <b>💸 Expense</b> are taken off the drawer straight away — don't add them again in the cash-up.</div></div>
+
+<h2 id="g7">7. For the owner ${O.en}</h2>
+<div class="card">
+<h3>📊 Dashboard</h3><p>Today's sales, cash, Simu, bank and savings balances, and this month's sales, stock bought, expenses and profit.</p>
+<h3>🧾 Cash-ups</h3><p>Check each seller's count against what Keep expected, then confirm. Short or over amounts are shown clearly.</p>
+<h3>🔒 Close day</h3><p>Count yourself (optional), see the day's summary and send it on WhatsApp.</p>
+<h3>📒 Accounting</h3><p>Record expenses, bank deposits and withdrawals, transfers between cash and Simu, savings, and <b>⚖️ Set balance</b> for opening balances or corrections.</p>
+<h3>📄 Reports and 📅 Monthly profit</h3><p>Sales, stock, expenses, returns, credit and more for any dates, as PDF or Excel. Close each month to save its final figures.</p>
+<h3>⚙️ Team &amp; Settings</h3>
+<ul><li><b>👥 Team</b>: add sellers and admins with their phone and PIN, reset PINs, switch accounts off when someone leaves.</li>
+<li><b>🔐 Permissions</b>: choose whether sellers may sell on credit, take returns, record manual sales or expenses, close the day, and their biggest discount. Sellers never see profit, cost prices, balances, banking or savings.</li>
+<li><b>🏪 Shop</b>: WhatsApp number for reports, daily target, receipt details, and <span class="k">⬇️ DOWNLOAD FULL BACKUP</span>.</li>
+<li><b>💳 Plan</b>: your plan, what it includes, how to pay, and your receipts.</li></ul></div>
+
+<h2 id="g8">8. Good habits</h2>
+<div class="card"><ul>
+<li>Every person has their own login. Never share PINs.</li>
+<li>Count stock regularly (📋 COUNT) — it is how missing goods are found.</li>
+<li>Review cash-ups every day and ask about any shortage the same day.</li>
+<li>Keep phones' date and time on <b>automatic</b>, so sales land on the right day.</li>
+<li>Download a backup weekly and keep it somewhere safe.</li>
+<li>Switch off a seller's account the day they leave.</li></ul></div>
+${contactBox.en}`,
+
+sw: () => `
+<h1>Jinsi ya kutumia Keep</h1>
+<p class="lead">Mwongozo mfupi kwa wamiliki wa maduka na wauzaji. Alama kama ${O.sw} au ${S_.sw} zinaonyesha nani kwa kawaida hufanya hatua hiyo.</p>
+<div class="toc"><ol>
+<li><a href="#g1">Kuanza</a></li><li><a href="#g2">Kuuza</a></li><li><a href="#g3">Wateja na mikopo</a></li>
+<li><a href="#g4">Marejesho na makosa</a></li><li><a href="#g5">Stoku</a></li><li><a href="#g6">Kumaliza zamu</a></li>
+<li><a href="#g7">Kwa mmiliki</a></li><li><a href="#g8">Tabia nzuri</a></li></ol></div>
+
+<h2 id="g1">1. Kuanza</h2>
+<div class="card">
+<h3>Fungua Keep</h3>
+<p>Fungua kiungo cha Keep ulichopewa kwenye Chrome (Android) au Safari (iPhone). Gusa <span class="k">📲 Install</span> (au “Add to Home Screen”) ili Keep ifunguke kama app.</p>
+<h3>Kuingia</h3>
+<ul><li>Gusa jina lako chini ya <b>Who's working?</b> au andika namba yako ya simu (mmiliki anaweza pia kutumia barua pepe).</li>
+<li>Andika PIN yako (namba 6–12) kisha gusa <span class="k">UNLOCK</span>.</li>
+<li>Keep inakutoa yenyewe baada ya dakika 10 bila kuitumia, ili mtu mwingine asiuze kwa jina lako.</li></ul>
+<h3>Umesahau PIN?</h3>
+<ul><li>${S_.sw} Muombe mmiliki. Anaibadilisha kwenye <span class="k">👥 Team</span>.</li>
+<li>${O.sw} Andika barua pepe yako kwenye ukurasa wa kuingia kisha gusa <span class="k">Forgot PIN?</span>. Tutakutumia kiungo cha kuweka PIN mpya.</li></ul>
+</div>
+<div class="tip">📵 <b>Hakuna intaneti?</b> Keep inaendelea kufanya kazi. Mauzo yanahifadhiwa kwenye simu na kutumwa intaneti ikirudi. Alama ya ⏳ inaonyesha kilichobaki kutumwa.</div>
+
+<h2 id="g2">2. Kuuza ${S_.sw}</h2>
+<div class="card"><ol>
+<li>Fungua <span class="k">🛒 Point of Sale</span>.</li>
+<li>Ongeza bidhaa: zigusa, tafuta, au soma barcode kwa 📷 (kisoma barcode cha USB/Bluetooth pia kinafanya kazi).</li>
+<li>Bidhaa zinazouzwa kwa vipimo (kilo, mita) zinakubali kiasi kama 1.5.</li>
+<li>Kwa simu na vifaa vya kielektroniki, Keep inauliza <b>serial / IMEI</b>. Isome au iandike — Keep inakuzuia ikiwa si sahihi au imeshauzwa.</li>
+<li>Hiari: <span class="k">👤 Add customer</span> (ongeza mteja) na <span class="k">🏷️ Discount</span> (punguzo — wauzaji wana kikomo kilichowekwa na mmiliki).</li>
+<li>Chagua amelipaje: <b>💵 Taslimu</b>, <b>📱 Lipa kwa Simu</b>, <b>📒 Mkopo</b>, au mchanganyiko. Malipo lazima yalingane na jumla.</li>
+<li>Gusa <span class="k">✅ CONFIRM SALE</span>. Gusa <span class="k">🧾 Receipt</span> kutuma risiti kwa WhatsApp.</li></ol></div>
+
+<h2 id="g3">3. Wateja na mikopo</h2>
+<div class="card">
+<ul><li>Ongeza mteja kwa jina na namba ya simu kwenye <span class="k">👥 Customers</span>, au wakati wa kuuza.</li>
+<li>Kuuza kwa mkopo: weka mteja kwenye mauzo na weka kiasi kwenye <b>📒 On credit</b>. Wauzaji wanaweza tu kama mmiliki ameruhusu.</li>
+<li>Akilipa: fungua mteja → <span class="k">💰 RECEIVE PAYMENT</span> → kiasi → taslimu au simu. Mtumie uthibitisho kwa WhatsApp.</li>
+<li><span class="k">📲 Remind</span> inatuma ukumbusho wa heshima kwa WhatsApp wa deni lake.</li></ul></div>
+
+<h2 id="g4">4. Marejesho na makosa</h2>
+<div class="card">
+<ul><li><b>Kurudisha bidhaa</b>: tafuta mauzo (historia ya mteja au ${O.sw} 🔍 Find date) → <span class="k">↩️ Return</span> → chagua bidhaa, kama zinarudi rafuni au zimeharibika, na pesa zinarudi vipi (taslimu, simu, au kupunguza deni). Wauzaji wanaweza tu kama mmiliki ameruhusu.</li>
+<li><b>Kufuta mauzo (Void)</b> ${O.sw}: inafuta mauzo yote yaliyokosewa. Stoku, pesa na deni vinarudishwa.</li>
+<li>Mauzo hayafutwi kabisa — kila mabadiliko yanabaki kwenye historia.</li></ul></div>
+
+<h2 id="g5">5. Stoku</h2>
+<div class="card">
+<ul><li>${O.sw} <span class="k">➕ ADD ITEM</span>: jina, bei ya kuuza, gharama, stoku, kiwango cha tahadhari, barcode. Weka tiki <b>Ask for serial / IMEI</b> kwa simu na vifaa vya kielektroniki, na miezi ya waranti.</li>
+<li><span class="k">📥</span> kwenye bidhaa: <b>Restock</b> mzigo ukiingia. Kwa bidhaa zenye serial, soma kila serial.</li>
+<li><span class="k">🚚 DELIVERY</span>: rekodi mzigo wa msambazaji wenye bidhaa nyingi. Mzigo uliorekodiwa na muuzaji unasubiri mmiliki aukague.</li>
+<li><span class="k">📋 COUNT</span>: kuhesabu stoku — andika idadi halisi; Keep inarekebisha na kurekodi nani alihesabu.</li>
+<li><span class="k">🔍 SERIAL</span>: tafuta simu/kompyuta yoyote kwa serial — iko dukani, imeuzwa (kwa nani, lini) au imerudishwa.</li>
+<li>${O.sw} <span class="k">📥 EXCEL</span>: pakua stoku kwenye Excel, au pakia bidhaa nyingi kwa mara moja.</li>
+<li>Bidhaa zinazokaribia kuisha au zilizoisha zinaonekana kwa rangi nyekundu na njano, na kwenye dashibodi ya mmiliki.</li></ul></div>
+
+<h2 id="g6">6. Kumaliza zamu ${S_.sw}</h2>
+<div class="card"><ol>
+<li>Gusa <span class="k">🔒 END SHIFT</span>.</li>
+<li>Hesabu taslimu yote kwenye droo na uiandike. Ongeza salio la Lipa kwa Simu ukiweza kuliona.</li>
+<li>Andika pesa zozote ulizolipa kutoka droo (LUKU, usafiri, msambazaji) pamoja na maelezo.</li>
+<li>Kama wewe ndiye wa mwisho na mmiliki ameruhusu, weka tiki <b>close the day</b> kumtumia mmiliki muhtasari wa siku kwa WhatsApp.</li>
+<li>Gusa <span class="k">✅ SUBMIT CASH-UP</span>, kisha toka ili anayefuata aingie kwa jina lake.</li></ol>
+<div class="tip">Matumizi uliyokwisha kuyarekodi kwa <b>💸 Expense</b> yameshatolewa kwenye droo — usiyaongeze tena kwenye hesabu ya zamu.</div></div>
+
+<h2 id="g7">7. Kwa mmiliki ${O.sw}</h2>
+<div class="card">
+<h3>📊 Dashibodi</h3><p>Mauzo ya leo, salio la taslimu, simu, benki na akiba, na mauzo, stoku iliyonunuliwa, matumizi na faida ya mwezi huu.</p>
+<h3>🧾 Hesabu za zamu (Cash-ups)</h3><p>Linganisha hesabu ya kila muuzaji na kile Keep ilichotarajia, kisha thibitisha. Upungufu au ziada vinaonekana wazi.</p>
+<h3>🔒 Kufunga siku</h3><p>Hesabu mwenyewe (hiari), ona muhtasari wa siku na uutume kwa WhatsApp.</p>
+<h3>📒 Uhasibu</h3><p>Rekodi matumizi, kuweka na kutoa benki, uhamisho kati ya taslimu na simu, akiba, na <b>⚖️ Set balance</b> kwa salio la kuanzia au marekebisho.</p>
+<h3>📄 Ripoti na 📅 Faida ya mwezi</h3><p>Mauzo, stoku, matumizi, marejesho, mikopo na zaidi kwa tarehe yoyote, kama PDF au Excel. Funga kila mwezi kuhifadhi takwimu zake za mwisho.</p>
+<h3>⚙️ Team &amp; Settings</h3>
+<ul><li><b>👥 Team</b>: ongeza wauzaji na wasimamizi kwa namba ya simu na PIN, badilisha PIN, zima akaunti mtu akiondoka.</li>
+<li><b>🔐 Permissions</b>: chagua kama wauzaji wanaweza kuuza kwa mkopo, kupokea marejesho, kurekodi mauzo ya mkono au matumizi, kufunga siku, na punguzo kubwa zaidi. Wauzaji hawaoni faida, bei za kununulia, salio, benki wala akiba.</li>
+<li><b>🏪 Shop</b>: namba ya WhatsApp ya ripoti, lengo la siku, maelezo ya risiti, na <span class="k">⬇️ DOWNLOAD FULL BACKUP</span>.</li>
+<li><b>💳 Plan</b>: kifurushi chako, kinachojumuisha, jinsi ya kulipa, na risiti zako.</li></ul></div>
+
+<h2 id="g8">8. Tabia nzuri</h2>
+<div class="card"><ul>
+<li>Kila mtu awe na akaunti yake. Usishirikiane PIN.</li>
+<li>Hesabu stoku mara kwa mara (📋 COUNT) — ndivyo bidhaa zinazopotea zinavyogundulika.</li>
+<li>Kagua hesabu za zamu kila siku na uulize kuhusu upungufu siku hiyo hiyo.</li>
+<li>Weka tarehe na saa za simu kuwa <b>automatic</b>, ili mauzo yaingie siku sahihi.</li>
+<li>Pakua nakala (backup) kila wiki na uihifadhi mahali salama.</li>
+<li>Zima akaunti ya muuzaji siku anayoondoka.</li></ul></div>
+${contactBox.sw}`
+},
+
+/* ═════════════════════════ FAQ ═════════════════════════ */
+faq: {
+en: () => `
+<h1>Frequently asked questions</h1>
+<p class="lead">Quick answers. Can't find yours? Contact Keep support at the bottom.</p>
+${[
+["Does Keep work without internet?", "Yes. You can keep selling. Sales are saved on the phone and sent automatically when the internet returns — keep the app open for a moment once you are back online. Signing in for the first time, resetting a PIN and backups need internet."],
+["What do I need to use Keep?", "Any smartphone, tablet or computer with a modern browser (Chrome, Safari, Edge). No special machine. A receipt printer and barcode scanner are optional."],
+["Can we use Keep on more than one phone?", "Yes. Every seller can use their own phone or a shared shop phone. Everything stays in step between devices."],
+["I forgot my PIN.", "Sellers: ask the owner to reset it in 👥 Team. Owners: type your email on the sign-in screen and tap “Forgot PIN?” — check your spam folder for the email."],
+["It says “The payment must add up to the total”.", "The cash + Simu + credit you typed must equal the total. Tap 💵 All Cash, 📱 All Simu or 📒 All Credit to fill it in one tap, or fix the amounts."],
+["I made a mistake on a sale.", "If the customer returns goods, use ↩️ Return. If the sale itself was wrong, the owner can Void it. Sales are never deleted, so the history stays honest."],
+["Keep says a serial / IMEI is already sold.", "Check the number carefully — it may be a typo. Use 🔍 SERIAL to see when and to whom it was sold. If a sold phone came back, record it as a return first."],
+["I see “⚠️ Not saved”.", "Something stopped that save (for example no permission, or the shop is paused). It is listed under the notices — tap “See”. Tell the owner or Keep support with the details shown."],
+["Stock numbers look wrong.", "Do a 📋 COUNT for those items. Keep corrects the numbers and records who counted, so the owner can see where the difference came from."],
+["Why is the till locked?", "The shop's subscription period has ended. Pay as shown on the lock screen, then tap “📲 I've paid — tell Keep”. The till unlocks by itself once the payment is recorded. Your data is safe while it is locked."],
+["How much does Keep cost and how do I pay?", "Your plan, its price and how to pay are shown in ⚙️ Team & Settings → 💳 Plan, or ask Keep support. New shops start with a free trial."],
+["Who can see my shop's data?", "Your team, according to the permissions you set (sellers never see profit, costs or balances), and Keep only for running the service: support, billing and security. Keep never sells your data and never shares one shop's information with another. See Terms & Privacy."],
+["Can I get my data out?", "Yes, any time. Owners can download a full backup in 🏪 Shop, and reports as PDF or Excel. Your data belongs to you."],
+["Is my data backed up?", "Keep makes a full backup every night and keeps 30 days of them. Owners can also download their own copy whenever they like."],
+["How do I add or remove a seller?", "⚙️ Team & Settings → 👥 Team → ➕ ADD STAFF. When someone leaves, switch their account off the same day. Their past sales stay in the records."],
+["Can sellers see profit or cost prices?", "No. Sellers see what they need to sell and count. Profit, cost prices, balances, banking and savings are for the owner and admins only."],
+["How do I get the daily summary on WhatsApp?", "Put the owner's WhatsApp number in 🏪 Shop. When the day is closed (by you, or by the last seller if allowed), Keep prepares the summary to send."],
+["The date on sales is wrong.", "Set the phone's date and time to automatic (in the phone's settings). Keep warns you when the phone clock looks wrong."]
+].map(([q, a]) => `<details><summary>${q}</summary><div><p>${a}</p></div></details>`).join('')}
+${contactBox.en}`,
+
+sw: () => `
+<h1>Maswali yanayoulizwa mara kwa mara</h1>
+<p class="lead">Majibu ya haraka. Hujapata jibu lako? Wasiliana na huduma ya Keep chini kabisa.</p>
+${[
+["Keep inafanya kazi bila intaneti?", "Ndiyo. Unaendelea kuuza. Mauzo yanahifadhiwa kwenye simu na kutumwa yenyewe intaneti ikirudi — acha app wazi kwa muda mfupi ukisharudi mtandaoni. Kuingia mara ya kwanza, kubadilisha PIN na kuhifadhi nakala vinahitaji intaneti."],
+["Ninahitaji nini kutumia Keep?", "Simu janja, tablet au kompyuta yoyote yenye kivinjari cha kisasa (Chrome, Safari, Edge). Hakuna mashine maalum. Printa ya risiti na kisoma barcode ni hiari."],
+["Tunaweza kutumia Keep kwenye simu zaidi ya moja?", "Ndiyo. Kila muuzaji anaweza kutumia simu yake au simu ya duka. Kila kitu kinaendana kati ya vifaa vyote."],
+["Nimesahau PIN yangu.", "Muuzaji: muombe mmiliki aibadilishe kwenye 👥 Team. Mmiliki: andika barua pepe yako kwenye ukurasa wa kuingia kisha gusa “Forgot PIN?” — angalia pia kwenye spam."],
+["Inasema “The payment must add up to the total”.", "Taslimu + simu + mkopo ulivyoandika lazima vilingane na jumla. Gusa 💵 All Cash, 📱 All Simu au 📒 All Credit kujaza kwa mguso mmoja, au rekebisha kiasi."],
+["Nimekosea kwenye mauzo.", "Mteja akirudisha bidhaa, tumia ↩️ Return. Kama mauzo yenyewe yalikosewa, mmiliki anaweza kuyafuta (Void). Mauzo hayafutwi kabisa, hivyo historia inabaki ya kweli."],
+["Keep inasema serial / IMEI imeshauzwa.", "Kagua namba vizuri — huenda umekosea kuandika. Tumia 🔍 SERIAL kuona iliuzwa lini na kwa nani. Simu iliyouzwa ikirudi, irekodi kwanza kama marejesho (return)."],
+["Ninaona “⚠️ Not saved”.", "Kuna kilichozuia kuhifadhi (mfano huna ruhusa, au duka limesimamishwa). Kimeorodheshwa kwenye taarifa — gusa “See”. Mweleze mmiliki au huduma ya Keep kwa maelezo yaliyoonyeshwa."],
+["Idadi ya stoku haiko sawa.", "Fanya 📋 COUNT kwa bidhaa hizo. Keep inarekebisha idadi na kurekodi nani alihesabu, hivyo mmiliki anaona tofauti ilitoka wapi."],
+["Kwa nini till imefungwa?", "Muda wa usajili wa duka umeisha. Lipa kama inavyoonyeshwa kwenye skrini, kisha gusa “📲 I've paid — tell Keep”. Till inajifungua yenyewe malipo yakisharekodiwa. Taarifa zako ziko salama hata ikiwa imefungwa."],
+["Keep inagharimu kiasi gani na ninalipaje?", "Kifurushi chako, bei yake na jinsi ya kulipa vinaonyeshwa kwenye ⚙️ Team & Settings → 💳 Plan, au uliza huduma ya Keep. Maduka mapya yanaanza na kipindi cha majaribio bure."],
+["Nani anaweza kuona taarifa za duka langu?", "Timu yako, kulingana na ruhusa ulizoweka (wauzaji hawaoni faida, gharama wala salio), na Keep kwa ajili ya kuendesha huduma tu: msaada, malipo na usalama. Keep haiuzi taarifa zako wala haishirikishi taarifa za duka moja kwa duka jingine. Soma Masharti & Faragha."],
+["Naweza kupata taarifa zangu?", "Ndiyo, wakati wowote. Mmiliki anaweza kupakua nakala kamili kwenye 🏪 Shop, na ripoti kama PDF au Excel. Taarifa ni zako."],
+["Taarifa zangu zina nakala ya akiba (backup)?", "Keep inahifadhi nakala kamili kila usiku na kuweka nakala za siku 30. Mmiliki anaweza pia kupakua nakala yake wakati wowote."],
+["Ninaongezaje au kuondoa muuzaji?", "⚙️ Team & Settings → 👥 Team → ➕ ADD STAFF. Mtu akiondoka, zima akaunti yake siku hiyo hiyo. Mauzo yake ya zamani yanabaki kwenye kumbukumbu."],
+["Wauzaji wanaweza kuona faida au bei za kununulia?", "Hapana. Wauzaji wanaona wanachohitaji kuuza na kuhesabu. Faida, bei za kununulia, salio, benki na akiba ni kwa mmiliki na wasimamizi tu."],
+["Ninapataje muhtasari wa siku kwa WhatsApp?", "Weka namba ya WhatsApp ya mmiliki kwenye 🏪 Shop. Siku ikifungwa (na wewe, au na muuzaji wa mwisho kama umeruhusu), Keep inaandaa muhtasari wa kutuma."],
+["Tarehe ya mauzo si sahihi.", "Weka tarehe na saa za simu kuwa automatic (kwenye mipangilio ya simu). Keep inakuonya saa ya simu ikionekana si sahihi."]
+].map(([q, a]) => `<details><summary>${q}</summary><div><p>${a}</p></div></details>`).join('')}
+${contactBox.sw}`
+},
+
+/* ═════════════════════════ TERMS & PRIVACY ═════════════════════════ */
+terms: {
+en: () => `
+<h1>Terms of Service &amp; Privacy</h1>
+<p class="meta">Version 1.0 · Effective 16 October 2026</p>
+<p class="lead">Plain-language terms for shops using Keep. By using Keep, the shop owner agrees to these terms on behalf of the shop and its staff.</p>
+
+<h2>1. Who we are</h2>
+<p>Keep is a point-of-sale and shop management service provided by <b>Matinyo</b> (Maternus Adriano), Zanzibar, Tanzania (“Keep”, “we”). The business using Keep is “the shop” or “you”.</p>
+
+<h2>2. The service</h2>
+<ul><li>Keep lets you record sales, stock, customers, credit, cash-ups, expenses and reports, on phones, tablets and computers.</li>
+<li>We work to keep Keep available and correct, and we improve it over time. Features may change; we tell shops about important changes.</li>
+<li>Keep works offline and sends saved records when the internet returns. Records that have not yet been sent exist only on that device.</li></ul>
+
+<h2>3. Accounts and security</h2>
+<ul><li>The owner is responsible for who has a login, what permissions they have, and switching accounts off when people leave.</li>
+<li>Each person must use their own login and keep their PIN secret. Everything done under a login is recorded in that person's name.</li>
+<li>Tell us straight away if you think someone has used an account without permission.</li></ul>
+
+<h2>4. Trial, plans and payment</h2>
+<ul><li>New shops may start with a free trial. After that, the shop pays the subscription for its plan, as shown in Keep under 💳 Plan or as agreed with us in writing.</li>
+<li>If payment is late beyond the grace period shown in Keep, the till is paused (locked) until payment is recorded. Your data is not deleted while the till is paused.</li>
+<li>Plan limits (such as number of staff and items) apply as shown in 💳 Plan. We give at least 30 days' notice before changing a shop's price.</li>
+<li>Fees already paid are not refunded for part of a period, unless we have failed to provide the service.</li></ul>
+
+<h2>5. Your data belongs to you</h2>
+<p>Everything your shop records in Keep — sales, stock, customers, prices, money and staff — belongs to the shop. You can download a full copy at any time (🏪 Shop → Download full backup), and reports as PDF or Excel.</p>
+
+<h2>6. What Keep can see, and why</h2>
+<p>To run the service, Keep's systems hold your shop's records. We look at them only when needed to:</p>
+<ul><li>provide support you ask for, and fix problems;</li><li>manage your plan and billing (for example: whether the shop is active, number of staff and items, and transaction counts);</li>
+<li>keep the service secure and prevent misuse; and</li><li>meet a legal requirement.</li></ul>
+<p><b>Our promises:</b></p>
+<ul><li>We keep your shop's information confidential.</li>
+<li>We <b>never sell</b> your data, and never use it for advertising.</li>
+<li>We <b>never share or use one shop's information</b> for another shop, for a competitor, or for our own trading.</li>
+<li>We do not publish your shop's name, figures or details without your permission.</li>
+<li>We share data only with the service providers needed to run Keep (our database and hosting is Google Firebase), or when the law requires it.</li></ul>
+
+<h2>7. Your customers' personal data</h2>
+<ul><li>When you record customers (for example names and phone numbers for credit), the shop decides what to record and why; Keep stores it for you and uses it only to provide the service.</li>
+<li>The shop should record only what it needs, tell customers why it keeps their details, and use reminders respectfully.</li>
+<li>We protect personal data with access controls, separation between shops and secure hosting, and we follow the Personal Data Protection Act, 2022 of Tanzania.</li>
+<li>Staff and customers can ask the shop to correct or remove their details; we will help the shop do this.</li></ul>
+
+<h2>8. Backups and keeping data</h2>
+<ul><li>Keep makes a full backup every night and keeps backups for 30 days.</li>
+<li>If a shop stops using Keep, we give the owner a full copy of its data on request. We delete the shop's data within 90 days after it leaves, unless the owner asks us to keep it longer or the law requires it. Deleted data may remain in backups until those backups expire.</li></ul>
+
+<h2>9. Fair use</h2>
+<p>Do not use Keep for anything illegal, to record false transactions, to try to get into another shop's data, or to interfere with the service. We may suspend an account that does.</p>
+
+<h2>10. Responsibility</h2>
+<ul><li>Keep is a tool to help you run your shop. The shop remains responsible for its cash, stock, prices, taxes and decisions, and for checking cash-ups and stock counts.</li>
+<li>We are not responsible for losses caused by things outside our control (such as internet or power failures, lost or broken devices, or staff misusing their own login).</li>
+<li>As far as the law allows, our total responsibility for any claim is limited to the fees the shop paid Keep in the 3 months before the claim.</li></ul>
+
+<h2>11. Ending the service</h2>
+<ul><li>You can stop using Keep at any time by telling us. You keep your data (see section 8).</li>
+<li>We may end or suspend the service for non-payment or serious misuse, and will normally give notice first.</li></ul>
+
+<h2>12. Changes to these terms</h2>
+<p>We may update these terms. We will tell shops about important changes at least 14 days before they apply. The version and date are shown at the top.</p>
+
+<h2>13. Law</h2>
+<p>These terms are governed by the laws of the United Republic of Tanzania. We will always try to settle any disagreement by talking first.</p>
+${contactBox.en}`,
+
+sw: () => `
+<h1>Masharti ya Huduma &amp; Faragha</h1>
+<p class="meta">Toleo 1.0 · Kuanzia 16 Oktoba 2026</p>
+<p class="lead">Masharti kwa lugha rahisi kwa maduka yanayotumia Keep. Kwa kutumia Keep, mmiliki wa duka anakubali masharti haya kwa niaba ya duka na wafanyakazi wake.</p>
+
+<h2>1. Sisi ni nani</h2>
+<p>Keep ni huduma ya mauzo (POS) na usimamizi wa duka inayotolewa na <b>Matinyo</b> (Maternus Adriano), Zanzibar, Tanzania (“Keep”, “sisi”). Biashara inayotumia Keep ni “duka” au “wewe”.</p>
+
+<h2>2. Huduma</h2>
+<ul><li>Keep inakuwezesha kurekodi mauzo, stoku, wateja, mikopo, hesabu za zamu, matumizi na ripoti, kwenye simu, tablet na kompyuta.</li>
+<li>Tunajitahidi Keep ipatikane na iwe sahihi, na tunaiboresha kadri muda unavyokwenda. Vipengele vinaweza kubadilika; tunajulisha maduka mabadiliko muhimu.</li>
+<li>Keep inafanya kazi bila intaneti na kutuma kumbukumbu zilizohifadhiwa intaneti ikirudi. Kumbukumbu ambazo bado hazijatumwa ziko kwenye kifaa hicho tu.</li></ul>
+
+<h2>3. Akaunti na usalama</h2>
+<ul><li>Mmiliki anawajibika kwa nani ana akaunti, ana ruhusa zipi, na kuzima akaunti za watu wanaoondoka.</li>
+<li>Kila mtu atumie akaunti yake na aweke PIN yake siri. Kila kinachofanyika kwa akaunti kinarekodiwa kwa jina la mwenye akaunti hiyo.</li>
+<li>Tujulishe mara moja ukidhani mtu ametumia akaunti bila ruhusa.</li></ul>
+
+<h2>4. Majaribio, vifurushi na malipo</h2>
+<ul><li>Maduka mapya yanaweza kuanza na kipindi cha majaribio bure. Baada ya hapo, duka linalipa ada ya kifurushi chake, kama inavyoonyeshwa kwenye Keep chini ya 💳 Plan au kama tulivyokubaliana kwa maandishi.</li>
+<li>Malipo yakichelewa zaidi ya muda wa nyongeza unaoonyeshwa kwenye Keep, till inasimamishwa (inafungwa) hadi malipo yarekodiwe. Taarifa zako hazifutwi wakati till imesimamishwa.</li>
+<li>Vikomo vya kifurushi (kama idadi ya wafanyakazi na bidhaa) vinatumika kama vinavyoonyeshwa kwenye 💳 Plan. Tunatoa taarifa ya angalau siku 30 kabla ya kubadilisha bei ya duka.</li>
+<li>Ada iliyokwisha kulipwa hairudishwi kwa sehemu ya kipindi, isipokuwa kama tumeshindwa kutoa huduma.</li></ul>
+
+<h2>5. Taarifa zako ni mali yako</h2>
+<p>Kila kitu ambacho duka lako linarekodi kwenye Keep — mauzo, stoku, wateja, bei, pesa na wafanyakazi — ni mali ya duka. Unaweza kupakua nakala kamili wakati wowote (🏪 Shop → Download full backup), na ripoti kama PDF au Excel.</p>
+
+<h2>6. Keep inaona nini, na kwa nini</h2>
+<p>Ili kuendesha huduma, mifumo ya Keep inahifadhi kumbukumbu za duka lako. Tunaziangalia pale tu inapohitajika ili:</p>
+<ul><li>kutoa msaada unaoomba, na kurekebisha matatizo;</li><li>kusimamia kifurushi na malipo yako (mfano: kama duka liko hai, idadi ya wafanyakazi na bidhaa, na idadi ya miamala);</li>
+<li>kulinda usalama wa huduma na kuzuia matumizi mabaya; na</li><li>kutimiza takwa la kisheria.</li></ul>
+<p><b>Ahadi zetu:</b></p>
+<ul><li>Tunatunza siri za taarifa za duka lako.</li>
+<li><b>Hatuuzi kamwe</b> taarifa zako, wala hatuzitumii kwa matangazo.</li>
+<li><b>Hatushirikishi wala kutumia taarifa za duka moja</b> kwa duka jingine, kwa mshindani, au kwa biashara yetu wenyewe.</li>
+<li>Hatutangazi jina la duka lako, takwimu au taarifa zako bila ruhusa yako.</li>
+<li>Tunashirikisha taarifa na watoa huduma wanaohitajika kuendesha Keep tu (hifadhidata na uhifadhi wetu ni Google Firebase), au sheria inapotutaka.</li></ul>
+
+<h2>7. Taarifa binafsi za wateja wako</h2>
+<ul><li>Unaporekodi wateja (mfano majina na namba za simu kwa ajili ya mikopo), duka linaamua nini kirekodiwe na kwa nini; Keep inazihifadhi kwa niaba yako na kuzitumia kutoa huduma tu.</li>
+<li>Duka lirekodi kile tu kinachohitajika, liwaeleze wateja kwa nini linahifadhi taarifa zao, na litumie vikumbusho kwa heshima.</li>
+<li>Tunalinda taarifa binafsi kwa udhibiti wa nani anaweza kuziona, kutenganisha maduka, na uhifadhi salama, na tunafuata Sheria ya Ulinzi wa Taarifa Binafsi ya Tanzania, 2022.</li>
+<li>Wafanyakazi na wateja wanaweza kuliomba duka kusahihisha au kuondoa taarifa zao; tutalisaidia duka kufanya hivyo.</li></ul>
+
+<h2>8. Nakala za akiba na kuhifadhi taarifa</h2>
+<ul><li>Keep inahifadhi nakala kamili kila usiku na kuziweka kwa siku 30.</li>
+<li>Duka likiacha kutumia Keep, tunampa mmiliki nakala kamili ya taarifa zake akiomba. Tunafuta taarifa za duka ndani ya siku 90 baada ya kuondoka, isipokuwa mmiliki akiomba tuzihifadhi zaidi au sheria ikitaka. Taarifa zilizofutwa zinaweza kubaki kwenye nakala za akiba hadi nakala hizo ziishe muda.</li></ul>
+
+<h2>9. Matumizi halali</h2>
+<p>Usitumie Keep kwa jambo lolote lisilo halali, kurekodi miamala ya uongo, kujaribu kuingia kwenye taarifa za duka jingine, au kuvuruga huduma. Tunaweza kusimamisha akaunti inayofanya hivyo.</p>
+
+<h2>10. Wajibu</h2>
+<ul><li>Keep ni chombo cha kukusaidia kuendesha duka lako. Duka linabaki na wajibu wa pesa zake, stoku, bei, kodi na maamuzi yake, na kukagua hesabu za zamu na stoku.</li>
+<li>Hatuwajibiki kwa hasara zinazotokana na mambo yaliyo nje ya uwezo wetu (kama kukatika kwa intaneti au umeme, kupotea au kuharibika kwa vifaa, au mfanyakazi kutumia vibaya akaunti yake).</li>
+<li>Kwa kadri sheria inavyoruhusu, wajibu wetu wote kwa dai lolote hauzidi ada ambayo duka liliilipa Keep katika miezi 3 kabla ya dai hilo.</li></ul>
+
+<h2>11. Kusitisha huduma</h2>
+<ul><li>Unaweza kuacha kutumia Keep wakati wowote kwa kutujulisha. Taarifa zako unabaki nazo (angalia kifungu 8).</li>
+<li>Tunaweza kusitisha au kusimamisha huduma kwa kutolipa au matumizi mabaya makubwa, na kwa kawaida tutatoa taarifa kwanza.</li></ul>
+
+<h2>12. Mabadiliko ya masharti haya</h2>
+<p>Tunaweza kusasisha masharti haya. Tutayajulisha maduka mabadiliko muhimu angalau siku 14 kabla hayajaanza kutumika. Toleo na tarehe vinaonyeshwa juu.</p>
+
+<h2>13. Sheria</h2>
+<p>Masharti haya yanaongozwa na sheria za Jamhuri ya Muungano wa Tanzania. Daima tutajaribu kumaliza tofauti yoyote kwa mazungumzo kwanza.</p>
+${contactBox.sw}`
+}
+};
+
+// ── page logic ──
+const qs = new URLSearchParams(location.search);
+let lang = qs.get('lang') || (() => { try { return localStorage.getItem('keep.help.lang'); } catch (e) { return null; } })() || ((navigator.language || '').startsWith('sw') ? 'sw' : 'en');
+let doc = qs.get('doc') || (location.hash || '').replace('#', '') || 'guide';
+if (!DOCS[doc]) doc = 'guide';
+if (!DOCS.guide[lang]) lang = 'en';
+const TITLES = { guide: { en: 'User Guide', sw: 'Mwongozo wa Matumizi' }, faq: { en: 'FAQ', sw: 'Maswali' }, terms: { en: 'Terms & Privacy', sw: 'Masharti & Faragha' } };
+
+function render() {
+    document.documentElement.lang = lang;
+    const L = LABELS[lang];
+    document.querySelectorAll('#tabs button').forEach(b => { b.textContent = L[b.dataset.d]; b.classList.toggle('on', b.dataset.d === doc); });
+    document.querySelectorAll('.lang button').forEach(b => b.classList.toggle('on', b.dataset.l === lang));
+    const pdfHead = `<div class="pdfhead"><div class="brand">Keep<span>.</span></div><small>${TITLES[doc][lang]} · ${lang === 'sw' ? 'Kiswahili' : 'English'} · matinyomatty.github.io/postz</small></div>`;
+    document.getElementById('main').innerHTML = pdfHead + DOCS[doc][lang]();
+    document.getElementById('foot').textContent = L.foot;
+    document.title = 'Keep — ' + TITLES[doc][lang];
+    if (qs.get('print') === '1') document.querySelectorAll('details').forEach(d => d.open = true);
+    // in-page links (table of contents) scroll without changing the tab
+    document.querySelectorAll('.toc a').forEach(a => a.onclick = e => { e.preventDefault(); const t = document.getElementById(a.getAttribute('href').slice(1)); if (t) window.scrollTo({ top: t.getBoundingClientRect().top + scrollY - 120, behavior: 'smooth' }); });
+}
+document.querySelectorAll('#tabs button').forEach(b => b.onclick = () => { doc = b.dataset.d; history.replaceState(null, '', '#' + doc); render(); window.scrollTo(0, 0); });
+document.querySelectorAll('.lang button').forEach(b => b.onclick = () => { lang = b.dataset.l; try { localStorage.setItem('keep.help.lang', lang); } catch (e) {} render(); });
+window.addEventListener('beforeprint', () => document.querySelectorAll('details').forEach(d => d.open = true));
+render();
+</script>
+</body>
+</html>
