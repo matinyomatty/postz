@@ -113,6 +113,15 @@ main { max-width:520px; margin:0 auto; padding:16px 16px 120px; }
 .ticket .t2 { font-size:.68rem; color:#9aa3b6; }
 .ticket .tot { margin-left:auto; font:800 1.05rem 'DM Sans'; color:var(--yellow); white-space:nowrap; }
 
+/* category bar (like Keep's All · Drinks · Food) */
+.catbar { display:flex; gap:8px; overflow-x:auto; scrollbar-width:none; padding:12px 16px; background:var(--ink); border-top:1px solid rgba(255,255,255,.06); position:sticky; top:calc(56px + env(safe-area-inset-top)); z-index:20; }
+.catbar button { flex-shrink:0; border:1px solid rgba(255,255,255,.18); background:transparent; color:#cfd5e2; border-radius:999px; padding:8px 14px; font:800 .74rem 'DM Sans'; }
+.catbar button.on { background:var(--yellow); border-color:var(--yellow); color:var(--ink); }
+.svc-row { display:flex; align-items:center; gap:8px; padding:6px 8px; border-radius:12px; border:1.5px solid var(--line); margin-bottom:6px; background:#fff; }
+.svc-row.on { border-color:var(--pos); background:#f3fbf7; }
+.svc-tick { flex:1; display:flex; align-items:center; gap:10px; font-weight:700; font-size:.88rem; min-width:0; cursor:pointer; }
+.svc-tick input { width:20px; height:20px; flex-shrink:0; accent-color:var(--pos); }
+.svc-row .svc-p { width:92px; flex-shrink:0; padding:9px 8px; text-align:right; font-size:.9rem; }
 /* lists */
 .li { display:flex; align-items:center; gap:10px; padding:11px 0; border-bottom:1px solid var(--line); }
 .li:last-child { border-bottom:0; }
@@ -195,7 +204,7 @@ const ic = (k, st = '') => `<svg class="ic" viewBox="0 0 24 24" style="${st}">${
 
 // ── state ──
 let D = load();
-const U = { tab: 'dash', view: null, job: blankJob(), owner: false, ownerAt: 0, rp: 'today', qBarber: '', cq: '' };
+const U = { tab: 'dash', view: null, job: blankJob(), owner: false, ownerAt: 0, rp: 'today', qBarber: '', cq: '', cat: 'all' };
 function blankJob() { return { barberId: null, items: {}, customer: { name: '', phone: '' }, discount: 0, queueId: null }; }
 function load() {
     try { const d = JSON.parse(localStorage.getItem(KEY) || 'null'); if (d && d.v === 1) return d; } catch (e) {}
@@ -267,7 +276,7 @@ function openMe(e) {
     const own = isOwner(), m = document.createElement('div'); m.className = 'me-menu'; m.id = 'meMenu';
     const it = (i, l, fn, cls = '') => `<button class="${cls}" onclick="${fn}">${ic(i)}${l}</button>`;
     m.innerHTML = `<div class="mm-head"><span class="me-av">${esc(initial(D.shop.name))}</span><div><b>${esc(D.shop.name)}</b><div class="mm-sub">${own ? 'Owner' : 'Staff'} · Barbershop</div></div></div>
-      ${it('report', 'Reports', "ownerGate(()=>openView('reports'))")}${it('team', 'Barbers &amp; pay', "ownerGate(()=>openView('team'))")}${it('list', 'Services &amp; products', "ownerGate(()=>openView('catalog'))")}
+      ${it('report', 'Reports', "ownerGate(()=>openView('reports'))")}${it('team', 'Staff &amp; pay', "ownerGate(()=>openView('team'))")}${it('list', 'Services &amp; products', "ownerGate(()=>openView('catalog'))")}
       ${it('wallet', 'Expenses', "ownerGate(()=>openView('expenses'))")}${it('book', 'Clients', "openView('clients')")}${it('gear', 'Shop settings', "ownerGate(()=>openView('shop'))")}${it('save', 'Backup', "ownerGate(()=>openView('backup'))")}
       ${D.shop.pin ? '<div class="sep"></div>' + (own ? it('lock', 'Lock (staff mode)', 'lockOwner()', 'lock') : it('unlock', 'Owner unlock', 'ownerGate(render)')) : ''}`;
     document.body.appendChild(m); setTimeout(() => document.addEventListener('click', meOutside), 0);
@@ -277,54 +286,98 @@ function closeMe() { const m = $('meMenu'); if (m) m.remove(); document.removeEv
 function lockOwner() { U.owner = false; closeMe(); if (U.view && U.view !== 'clients') U.view = null; render(); toast('Locked — staff mode'); }
 const subHeader = title => `<div class="hdr"><button class="back" onclick="go(U.tab)">${ic('back', 'width:14px;height:14px')} Back</button><div class="hdr-top" style="margin-bottom:0"><div class="page-title">${esc(title)}</div>${meChip()}</div></div>`;
 
+// ════════════ SERVICE MENU (starter list — owner ticks what they offer and sets their own prices) ════════════
+const SVC_CATS = [['hair', 'Hair'], ['beard', 'Beard'], ['face', 'Face & skin'], ['nails', 'Hands & feet'], ['massage', 'Massage'], ['style', 'Locs & styling'], ['other', 'Other']];
+const catName = k => (SVC_CATS.find(c => c[0] === k) || [0, 'Other'])[1];
+// [name, category, price TZS, minutes, staff gets (per-service pay), ticked by default]
+const SERVICE_MENU = [
+    ['Haircut', 'hair', 3000, 20, 1500, 1], ['Haircut + beard', 'hair', 4000, 30, 2000, 1], ['Clean shave (bald)', 'hair', 3000, 20, 1500, 1], ['Kids haircut', 'hair', 2000, 15, 1000, 1],
+    ['Fade / design lines', 'hair', 5000, 30, 2500, 1], ['Hair wash', 'hair', 2000, 10, 1000, 1], ['Black dye', 'hair', 3000, 20, 1500, 1], ['Colour dye', 'hair', 10000, 40, 4000, 0],
+    ['Relaxer / texturizer', 'hair', 10000, 45, 4000, 0], ['Waves / curl treatment', 'hair', 15000, 60, 6000, 0],
+    ['Beard trim', 'beard', 1500, 10, 700, 1], ['Beard shape-up', 'beard', 2000, 15, 1000, 1], ['Beard dye', 'beard', 2000, 15, 1000, 0], ['Hot towel shave', 'beard', 5000, 20, 2500, 0],
+    ['Face scrub', 'face', 3000, 15, 1500, 1], ['Steam', 'face', 3000, 15, 1500, 1], ['Facial', 'face', 10000, 40, 4000, 1], ['Face mask', 'face', 5000, 20, 2000, 0],
+    ['Blackhead removal', 'face', 5000, 20, 2000, 0], ['Eyebrow shaping', 'face', 2000, 10, 1000, 0],
+    ['Manicure', 'nails', 7000, 30, 3000, 1], ['Pedicure', 'nails', 10000, 45, 4000, 1], ['Manicure + pedicure', 'nails', 15000, 75, 6000, 0], ['Nail cut & clean', 'nails', 2000, 10, 1000, 0], ['Foot scrub', 'nails', 5000, 20, 2000, 0],
+    ['Head massage', 'massage', 3000, 10, 1500, 1], ['Neck & shoulder massage', 'massage', 5000, 15, 2000, 0], ['Full back massage', 'massage', 15000, 30, 6000, 0],
+    ['Dreadlocks — start', 'style', 30000, 120, 12000, 0], ['Dreadlocks — retwist', 'style', 15000, 60, 6000, 0], ['Twists / braids (men)', 'style', 15000, 90, 6000, 0], ['Cornrows', 'style', 10000, 60, 4000, 0]
+];
+const ROLES = ['Barber', 'Nail technician', 'Beautician', 'Masseur', 'Assistant'];
+
 // ════════════ FIRST RUN ════════════
 function renderSetup() {
-    U.suB = U.suB || [{ name: '', v: '' }, { name: '', v: '' }];
+    U.suB = U.suB || [{ name: '', v: '', role: 'Barber' }, { name: '', v: '', role: 'Barber' }];
     U.suPay = U.suPay || 'head';
-    U.suS = U.suS || [['Haircut', 5000, 20, 2500], ['Beard trim', 2000, 10, 1000], ['Haircut + beard', 6000, 30, 3000], ['Kids haircut', 3000, 15, 1500], ['Hair wash', 3000, 10, 1000], ['Hair dye', 10000, 40, 4000]];
+    U.suStep = U.suStep || 1;
+    U.suS = U.suS || SERVICE_MENU.map(([n, c, p, m, cut, on]) => ({ n, c, p, m, cut, on: !!on }));
+    if (U.suStep === 2) return renderSetupServices();
     $('app').innerHTML = `<div class="login"><div class="login-card">
-      <div class="login-logo">KEEP</div><div class="login-sub">Barbershop</div>
+      <div class="login-logo">KEEP</div><div class="login-sub">Barbershop · step 1 of 2</div>
       <label class="f">Shop name</label><input class="in" id="suName" value="${esc(U.suName || '')}" oninput="U.suName=this.value" placeholder="e.g. Classic Cuts">
-      <label class="f">Owner PIN (4–8 digits)</label><input class="in" id="suPin" type="password" inputmode="numeric" maxlength="8">
-      <label class="f">How are barbers paid?</label>
-      <div class="seg">${PAYTYPES.map(([k, l]) => `<button class="${U.suPay === k ? 'on' : ''}" onclick="U.suPin=$('suPin').value;U.suPay='${k}';renderSetup()">${l}</button>`).join('')}</div>
-      <label class="f">Barbers${U.suPay === 'service' ? '' : ' · ' + suValLabel()}</label>
-      <div id="suBarbers"></div><button class="btn-sm ghost" style="margin-top:4px;" onclick="suAddBarber()">+ Add barber</button>
-      <label class="f">Starter services</label><div class="muted">${U.suS.map(([n, p]) => `${esc(n)} ${n0(p)}`).join(' · ')}<br>You can change these later.</div>
-      <button class="cta" style="margin-top:20px;" onclick="finishSetup()">Open shop</button></div></div>`;
+      <label class="f">Owner PIN (4–8 digits)</label><input class="in" id="suPin" type="password" inputmode="numeric" maxlength="8" oninput="U.suPin=this.value">
+      <label class="f">How is your staff paid?</label>
+      <div class="seg">${PAYTYPES.map(([k, l]) => `<button class="${U.suPay === k ? 'on' : ''}" onclick="U.suPay='${k}';renderSetup()">${l}</button>`).join('')}</div>
+      <div class="muted" style="margin-top:6px;">${{ head: 'A fixed amount for every client they serve.', service: 'A set amount for each service — you choose it per service on the next step.', pct: 'A share of the price of the services they do.', rent: 'They keep what they charge and pay the shop a daily chair rent.' }[U.suPay]} You can set each person differently later.</div>
+      <label class="f">Staff${U.suPay === 'service' ? '' : ' · ' + suValLabel()}</label>
+      <div id="suBarbers"></div><button class="btn-sm ghost" style="margin-top:4px;" onclick="suAddBarber()">+ Add staff</button>
+      <button class="cta" style="margin-top:20px;" onclick="suNext()">Next: choose services</button></div></div>`;
     if (U.suPin) $('suPin').value = U.suPin;
     suDrawBarbers();
 }
 function suValLabel() { return { head: 'amount per client (TZS)', pct: 'percentage (%)', rent: 'chair rent per day (TZS)', service: '' }[U.suPay]; }
-function suDrawBarbers() { const svc = U.suPay === 'service', ph = { head: '2,500', pct: '50', rent: '10,000' }[U.suPay];
-    $('suBarbers').innerHTML = U.suB.map((b, i) => `<div style="display:grid;grid-template-columns:${svc ? '1fr' : '2fr 1fr'};gap:8px;margin-bottom:8px;"><input class="in" placeholder="Barber ${i + 1} name" value="${esc(b.name)}" oninput="U.suB[${i}].name=this.value">${svc ? '' : `<input class="in" type="number" inputmode="numeric" placeholder="${ph}" value="${esc(b.v)}" oninput="U.suB[${i}].v=this.value">`}</div>`).join(''); }
-function suAddBarber() { U.suB.push({ name: '', v: '' }); suDrawBarbers(); }
-async function finishSetup() {
-    const name = $('suName').value.trim(), pin = $('suPin').value.trim(), ty = U.suPay;
+function suDrawBarbers() { const svc = U.suPay === 'service', ph = { head: '1,500', pct: '50', rent: '10,000' }[U.suPay];
+    $('suBarbers').innerHTML = U.suB.map((b, i) => `<div style="display:grid;grid-template-columns:${svc ? '3fr 2fr' : '3fr 2fr 2fr'};gap:6px;margin-bottom:8px;"><input class="in" placeholder="Name" value="${esc(b.name)}" oninput="U.suB[${i}].name=this.value"><select class="in" style="padding:12px 6px;font-size:.8rem;" onchange="U.suB[${i}].role=this.value">${ROLES.map(r => `<option ${b.role === r ? 'selected' : ''}>${r}</option>`).join('')}</select>${svc ? '' : `<input class="in" type="number" inputmode="numeric" placeholder="${ph}" value="${esc(b.v)}" oninput="U.suB[${i}].v=this.value">`}</div>`).join(''); }
+function suAddBarber() { U.suB.push({ name: '', v: '', role: 'Barber' }); suDrawBarbers(); }
+function suNext() {
+    const name = (U.suName || '').trim(), pin = (U.suPin || '').trim();
     if (!name) return toast('Enter the shop name', true);
     if (!/^\d{4,8}$/.test(pin)) return toast('PIN must be 4–8 digits', true);
     const bs = U.suB.filter(b => b.name.trim());
-    if (!bs.length) return toast('Add at least one barber', true);
-    if (ty !== 'service' && bs.some(b => !(num(b.v) > 0))) return toast('Enter the ' + suValLabel() + ' for each barber', true);
-    D.shop.name = name; D.shop.pin = await sha(pin);
-    D.barbers = bs.map((b, i) => { const v = num(b.v); return { id: uid(), name: b.name.trim(), payType: ty, pct: ty === 'pct' ? Math.min(100, v) : 50, perHead: ty === 'head' ? v : 0, rent: ty === 'rent' ? v : 0, active: true, color: COLORS[i % COLORS.length] }; });
-    D.services = U.suS.map(([n, p, m, c]) => ({ id: uid(), name: n, price: p, mins: m, cut: c, active: true }));
+    if (!bs.length) return toast('Add at least one staff member', true);
+    if (U.suPay !== 'service' && bs.some(b => !(num(b.v) > 0))) return toast('Enter the ' + suValLabel() + ' for each person', true);
+    U.suStep = 2; renderSetup(); window.scrollTo(0, 0);
+}
+function renderSetupServices() {
+    const cut = U.suPay === 'service', n = U.suS.filter(s => s.on).length;
+    $('app').innerHTML = `<div class="login" style="align-items:flex-start;"><div class="login-card">
+      <div class="login-logo">KEEP</div><div class="login-sub">Barbershop · step 2 of 2</div>
+      <div class="note">Tick the services you offer and type <b>your own prices</b>. The prices shown are only a starting point.${cut ? ' “Staff gets” is what the person who does the service earns.' : ''} You can add more services later.</div>
+      ${SVC_CATS.filter(([k]) => U.suS.some(s => s.c === k)).map(([k, l]) => `<div class="sec">${l}</div>${U.suS.map((s, i) => s.c !== k ? '' : `
+        <div class="svc-row ${s.on ? 'on' : ''}"><label class="svc-tick"><input type="checkbox" ${s.on ? 'checked' : ''} onchange="U.suS[${i}].on=this.checked;this.closest('.svc-row').classList.toggle('on',this.checked);suCount()"><span>${esc(s.n)}</span></label>
+          <input class="in svc-p" type="number" inputmode="numeric" value="${s.p}" oninput="U.suS[${i}].p=num(this.value)" aria-label="Price">${cut ? `<input class="in svc-p" type="number" inputmode="numeric" value="${s.cut}" oninput="U.suS[${i}].cut=num(this.value)" aria-label="Staff gets" title="Staff gets">` : ''}</div>`).join('')}`).join('')}
+      ${cut ? '<p class="muted" style="margin-top:6px;">Left box: price · right box: staff gets</p>' : ''}
+      <div style="display:flex;gap:10px;margin-top:20px;"><button class="btn-sec" style="flex:0 0 30%;" onclick="U.suStep=1;renderSetup()">Back</button><button class="cta" style="flex:1;" id="suGo" onclick="finishSetup()">Open shop · ${n} services</button></div></div></div>`;
+}
+function suCount() { $('suGo').textContent = 'Open shop · ' + U.suS.filter(s => s.on).length + ' services'; }
+async function finishSetup() {
+    const ty = U.suPay, sv = U.suS.filter(s => s.on);
+    if (!sv.length) return toast('Tick at least one service', true);
+    if (sv.some(s => !(s.p > 0))) return toast('Every ticked service needs a price', true);
+    D.shop.name = U.suName.trim(); D.shop.pin = await sha(U.suPin.trim());
+    D.barbers = U.suB.filter(b => b.name.trim()).map((b, i) => { const v = num(b.v); return { id: uid(), name: b.name.trim(), role: b.role || 'Barber', payType: ty, pct: ty === 'pct' ? Math.min(100, v) : 50, perHead: ty === 'head' ? v : 0, rent: ty === 'rent' ? v : 0, active: true, color: COLORS[i % COLORS.length] }; });
+    D.services = sv.map(s => ({ id: uid(), name: s.n, cat: s.c, price: s.p, mins: s.m, cut: Math.min(s.p, s.cut || 0), active: true }));
     persist(); U.owner = true; U.ownerAt = Date.now(); go('pos');
 }
 
 // ════════════ FIGURES ════════════
+// staff on a sale: older sales have one barber; newer ones list each person and their pay
+const jobStaff = j => j.pays ? Object.keys(j.pays) : [j.barberId];
 function fig(from, to) {
     const J = D.jobs.filter(j => !j.voided && j.day >= from && j.day <= to);
     const E = D.expenses.filter(e => e.day >= from && e.day <= to), P = D.payouts.filter(p => p.day >= from && p.day <= to);
-    const f = { jobs: J.length, revenue: 0, cash: 0, mobile: 0, commission: 0, productCost: 0, productSales: 0, expenses: E.reduce((a, e) => a + e.amount, 0), payouts: P.reduce((a, p) => a + p.amount, 0), per: {}, svc: {}, J, E };
-    const R = id => f.per[id] = f.per[id] || { jobs: 0, takings: 0, commission: 0, paid: 0, rent: 0 };
+    const f = { jobs: J.length, revenue: 0, cash: 0, mobile: 0, commission: 0, productCost: 0, productSales: 0, expenses: E.reduce((a, e) => a + e.amount, 0), payouts: P.reduce((a, p) => a + p.amount, 0), per: {}, svc: {}, cats: {}, J, E };
+    const R = id => f.per[id] = f.per[id] || { jobs: 0, takings: 0, commission: 0, paid: 0, rent: 0, days: new Set() };
     J.forEach(j => {
         f.revenue += j.total; f.cash += j.cash; f.mobile += j.mobile; f.commission += j.commission;
-        j.items.forEach(i => { if (i.t === 'p') { f.productCost += (i.cost || 0) * i.qty; f.productSales += i.price * i.qty; } else f.svc[i.name] = (f.svc[i.name] || 0) + i.qty; });
-        const r = R(j.barberId); r.jobs++; r.takings += j.total; r.commission += j.commission;
+        const k = j.sub ? j.total / j.sub : 1;
+        j.items.forEach(i => { if (i.t === 'p') { f.productCost += (i.cost || 0) * i.qty; f.productSales += i.price * i.qty; } else { f.svc[i.name] = (f.svc[i.name] || 0) + i.qty; const c = i.cat || 'other'; f.cats[c] = (f.cats[c] || 0) + i.price * i.qty * k; } });
+        jobStaff(j).forEach(sid => {
+            const r = R(sid); r.jobs++; r.days.add(j.day);
+            r.commission += j.pays ? (j.pays[sid] || 0) : j.commission;
+            r.takings += j.pays ? j.items.filter(i => (i.staff || j.barberId) === sid).reduce((a, i) => a + i.price * i.qty, 0) * k : j.total;
+        });
     });
-    // chair rent: charged for each day the barber worked
-    D.barbers.forEach(b => { if (b.payType !== 'rent' || !b.rent) return; const days = new Set(J.filter(j => j.barberId === b.id).map(j => j.day)).size; if (!days) return; const r = R(b.id); r.rent = days * b.rent; r.commission -= r.rent; f.commission -= r.rent; });
+    // chair rent: charged for each day the person worked
+    D.barbers.forEach(b => { if (b.payType !== 'rent' || !b.rent || !f.per[b.id]) return; const r = f.per[b.id]; r.rent = r.days.size * b.rent; r.commission -= r.rent; f.commission -= r.rent; });
     P.forEach(p => { R(p.barberId).paid += p.amount; });
     f.profit = f.revenue - f.commission - f.productCost - f.expenses;
     return f;
@@ -345,17 +398,17 @@ function renderDash() {
         <div><h4>Cash</h4><p>${n0(f.cash)}</p></div><div class="r"><h4>Mobile money</h4><p>${n0(f.mobile)}</p></div></div>`;
     const act = D.barbers.filter(b => b.active || f.per[b.id]);
     const cards = act.map(b => { const r = f.per[b.id] || { jobs: 0, takings: 0, commission: 0 }, due = own ? owedAll(b.id) : 0;
-        return `<div class="bcard" style="border-left-color:${b.color}"><div class="nm">${esc(b.name)}</div><div class="rule">${esc(payDesc(b))}</div>
+        return `<div class="bcard" style="border-left-color:${b.color}"><div class="nm">${esc(b.name)}</div><div class="rule">${esc(b.role || 'Barber')} · ${esc(payDesc(b))}</div>
           <div class="count">${r.jobs}<small>client${r.jobs === 1 ? '' : 's'}</small></div><div class="muted">${n0(r.takings)} TZS taken</div>
           ${own ? `<div class="earn"><span>Earned today</span><b>${n0(r.commission)}</b></div>${due > 0 ? `<button class="btn-sm" style="width:100%;margin-top:10px;" onclick="payBarber('${b.id}')">Pay ${n0(due)}</button>` : ''}` : ''}</div>`; }).join('');
     const jobs = f.J.concat(D.jobs.filter(j => j.voided && j.day === d)).sort((a, b) => b.at - a.at).slice(0, 25);
     $('page').innerHTML = header(D.shop.name, hero + panel) + `<main>
       <button class="cta" onclick="go('pos')">${ic('cut')} New sale</button>
-      <div class="sec" style="margin-top:20px;">Clients served today</div>
+      <div class="sec" style="margin-top:20px;">Clients served today · by staff</div>
       <div class="g2">${cards || '<div class="empty">No barbers yet</div>'}</div>
       ${own ? `<div class="sec">${mon} so far</div><div class="g2">
         <div class="stat-card"><h4>Revenue · ${mon.slice(0, 3)}</h4><p>${n0(m.revenue)} TZS</p></div>
-        <div class="stat-card" style="border-left-color:var(--amber)"><h4>Barber pay · ${mon.slice(0, 3)}</h4><p>${n0(m.commission)} TZS</p></div>
+        <div class="stat-card" style="border-left-color:var(--amber)"><h4>Staff pay · ${mon.slice(0, 3)}</h4><p>${n0(m.commission)} TZS</p></div>
         <div class="stat-card" style="border-left-color:var(--red)"><h4>Costs · ${mon.slice(0, 3)}</h4><p>${n0(m.expenses + m.productCost)} TZS</p></div>
         <div class="stat-card" style="border-left-color:var(--yellow)"><h4>Profit · ${mon.slice(0, 3)}</h4><p style="color:var(--pos)">${n0(m.profit)} TZS</p></div></div>
       <div style="display:flex;gap:10px;margin-top:12px;"><button class="btn-sec blue" onclick="openView('reports')">${ic('report', 'width:16px;height:16px')} Reports</button><button class="btn-sec" onclick="openView('expenses')">${ic('wallet', 'width:16px;height:16px')} Expenses</button></div>` : ''}
@@ -366,51 +419,62 @@ function renderDash() {
           ${!j.voided ? `<button class="x" title="Receipt" onclick="sendReceipt('${j.id}')">${ic('wa')}</button>${own ? `<button class="x" title="Void" onclick="voidJob('${j.id}')">${ic('x')}</button>` : ''}` : ''}</div>`).join('') || '<div class="empty">No sales yet today.</div>'}</div>
     </main>`;
 }
-function voidJob(id) { ownerGate(() => confirmBox('Void this sale? It will be removed from takings and barber pay.', 'Void sale', () => {
+function voidJob(id) { ownerGate(() => confirmBox('Void this sale? It will be removed from takings and staff pay.', 'Void sale', () => {
     const j = D.jobs.find(x => x.id === id); if (!j || j.voided) return; j.voided = true; j.voidedAt = Date.now();
     j.items.forEach(i => { if (i.t === 'p') { const p = D.products.find(y => y.id === i.id); if (p) p.stock += i.qty; } });
     const c = D.customers.find(x => x.id === j.customerId); if (c) { c.visits = Math.max(0, c.visits - 1); c.spent = Math.max(0, c.spent - j.total); }
     persist(); render(); toast('Sale voided'); })); }
 
 // ════════════ POINT OF SALE ════════════
+// ticket lines are keyed "type:itemId:staffId" so one visit can include work by several people
+const lineOf = k => { const [ty, id, sid] = k.split(':'); return { ty, id, sid, it: ty === 's' ? D.services.find(x => x.id === id) : D.products.find(x => x.id === id) }; };
 const jobTotals = () => {
     let sub = 0, svc = 0;
-    Object.entries(U.job.items).forEach(([k, q]) => { const [ty, id] = k.split(':'); const it = ty === 's' ? D.services.find(x => x.id === id) : D.products.find(x => x.id === id); if (it) { sub += it.price * q; if (ty === 's') svc += it.price * q; } });
+    Object.entries(U.job.items).forEach(([k, q]) => { const { ty, it } = lineOf(k); if (it) { sub += it.price * q; if (ty === 's') svc += it.price * q; } });
     const disc = Math.min(sub, Math.max(0, U.job.discount || 0));
     return { sub, svc, disc, total: sub - disc };
 };
+const qtyOf = (ty, id) => Object.entries(U.job.items).reduce((a, [k, q]) => { const l = lineOf(k); return a + (l.ty === ty && l.id === id ? q : 0); }, 0);
 function renderPOS() {
-    const d = dayStr(), f = fig(d, d), busy = new Set(D.queue.filter(q => q.status === 'chair').map(q => q.barberId)), items = U.job.items;
+    const d = dayStr(), f = fig(d, d), busy = new Set(D.queue.filter(q => q.status === 'chair').map(q => q.barberId));
     const act = D.barbers.filter(b => b.active), wait = D.queue.filter(q => q.status === 'waiting').length;
+    const S = D.services.filter(s => s.active), cats = SVC_CATS.filter(([k]) => S.some(s => (s.cat || 'other') === k));
+    if (U.cat !== 'all' && U.cat !== 'products' && !cats.some(c => c[0] === U.cat)) U.cat = 'all';
+    const showP = D.products.some(p => p.active);
     const extra = `<div class="hdr-line"><span>Today: <b>${f.jobs}</b> clients · <b>${n0(f.revenue)} TZS</b></span><button class="pill-btn ${wait ? 'yel' : ''}" onclick="go('queue')">${ic('queue', 'width:14px;height:14px')} Queue${wait ? ' · ' + wait : ''}</button></div>
       <div class="chairs">${act.map(b => `<button class="chair ${U.job.barberId === b.id ? 'on' : ''}" onclick="pickBarber('${b.id}')"><span class="av" style="background:${b.color}">${esc(initial(b.name))}</span>${esc(b.name)}${busy.has(b.id) ? '<span class="busy" title="In chair"></span>' : ''}</button>`).join('')}</div>`;
-    $('page').innerHTML = header(D.shop.name, extra, 'POS') + `<main>
-      ${!U.job.barberId ? `<div class="note">Choose the barber who served the client, then tap the services.</div>` : ''}
-      <div class="sec">Services</div>
-      <div class="tiles">${D.services.filter(s => s.active).map(s => { const q = items['s:' + s.id] || 0; return `<button class="tile ${q ? 'on' : ''}" onclick="addItem('s','${s.id}')">${q ? `<span class="q">${q}</span>` : ''}<b>${esc(s.name)}</b><span class="p">${n0(s.price)} TZS</span>${s.mins ? `<div class="s">${s.mins} min</div>` : ''}</button>`; }).join('')}</div>
-      ${D.products.some(p => p.active) ? `<div class="sec">Products</div><div class="tiles">${D.products.filter(p => p.active).map(p => { const q = items['p:' + p.id] || 0; return `<button class="tile ${q ? 'on' : ''} ${p.stock <= 0 ? 'out' : ''}" onclick="addItem('p','${p.id}')" ${p.stock <= 0 ? 'disabled' : ''}>${q ? `<span class="q">${q}</span>` : ''}<b>${esc(p.name)}</b><span class="p">${n0(p.price)} TZS</span><div class="s">${p.stock <= 0 ? 'Out of stock' : p.stock + ' left'}</div></button>`; }).join('')}</div>` : ''}
+    const tile = (ty, x) => { const q = qtyOf(ty, x.id), out = ty === 'p' && x.stock <= 0;
+        return `<button class="tile ${q ? 'on' : ''} ${out ? 'out' : ''}" onclick="addItem('${ty}','${x.id}')" ${out ? 'disabled' : ''}>${q ? `<span class="q">${q}</span>` : ''}<b>${esc(x.name)}</b><span class="p">${n0(x.price)} TZS</span><div class="s">${ty === 'p' ? (out ? 'Out of stock' : x.stock + ' left') : (x.mins ? x.mins + ' min' : '')}</div></button>`; };
+    const list = U.cat === 'products' ? D.products.filter(p => p.active).map(p => tile('p', p)) : S.filter(s => U.cat === 'all' || (s.cat || 'other') === U.cat).map(s => tile('s', s));
+    $('page').innerHTML = header(D.shop.name, extra, 'POS') + `
+      <div class="catbar">${[['all', 'All'], ...cats, ...(showP ? [['products', 'Products']] : [])].map(([k, l]) => `<button class="${U.cat === k ? 'on' : ''}" onclick="U.cat='${k}';renderPOS()">${l}</button>`).join('')}</div>
+      <main style="padding-top:12px;">
+      ${!U.job.barberId ? `<div class="note">Tap who is doing the work, then tap the services. If someone else does the next service (a pedicure, a scrub), tap their name first.</div>` : `<div class="muted" style="margin:0 2px 10px;">Adding for <b style="color:var(--ink)">${esc(barber(U.job.barberId).name)}</b></div>`}
+      <div class="tiles">${list.join('') || '<div class="empty">Nothing here.</div>'}</div>
     </main><div id="ticketWrap"></div>`;
     drawTicket();
 }
 function pickBarber(id) { U.job.barberId = U.job.barberId === id ? null : id; renderPOS(); }
 function addItem(ty, id) {
-    const k = ty + ':' + id, cur = U.job.items[k] || 0;
-    if (ty === 'p') { const p = D.products.find(x => x.id === id); if (!p || cur >= p.stock) return toast('Not enough stock', true); }
-    U.job.items[k] = cur + 1; renderPOS();
+    if (!U.job.barberId) return toast('First tap who is doing the work', true);
+    const k = ty + ':' + id + ':' + U.job.barberId;
+    if (ty === 'p') { const p = D.products.find(x => x.id === id); if (!p || qtyOf('p', id) >= p.stock) return toast('Not enough stock', true); }
+    U.job.items[k] = (U.job.items[k] || 0) + 1; renderPOS();
 }
+function ticketStaff() { return [...new Set(Object.keys(U.job.items).map(k => lineOf(k).sid))].map(barber).filter(Boolean); }
 function drawTicket() {
     const n = Object.values(U.job.items).reduce((a, b) => a + b, 0), x = jobTotals(), w = $('ticketWrap'); if (!w) return;
     if (!n) { w.innerHTML = ''; return; }
-    const b = barber(U.job.barberId), names = Object.keys(U.job.items).map(k => { const [ty, id] = k.split(':'); return ((ty === 's' ? D.services : D.products).find(i => i.id === id) || {}).name; }).filter(Boolean);
-    w.innerHTML = `<button class="ticket" onclick="openCheckout()"><span class="n">${n}</span><div><div class="t1">View ticket</div><div class="t2">${b ? esc(b.name) + ' · ' : 'No barber · '}${esc(names.slice(0, 2).join(', '))}${names.length > 2 ? ' +' + (names.length - 2) + ' more' : ''}</div></div><span class="tot">${n0(x.total)} TZS</span></button>`;
+    const names = Object.keys(U.job.items).map(k => (lineOf(k).it || {}).name).filter(Boolean);
+    w.innerHTML = `<button class="ticket" onclick="openCheckout()"><span class="n">${n}</span><div style="min-width:0;"><div class="t1">View ticket</div><div class="t2" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(ticketStaff().map(b => b.name).join(' + '))} · ${esc(names.slice(0, 2).join(', '))}${names.length > 2 ? ' +' + (names.length - 2) : ''}</div></div><span class="tot">${n0(x.total)} TZS</span></button>`;
 }
 function openCheckout() {
-    if (!U.job.barberId) return toast('Choose the barber first', true);
     if (!Object.keys(U.job.items).length) return toast('Add a service or product', true);
-    const x = jobTotals(), b = barber(U.job.barberId);
-    const lines = Object.entries(U.job.items).map(([k, q]) => { const [ty, id] = k.split(':'); const it = ty === 's' ? D.services.find(s => s.id === id) : D.products.find(p => p.id === id); return it ? `<div class="li"><div class="mx"><b>${esc(it.name)}</b><span class="muted">${q} × ${n0(it.price)}</span></div><b>${n0(it.price * q)}</b><button class="x" onclick="decItem('${k}')">−</button></div>` : ''; }).join('');
+    const x = jobTotals(), multi = ticketStaff().length > 1;
+    const lines = Object.entries(U.job.items).map(([k, q]) => { const { it, sid } = lineOf(k), b = barber(sid); return it ? `<div class="li"><div class="dot" style="width:28px;height:28px;font-size:.7rem;background:${b ? b.color : '#9ca3af'}">${esc(initial(b ? b.name : '?'))}</div><div class="mx"><b>${esc(it.name)}</b><span class="muted">${q} × ${n0(it.price)} · ${esc(b ? b.name : '')}</span></div><b>${n0(it.price * q)}</b><button class="x" onclick="decItem('${k}')">−</button></div>` : ''; }).join('');
     const names = D.customers.map(c => `<option value="${esc(c.name)}">${esc(pretty(c.phone))}</option>`).join('');
-    modal(`<div class="modal-title">Ticket · ${esc(b.name)}</div>${lines}
+    modal(`<div class="modal-title">Ticket · ${esc(ticketStaff().map(b => b.name).join(' + '))}</div>${lines}
+      ${multi ? '<div class="muted" style="margin-top:6px;">Each person is paid for their own services.</div>' : ''}
       <label class="f">Client (optional)</label>
       <div class="g2"><input class="in" id="coName" list="custList" placeholder="Name" value="${esc(U.job.customer.name)}" oninput="coCust()"><input class="in" id="coPhone" inputmode="tel" placeholder="07XX XXX XXX" value="${esc(U.job.customer.phone)}"></div><datalist id="custList">${names}</datalist>
       <label class="f">Discount</label><input class="in" id="coDisc" type="number" inputmode="numeric" value="${U.job.discount || ''}" placeholder="0" oninput="coRecalc()">
@@ -428,9 +492,13 @@ function saveJob() {
     U.job.discount = num($('coDisc').value);
     const x = jobTotals(), cash = num($('coCash').value), mobile = num($('coMob').value);
     if (cash < 0 || mobile < 0 || Math.abs(cash + mobile - x.total) > 0.5) { $('coSplit').classList.remove('hidden'); return toast('Cash + mobile must equal ' + n0(x.total), true); }
-    const b = barber(U.job.barberId), name = $('coName').value.trim(), phone = normPhone($('coPhone').value);
-    const items = Object.entries(U.job.items).map(([k, q]) => { const [ty, id] = k.split(':'); const it = ty === 's' ? D.services.find(s => s.id === id) : D.products.find(p => p.id === id); return { t: ty, id, name: it.name, price: it.price, qty: q, cost: ty === 'p' ? (it.cost || 0) : 0 }; });
-    const commission = jobPay(b, x.svc, x.disc, items);
+    const name = $('coName').value.trim(), phone = normPhone($('coPhone').value);
+    const items = Object.entries(U.job.items).map(([k, q]) => { const { ty, id, sid, it } = lineOf(k); return { t: ty, id, name: it.name, cat: ty === 's' ? (it.cat || 'other') : '', price: it.price, qty: q, cost: ty === 'p' ? (it.cost || 0) : 0, staff: sid }; });
+    // pay each person for their own services; the discount is shared across services by value
+    const pays = {};
+    ticketStaff().forEach(b => { const mine = items.filter(i => i.staff === b.id), g = mine.filter(i => i.t === 's').reduce((a, i) => a + i.price * i.qty, 0);
+        pays[b.id] = jobPay(b, g, x.svc ? x.disc * g / x.svc : 0, mine); });
+    const staff = ticketStaff(), commission = Object.values(pays).reduce((a, v) => a + v, 0);
     let cust = null;
     if (name || phone) {
         cust = D.customers.find(c => (phone && c.phone === phone) || (name && c.name.toLowerCase() === name.toLowerCase()));
@@ -439,8 +507,8 @@ function saveJob() {
         cust.visits++; cust.spent += x.total; cust.lastVisit = Date.now();
     }
     D.seq = (D.seq || 0) + 1;
-    const job = { id: uid(), no: 'B' + dayStr().slice(2).replace(/-/g, '') + '-' + String(D.seq).padStart(4, '0'), at: Date.now(), day: dayStr(), barberId: b.id, barberName: b.name, payType: b.payType || 'pct',
-        items, sub: x.sub, discount: x.disc, total: x.total, cash, mobile, commission, customerId: cust ? cust.id : null, customerName: cust ? cust.name : '', customerPhone: cust ? cust.phone : '', voided: false };
+    const job = { id: uid(), no: 'B' + dayStr().slice(2).replace(/-/g, '') + '-' + String(D.seq).padStart(4, '0'), at: Date.now(), day: dayStr(), barberId: staff[0].id, barberName: staff.map(b => b.name).join(' + '),
+        items, sub: x.sub, discount: x.disc, total: x.total, cash, mobile, commission, pays, customerId: cust ? cust.id : null, customerName: cust ? cust.name : '', customerPhone: cust ? cust.phone : '', voided: false };
     D.jobs.push(job);
     items.forEach(i => { if (i.t === 'p') { const p = D.products.find(y => y.id === i.id); if (p) p.stock -= i.qty; } });
     if (U.job.queueId) D.queue = D.queue.filter(q => q.id !== U.job.queueId);
@@ -454,7 +522,7 @@ function saveJob() {
 }
 function receiptText(j) {
     const L = [`*${D.shop.name.toUpperCase()}*`]; if (D.shop.address) L.push(D.shop.address); if (D.shop.phone) L.push('Tel: ' + pretty(D.shop.phone));
-    L.push('', `Receipt ${j.no}`, `${new Date(j.at).toLocaleDateString('en-GB')} ${tm(j.at)}`, `Barber: ${j.barberName}`);
+    L.push('', `Receipt ${j.no}`, `${new Date(j.at).toLocaleDateString('en-GB')} ${tm(j.at)}`, `Served by: ${j.barberName}`);
     if (j.customerName) L.push('Client: ' + j.customerName);
     L.push(''); j.items.forEach(i => L.push(`${i.name}${i.qty > 1 ? ' x' + i.qty : ''} — ${n0(i.price * i.qty)}`));
     if (j.discount) L.push(`Discount: -${n0(j.discount)}`);
@@ -471,13 +539,13 @@ function renderQueue() {
     const wait = D.queue.filter(q => q.status === 'waiting'), chair = D.queue.filter(q => q.status === 'chair');
     const avg = wait.length ? Math.round(wait.reduce((a, q) => a + (now - q.at), 0) / wait.length / 60000) : 0;
     const row = q => { const b = barber(q.barberId), mins = Math.max(0, Math.round((now - (q.status === 'chair' ? q.startedAt : q.at)) / 60000));
-        return `<div class="li"><div class="dot" style="background:${b ? b.color : '#9ca3af'}">${esc(initial(q.name))}</div><div class="mx"><b>${esc(q.name)}</b><span class="muted">${b ? esc(b.name) : 'Any barber'} · ${mins} min${q.status === 'chair' ? ' in chair' : ' waiting'}</span></div>
+        return `<div class="li"><div class="dot" style="background:${b ? b.color : '#9ca3af'}">${esc(initial(q.name))}</div><div class="mx"><b>${esc(q.name)}</b><span class="muted">${b ? esc(b.name) : 'Anyone'} · ${mins} min${q.status === 'chair' ? ' in chair' : ' waiting'}</span></div>
           ${q.status === 'waiting' ? `<button class="btn-sm" onclick="qStart('${q.id}')">Start</button>` : `<button class="btn-sm green" onclick="qFinish('${q.id}')">Checkout</button>`}
           <button class="x" onclick="qRemove('${q.id}')">${ic('x')}</button></div>`; };
     const extra = `<div class="qstats"><div><h4>Waiting</h4><p>${wait.length}</p></div><div><h4>In chair</h4><p>${chair.length}</p></div><div><h4>Avg wait</h4><p>${avg} min</p></div></div>`;
     $('page').innerHTML = `<div class="hdr"><div class="hdr-top"><div class="page-title">Queue</div>${meChip()}</div>${extra}</div><main>
       <div class="card"><div style="display:grid;grid-template-columns:3fr 2fr;gap:8px;"><input class="in" id="qName" placeholder="Client name"><input class="in" id="qPhone" inputmode="tel" placeholder="Phone"></div>
-        <div class="chips" style="margin:12px 0;">${[['', 'Any barber'], ...act.map(b => [b.id, b.name])].map(([id, n]) => `<button class="chip ${U.qBarber === id ? 'on' : ''}" onclick="U.qBarber='${id}';segPick(this)">${esc(n)}</button>`).join('')}</div>
+        <div class="chips" style="margin:12px 0;">${[['', 'Anyone'], ...act.map(b => [b.id, b.name])].map(([id, n]) => `<button class="chip ${U.qBarber === id ? 'on' : ''}" onclick="U.qBarber='${id}';segPick(this)">${esc(n)}</button>`).join('')}</div>
         <button class="cta yellow" onclick="qAdd()">${ic('plus')} Add to queue</button></div>
       <div class="sec">In chair</div><div class="card" style="padding:4px 14px;">${chair.map(row).join('') || '<div class="empty">No one in a chair.</div>'}</div>
       <div class="sec">Waiting</div><div class="card" style="padding:4px 14px;">${wait.map(row).join('') || '<div class="empty">Nobody is waiting.</div>'}</div></main>`;
@@ -509,15 +577,16 @@ function renderReports() {
       <p class="muted" style="margin:10px 2px;">${from === to ? from : from + ' → ' + to}</p>
       <div class="g2"><div class="stat-card"><h4>Revenue</h4><p>${n0(f.revenue)} TZS</p></div><div class="stat-card" style="border-left-color:var(--yellow)"><h4>Profit</h4><p style="color:var(--pos)">${n0(f.profit)} TZS</p></div></div>
       <div class="card" style="margin-top:10px;">
-        ${[['Clients served', f.jobs], ['Cash', n0(f.cash)], ['Mobile money', n0(f.mobile)], ['Product sales', n0(f.productSales)], ['Barber pay', '− ' + n0(f.commission)], ['Product cost', '− ' + n0(f.productCost)], ['Expenses', '− ' + n0(f.expenses)]].map(([l, v]) => `<div class="row" style="padding:6px 0;"><span>${l}</span><b>${v}</b></div>`).join('')}
+        ${[['Clients served', f.jobs], ['Cash', n0(f.cash)], ['Mobile money', n0(f.mobile)], ['Product sales', n0(f.productSales)], ['Staff pay', '− ' + n0(f.commission)], ['Product cost', '− ' + n0(f.productCost)], ['Expenses', '− ' + n0(f.expenses)]].map(([l, v]) => `<div class="row" style="padding:6px 0;"><span>${l}</span><b>${v}</b></div>`).join('')}
         <div class="row" style="padding:10px 0 2px;border-top:1.5px solid var(--line);margin-top:6px;"><b>Profit</b><b style="color:var(--pos);font-size:1.05rem;">${n0(f.profit)} TZS</b></div></div>
-      <div class="sec">Barbers</div>
+      <div class="sec">Staff</div>
       ${D.barbers.map(b => { const r = f.per[b.id] || { jobs: 0, takings: 0, commission: 0, paid: 0, rent: 0 }, due = owedAll(b.id); return `<div class="bcard" style="border-left-color:${b.color};margin-bottom:10px;">
           <div class="row"><div><div class="nm">${esc(b.name)}</div><div class="rule">${esc(payDesc(b))}</div></div><div style="text-align:right;"><div style="font:800 1.5rem 'DM Sans';line-height:1;">${r.jobs}</div><div class="rule">clients</div></div></div>
           <div class="g2" style="grid-template-columns:repeat(3,1fr);margin-top:12px;font-size:.78rem;">
             <div><div class="muted">Takings</div><b>${n0(r.takings)}</b></div><div><div class="muted">Earned</div><b style="color:var(--pos)">${n0(r.commission)}</b>${r.rent ? `<div class="muted">after ${n0(r.rent)} rent</div>` : ''}</div><div><div class="muted">Paid</div><b>${n0(r.paid)}</b></div></div>
           <div class="earn"><span>Owed now: <b style="color:${due > 0 ? 'var(--red)' : 'var(--pos)'}">${n0(due)} TZS</b></span>${due > 0 ? `<button class="btn-sm" onclick="payBarber('${b.id}')">Pay</button>` : ''}</div></div>`; }).join('')}
       <p class="muted" style="margin:0 2px 8px;">Owed now = everything earned minus everything paid, across all dates.</p>
+      ${Object.keys(f.cats).length ? `<div class="sec">Takings by service group</div><div class="card">${Object.entries(f.cats).sort((a, b) => b[1] - a[1]).map(([k, v]) => `<div class="row" style="padding:6px 0;"><span>${catName(k)}</span><b>${n0(v)}</b></div>`).join('')}${f.productSales ? `<div class="row" style="padding:6px 0;"><span>Products</span><b>${n0(f.productSales)}</b></div>` : ''}</div>` : ''}
       ${top.length ? `<div class="sec">Services</div><div class="card">${top.map(([n, q]) => `<div class="row" style="padding:6px 0;"><span>${esc(n)}</span><b>${q}</b></div>`).join('')}</div>` : ''}
       <button class="btn-sec" style="width:100%;margin-top:6px;" onclick="exportCsv('${from}','${to}')">${ic('save', 'width:16px;height:16px')} Download Excel (CSV)</button></main>`;
 }
@@ -532,38 +601,39 @@ function payBarber(bid) {
 function savePayout(bid) { const amt = num($('poAmt').value); if (!(amt > 0)) return toast('Enter the amount', true);
     D.payouts.push({ id: uid(), day: dayStr(), at: Date.now(), barberId: bid, amount: amt, from: $('poFrom').querySelector('.on').dataset.v, note: $('poNote').value.trim() }); persist(); closeModal(); toast('Payment recorded'); render(); }
 function exportCsv(from, to) {
-    const rows = [['Receipt', 'Date', 'Time', 'Barber', 'Items', 'Total', 'Discount', 'Cash', 'Mobile money', 'Barber pay', 'Client', 'Voided']];
+    const rows = [['Receipt', 'Date', 'Time', 'Staff', 'Items', 'Total', 'Discount', 'Cash', 'Mobile money', 'Staff pay', 'Client', 'Voided']];
     D.jobs.filter(j => j.day >= from && j.day <= to).forEach(j => rows.push([j.no, j.day, tm(j.at), j.barberName, j.items.map(i => i.name + ' x' + i.qty).join('; '), j.total, j.discount, j.cash, j.mobile, j.commission, j.customerName, j.voided ? 'yes' : '']));
     rows.push([], ['Expenses'], ['Date', 'Type', 'Amount', 'Note']); D.expenses.filter(e => e.day >= from && e.day <= to).forEach(e => rows.push([e.day, e.cat, e.amount, e.note]));
-    rows.push([], ['Barber payments'], ['Date', 'Barber', 'Amount', 'Note']); D.payouts.filter(p => p.day >= from && p.day <= to).forEach(p => rows.push([p.day, (barber(p.barberId) || {}).name || '', p.amount, p.note]));
+    rows.push([], ['Staff payments'], ['Date', 'Staff', 'Amount', 'Note']); D.payouts.filter(p => p.day >= from && p.day <= to).forEach(p => rows.push([p.day, (barber(p.barberId) || {}).name || '', p.amount, p.note]));
     const csv = rows.map(r => r.map(c => `"${String(c ?? '').replace(/"/g, '""')}"`).join(',')).join('\n');
     dl(new Blob(['﻿' + csv], { type: 'text/csv' }), `Keep_Barbershop_${from}_${to}.csv`);
 }
 function dl(blob, name) { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 3000); }
 
-// ════════════ BARBERS & PAY ════════════
+// ════════════ STAFF & PAY ════════════
 function renderTeam() {
     if (!isOwner()) return go('dash');
     const P = [...D.payouts].sort((a, b) => b.at - a.at).slice(0, 30);
-    $('page').innerHTML = subHeader('Barbers & pay') + `<main>
-      <div class="sec" style="margin-top:0">Barbers <a onclick="editBarber()">+ Add barber</a></div>
-      <div class="card" style="padding:4px 14px;">${D.barbers.map(b => `<div class="li" style="cursor:pointer;" onclick="editBarber('${b.id}')"><div class="dot" style="background:${b.color}">${esc(initial(b.name))}</div><div class="mx"><b>${esc(b.name)}${b.active ? '' : ' <span class="tag v">Inactive</span>'}</b><span class="muted">${esc(payDesc(b))}</span></div><div style="text-align:right;"><div class="muted">Owed</div><b>${n0(owedAll(b.id))}</b></div></div>`).join('')}</div>
+    $('page').innerHTML = subHeader('Staff & pay') + `<main>
+      <div class="sec" style="margin-top:0">Staff <a onclick="editBarber()">+ Add staff</a></div>
+      <div class="card" style="padding:4px 14px;">${D.barbers.map(b => `<div class="li" style="cursor:pointer;" onclick="editBarber('${b.id}')"><div class="dot" style="background:${b.color}">${esc(initial(b.name))}</div><div class="mx"><b>${esc(b.name)}${b.active ? '' : ' <span class="tag v">Inactive</span>'}</b><span class="muted">${esc(b.role || 'Barber')} · ${esc(payDesc(b))}</span></div><div style="text-align:right;"><div class="muted">Owed</div><b>${n0(owedAll(b.id))}</b></div></div>`).join('')}</div>
       <div class="sec">Recent payments</div>
       <div class="card" style="padding:4px 14px;">${P.map(p => `<div class="li"><div class="mx"><b>${esc((barber(p.barberId) || {}).name || '—')}</b><span class="muted">${p.day} · ${p.from === 'mobile' ? 'Mobile money' : 'Cash'}${p.note ? ' · ' + esc(p.note) : ''}</span></div><b>${n0(p.amount)}</b></div>`).join('') || '<div class="empty">No payments yet.</div>'}</div></main>`;
 }
 function editBarber(id) {
-    const f0 = D.barbers[0] || {}, b = id ? barber(id) : { name: '', payType: f0.payType || 'head', pct: f0.pct || 50, perHead: f0.perHead || 0, rent: f0.rent || 0, active: true, color: COLORS[D.barbers.length % COLORS.length] };
-    modal(`<div class="modal-title">${id ? esc(b.name) : 'Add barber'}</div><label class="f">Name</label><input class="in" id="ebName" value="${esc(b.name)}">
+    const f0 = D.barbers[0] || {}, b = id ? barber(id) : { name: '', role: 'Barber', payType: f0.payType || 'head', pct: f0.pct || 50, perHead: f0.perHead || 0, rent: f0.rent || 0, active: true, color: COLORS[D.barbers.length % COLORS.length] };
+    modal(`<div class="modal-title">${id ? esc(b.name) : 'Add staff'}</div>
+      <div class="g2"><div><label class="f">Name</label><input class="in" id="ebName" value="${esc(b.name)}"></div><div><label class="f">Role</label><select class="in" id="ebRole">${ROLES.map(r => `<option ${(b.role || 'Barber') === r ? 'selected' : ''}>${r}</option>`).join('')}</select></div></div>
       <label class="f">How paid</label><select class="in" id="ebType" onchange="ebShow()">${PAYTYPES.map(([k, l]) => `<option value="${k}" ${(b.payType || 'pct') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
-      <div id="ebF_head"><label class="f">Amount per client (TZS)</label><input class="in" id="ebHead" type="number" inputmode="numeric" value="${b.perHead || ''}"></div>
+      <div id="ebF_head"><label class="f">Amount per client (TZS)</label><input class="in" id="ebHead" type="number" inputmode="numeric" value="${b.perHead || ''}"><div class="muted" style="margin-top:6px;">Paid once for each client they serve, whatever services the client has.</div></div>
       <div id="ebF_pct"><label class="f">Percentage of service price (%)</label><input class="in" id="ebPct" type="number" inputmode="numeric" value="${b.pct || ''}"></div>
-      <div id="ebF_rent"><label class="f">Chair rent per day worked (TZS)</label><input class="in" id="ebRent" type="number" inputmode="numeric" value="${b.rent || ''}"><div class="muted" style="margin-top:6px;">The barber keeps the service money and the shop charges rent for each day they serve at least one client.</div></div>
-      <div id="ebF_service" class="note" style="margin-top:12px;">Set what the barber gets for each service under Services &amp; products.</div>
+      <div id="ebF_rent"><label class="f">Chair rent per day worked (TZS)</label><input class="in" id="ebRent" type="number" inputmode="numeric" value="${b.rent || ''}"><div class="muted" style="margin-top:6px;">They keep the money for their services; the shop charges rent for each day they serve at least one client.</div></div>
+      <div id="ebF_service" class="note" style="margin-top:12px;">Set what staff get for each service under Services &amp; products.</div>
       <label class="check"><input type="checkbox" id="ebAct" ${b.active ? 'checked' : ''}> Working (shows at the till)</label>
       <button class="cta green" style="margin-top:16px;" id="ebSave">Save</button>`);
     ebShow();
     $('ebSave').onclick = () => { const name = $('ebName').value.trim(); if (!name) return toast('Enter a name', true);
-        const v = { name, payType: $('ebType').value, pct: Math.min(100, Math.max(0, num($('ebPct').value))), perHead: Math.max(0, num($('ebHead').value)), rent: Math.max(0, num($('ebRent').value)), active: $('ebAct').checked };
+        const v = { name, role: $('ebRole').value, payType: $('ebType').value, pct: Math.min(100, Math.max(0, num($('ebPct').value))), perHead: Math.max(0, num($('ebHead').value)), rent: Math.max(0, num($('ebRent').value)), active: $('ebAct').checked };
         if (id) Object.assign(b, v); else D.barbers.push({ id: uid(), ...v, color: b.color });
         persist(); closeModal(); render(); toast('Saved'); };
 }
@@ -572,21 +642,35 @@ function ebShow() { const k = $('ebType').value; ['head', 'pct', 'rent', 'servic
 // ════════════ SERVICES & PRODUCTS ════════════
 function renderCatalog() {
     if (!isOwner()) return go('dash');
+    const missing = SERVICE_MENU.filter(m => !D.services.some(s => s.name.toLowerCase() === m[0].toLowerCase()));
     $('page').innerHTML = subHeader('Services & products') + `<main>
-      <div class="sec" style="margin-top:0">Services <a onclick="editService()">+ Add service</a></div>
-      <div class="card" style="padding:4px 14px;">${D.services.map(s => `<div class="li" style="cursor:pointer;" onclick="editService('${s.id}')"><div class="mx"><b style="${s.active ? '' : 'color:var(--gray);text-decoration:line-through'}">${esc(s.name)}</b><span class="muted">${s.mins ? s.mins + ' min · ' : ''}barber gets ${n0(s.cut || 0)} (per-service pay)</span></div><b>${n0(s.price)}</b></div>`).join('')}</div>
+      <div class="sec" style="margin-top:0">Services <a onclick="editService()">+ Add your own</a></div>
+      ${SVC_CATS.filter(([k]) => D.services.some(s => (s.cat || 'other') === k)).map(([k, l]) => `<div class="muted" style="font-weight:800;margin:12px 2px 6px;">${l}</div>
+        <div class="card" style="padding:4px 14px;">${D.services.filter(s => (s.cat || 'other') === k).map(s => `<div class="li" style="cursor:pointer;" onclick="editService('${s.id}')"><div class="mx"><b style="${s.active ? '' : 'color:var(--gray);text-decoration:line-through'}">${esc(s.name)}</b><span class="muted">${s.mins ? s.mins + ' min · ' : ''}staff gets ${n0(s.cut || 0)} (per-service pay)</span></div><b>${n0(s.price)}</b></div>`).join('')}</div>`).join('')}
+      ${missing.length ? `<button class="btn-sec" style="width:100%;margin-top:4px;" onclick="pickMore()">${ic('plus', 'width:16px;height:16px')} Add from the common list (${missing.length})</button>` : ''}
       <div class="sec">Products <a onclick="editProduct()">+ Add product</a></div>
-      <div class="card" style="padding:4px 14px;">${D.products.map(p => `<div class="li" style="cursor:pointer;" onclick="editProduct('${p.id}')"><div class="mx"><b>${esc(p.name)}</b><span class="muted">Stock ${p.stock} · cost ${n0(p.cost)}</span></div><b>${n0(p.price)}</b></div>`).join('') || '<div class="empty">No products. Add hair oils, creams and other items you sell.</div>'}</div></main>`;
+      <div class="card" style="padding:4px 14px;">${D.products.map(p => `<div class="li" style="cursor:pointer;" onclick="editProduct('${p.id}')"><div class="mx"><b>${esc(p.name)}</b><span class="muted">Stock ${p.stock} · cost ${n0(p.cost)}</span></div><b>${n0(p.price)}</b></div>`).join('') || '<div class="empty">No products. Add hair oils, creams, combs and other items you sell.</div>'}</div></main>`;
+}
+function pickMore() {
+    const missing = SERVICE_MENU.filter(m => !D.services.some(s => s.name.toLowerCase() === m[0].toLowerCase()));
+    modal(`<div class="modal-title">Add services</div><div class="muted" style="text-align:center;margin:-8px 0 8px;">Tick what you offer and set your price.</div>
+      ${missing.map((m, i) => `<div class="svc-row"><label class="svc-tick"><input type="checkbox" class="pm-on" data-i="${i}"><span>${esc(m[0])}<small class="muted" style="display:block;font-weight:500;">${catName(m[1])}</small></span></label><input class="in svc-p pm-p" data-i="${i}" type="number" inputmode="numeric" value="${m[2]}"></div>`).join('')}
+      <button class="cta green" style="margin-top:14px;" id="pmGo">Add selected</button>`);
+    $('pmGo').onclick = () => { let n = 0;
+        document.querySelectorAll('.pm-on').forEach(cb => { if (!cb.checked) return; const m = missing[+cb.dataset.i], p = num(document.querySelector(`.pm-p[data-i="${cb.dataset.i}"]`).value); if (!(p > 0)) return;
+            D.services.push({ id: uid(), name: m[0], cat: m[1], price: p, mins: m[3], cut: Math.min(p, m[4]), active: true }); n++; });
+        persist(); closeModal(); render(); toast(n ? n + ' service' + (n > 1 ? 's' : '') + ' added' : 'Nothing selected'); };
 }
 function editService(id) {
-    const s = id ? D.services.find(x => x.id === id) : { name: '', price: 0, mins: 20, cut: 0, active: true };
-    modal(`<div class="modal-title">${id ? esc(s.name) : 'Add service'}</div><label class="f">Name</label><input class="in" id="esName" value="${esc(s.name)}">
+    const s = id ? D.services.find(x => x.id === id) : { name: '', cat: 'hair', price: 0, mins: 20, cut: 0, active: true };
+    modal(`<div class="modal-title">${id ? esc(s.name) : 'Add service'}</div><label class="f">Name</label><input class="in" id="esName" value="${esc(s.name)}" placeholder="e.g. Steam + scrub">
+      <label class="f">Group</label><select class="in" id="esCat">${SVC_CATS.map(([k, l]) => `<option value="${k}" ${(s.cat || 'other') === k ? 'selected' : ''}>${l}</option>`).join('')}</select>
       <div class="g2"><div><label class="f">Price (TZS)</label><input class="in" id="esPrice" type="number" inputmode="numeric" value="${s.price || ''}"></div><div><label class="f">Minutes</label><input class="in" id="esMins" type="number" inputmode="numeric" value="${s.mins || ''}"></div></div>
-      <label class="f">Barber gets (per-service pay)</label><input class="in" id="esCut" type="number" inputmode="numeric" value="${s.cut || ''}"><div class="muted" style="margin-top:6px;">Only used for barbers paid per service.</div>
+      <label class="f">Staff gets (per-service pay)</label><input class="in" id="esCut" type="number" inputmode="numeric" value="${s.cut || ''}"><div class="muted" style="margin-top:6px;">Only used for staff paid per service.</div>
       <label class="check"><input type="checkbox" id="esAct" ${s.active ? 'checked' : ''}> Offered (shows at the till)</label>
       <button class="cta green" style="margin-top:16px;" id="esSave">Save</button>`);
     $('esSave').onclick = () => { const name = $('esName').value.trim(), price = num($('esPrice').value); if (!name || !(price > 0)) return toast('Enter a name and price', true);
-        const v = { name, price, mins: num($('esMins').value), cut: Math.min(price, Math.max(0, num($('esCut').value))), active: $('esAct').checked };
+        const v = { name, cat: $('esCat').value, price, mins: num($('esMins').value), cut: Math.min(price, Math.max(0, num($('esCut').value))), active: $('esAct').checked };
         if (id) Object.assign(s, v); else D.services.push({ id: uid(), ...v }); persist(); closeModal(); render(); toast('Saved'); };
 }
 function editProduct(id) {
