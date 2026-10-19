@@ -5568,6 +5568,34 @@ async function forceUpdate() {
     } catch (e) {}
     location.reload();
 }
+// ── Keep has moved to keep.co.tz ─────────────────────────────
+// This old address hands each device over to https://keep.co.tz/app/ — but only once
+// every sale made here has reached the server and the cart is empty, so nothing
+// saved offline on this device is ever left behind.
+const MOVED_TO = 'https://keep.co.tz/app/';
+(function moveToKeep() {
+    const go = () => location.replace(MOVED_TO + (location.search.includes('mode=') ? location.search : ''));
+    if (location.search.includes('mode=')) return go();          // set-PIN links: nothing to save
+    const bar = document.createElement('div');
+    bar.style.cssText = 'position:fixed;left:0;right:0;bottom:0;z-index:99999;background:#0b0d12;color:#fff;font:600 14px/1.4 "DM Sans",system-ui,sans-serif;padding:12px 16px calc(12px + env(safe-area-inset-bottom,0px));text-align:center;';
+    bar.innerHTML = '<b style="color:#ffc72c">Keep has moved to keep.co.tz.</b> <span id="mvMsg">Saving your sales first…</span>';
+    const show = () => { if (!bar.isConnected && document.body) document.body.appendChild(bar); };
+    const say = t => { show(); const m = document.getElementById('mvMsg'); if (m) m.textContent = t; };
+    let tries = 0;
+    async function check() {
+        tries++;
+        if (!navigator.onLine) { say('Connect to the internet to finish moving. Your sales are safe on this device.'); return setTimeout(check, 5000); }
+        try {
+            await Promise.race([db.waitForPendingWrites(), new Promise((_, no) => setTimeout(() => no(new Error('slow')), 20000))]);
+        } catch (e) { say('Still saving your sales…'); return setTimeout(check, 5000); }
+        const cartBusy = S && S.cart && Object.keys(S.cart).length > 0;
+        if (cartBusy) { say('Finish this sale, then Keep will open the new address.'); return setTimeout(check, 3000); }
+        say('All sales saved. Opening keep.co.tz…');
+        setTimeout(go, 1500);
+    }
+    setTimeout(() => { show(); check(); }, 1500);
+})();
+
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(e => console.warn('SW:', e)));
 }
